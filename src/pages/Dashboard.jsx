@@ -5,6 +5,7 @@ import { Toaster, toast } from 'sonner';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { motion } from 'framer-motion';
+import arcbyteLogo from '../assets/arcbyte.co Logo_white_transparent.png';
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
@@ -139,7 +140,7 @@ export default function Dashboard() {
             <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] stroke-[2.5]" />
             <span className="text-lg sm:text-xl font-bold tracking-tight text-white">ArcPay</span>
             <div className="w-[1px] h-4 sm:h-5 bg-white/20 mx-0.5 sm:mx-1"></div>
-            <img src="/src/assets/arcbyte.co Logo_white_transparent.png" alt="ArcByte" className="h-5 sm:h-6 opacity-90 object-contain" />
+            <img src={arcbyteLogo} alt="ArcByte" className="h-5 sm:h-6 opacity-90 object-contain" />
           </div>
 
           
