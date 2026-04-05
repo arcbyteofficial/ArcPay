@@ -43,7 +43,7 @@ export default function Hero() {
         <div className="pt-10">
           <h1 className="text-5xl sm:text-7xl lg:text-[80px] font-bold leading-[1.05] tracking-[-0.03em] mb-6 drop-shadow-sm">
             Seamless UPI<br />
-            payments for<br />
+            <span className="text-[#75f2c6]">payments</span> for<br />
             your business
             <span className="inline-block ml-2 sm:ml-4 align-middle pb-1 sm:pb-2 w-8 h-8 sm:w-12 sm:h-12">
               {/* Pristine 4-point Sparkle SVG */}
@@ -59,11 +59,11 @@ export default function Hero() {
 
           <button
             onClick={() => navigate('/app')}
-            className="flex items-center gap-3 bg-[#0d6dfd] hover:bg-blue-600 transition-colors rounded-full pl-8 pr-2 py-2 mb-20 shadow-[0_0_30px_rgba(13,109,253,0.4)] group"
+            className="flex items-center gap-3 bg-[#75f2c6] text-black hover:bg-[#64e4b6] transition-all duration-300 rounded-full pl-8 pr-2 py-2 mb-20 shadow-[0_0_30px_rgba(117,242,198,0.3)] hover:shadow-[0_0_40px_rgba(117,242,198,0.5)] group"
           >
-            <span className="font-semibold tracking-wide">Try for Free</span>
-            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center transform group-hover:translate-x-1 transition-transform">
-              <ArrowRight className="w-5 h-5 text-black" />
+            <span className="font-bold tracking-wide">Try for Free</span>
+            <div className="w-10 h-10 bg-[#151518] rounded-full flex items-center justify-center transform group-hover:translate-x-1 transition-transform">
+              <ArrowRight className="w-5 h-5 text-[#75f2c6]" />
             </div>
           </button>
 
