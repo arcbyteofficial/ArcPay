@@ -4,7 +4,7 @@ import { ArrowLeft, Check, Smartphone, QrCode, Settings, ChevronLeft, Wallet, Do
 import { Toaster, toast } from 'sonner';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import arcbyteLogo from '../assets/arcbyte.co Logo_white_transparent.png';
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -74,23 +74,29 @@ export default function Dashboard() {
     }
   }, []);
   
-  const generateUPIURI = () => {
+  const generateUPIParams = () => {
     const finalNote = name.trim() ? `${name.trim()} - ${note.trim()}` : note.trim();
     const encodedNote = encodeURIComponent(finalNote);
     const validAmount = amount && !isNaN(Number(amount)) && Number(amount) > 0 ? Number(amount).toFixed(2) : '';
     
     if (!validAmount) return '';
-    return `upi://pay?pa=${PAYEE_VPA}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${validAmount}&cu=INR${encodedNote ? `&tn=${encodedNote}` : ''}`;
+    return `pa=${PAYEE_VPA}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${validAmount}&cu=INR${encodedNote ? `&tn=${encodedNote}` : ''}`;
+  };
+
+  const generateUPIURI = () => {
+    const params = generateUPIParams();
+    return params ? `upi://pay?${params}` : '';
   };
 
   const upiURI = generateUPIURI();
+  const upiParams = generateUPIParams();
   const isValid = Boolean(upiURI);
 
   const handlePrimaryAction = () => {
     if (!isValid) return;
     
     if (isLocked) {
-      window.location.href = upiURI;
+      window.location.href = `tez://upi/pay?${upiParams}`;
     } else {
       const payload = btoa(JSON.stringify({ a: amount, n: note, nm: name }));
       const baseUrl = window.location.origin + window.location.pathname;
