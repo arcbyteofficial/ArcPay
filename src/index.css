@@ -1,0 +1,39 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#111114] text-zinc-50 font-sans antialiased min-h-screen selection:bg-[#0047FF] selection:text-white;
+  }
+}
+
+@layer utilities {
+  .mockup-panel {
+    @apply bg-[#1c1c24] rounded-xl border border-white/[0.04];
+  }
+  
+  .mockup-input {
+    @apply bg-[#15151a] border border-white/[0.05] focus:border-[#0047FF]/50 focus:ring-1 focus:ring-[#0047FF]/50 outline-none transition-all duration-200 placeholder:text-zinc-600 text-zinc-100 rounded-md py-3 px-4;
+  }
+  
+  .mockup-button-primary {
+    @apply bg-[#0047FF] hover:bg-[#003FE0] transition-colors text-white font-medium rounded-lg text-sm;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-[#2a2a35] rounded-full;
+}
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-[#3f3f50];
+}
