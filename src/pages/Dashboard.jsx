@@ -1,17 +1,54 @@
 import { useState, useRef, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { ArrowLeft, Check, Smartphone, QrCode, Settings, ChevronLeft, Wallet } from 'lucide-react';
+import { ArrowLeft, Check, Smartphone, QrCode, Settings, ChevronLeft, Wallet, Download, ShieldCheck } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { motion } from 'framer-motion';
-
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
 
 const PAYEE_VPA = 'aidan.rodrigues@superyes';
 const PAYEE_NAME = 'Aidan Rodrigues';
+
+const SlideToPay = ({ onComplete }) => {
+  const containerRef = useRef(null);
+  
+  return (
+    <div 
+      ref={containerRef}
+      className="relative w-full h-[64px] bg-[#1c1c20] rounded-full overflow-hidden flex items-center border border-white/10 shadow-[inset_0_4px_10px_rgba(0,0,0,0.5)] mt-8"
+    >
+      {/* Track text */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center pl-10 pointer-events-none">
+        <span className="text-zinc-500 font-bold tracking-[0.2em] text-xs">
+          SLIDE TO PAY SECURELY
+        </span>
+      </div>
+      
+      {/* Draggable thumb */}
+      <motion.div
+        drag="x"
+        dragConstraints={containerRef}
+        dragElastic={0.05}
+        dragSnapToOrigin={true}
+        onDragEnd={(e, info) => {
+          if (containerRef.current) {
+            const trackWidth = containerRef.current.offsetWidth;
+            // Activate if dragged past 70%
+            if (info.offset.x > trackWidth * 0.7) {
+              onComplete();
+            }
+          }
+        }}
+        className="absolute left-1.5 top-1.5 bottom-1.5 w-[52px] bg-white rounded-full flex items-center justify-center z-10 cursor-grab active:cursor-grabbing shadow-[0_0_15px_rgba(255,255,255,0.4)]"
+      >
+        <ShieldCheck className="w-5 h-5 text-black" />
+      </motion.div>
+    </div>
+  );
+};
 
 export default function Dashboard() {
   const [amount, setAmount] = useState('');
@@ -93,25 +130,18 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] p-2 sm:p-4 md:p-6 lg:p-8 font-sans antialiased text-white selection:bg-teal-500/30">
+    <div className="min-h-screen bg-[#0a0a0c] p-0 sm:p-4 md:p-6 lg:p-8 font-sans antialiased text-white selection:bg-teal-500/30">
       <Toaster theme="dark" position="top-center" />
-      
-      {/* Massive Rounded Container mirroring LandingPage wrap */}
-      <div className="max-w-[1400px] mx-auto rounded-[40px] overflow-hidden shadow-2xl relative min-h-[90vh] bg-[#151518] px-8 pt-6 pb-20">
-        
+      <div className="max-w-[1400px] mx-auto rounded-none sm:rounded-[40px] overflow-hidden shadow-2xl relative min-h-screen sm:min-h-[90vh] bg-[#151518] px-4 sm:px-8 pt-6 pb-20">
         {/* Navigation - Identical to Hero.jsx */}
         <nav className="flex items-center justify-between mb-16 max-w-[1200px] mx-auto z-50 relative">
-          <div className="flex items-center gap-2">
-            <div className="w-5 h-5 bg-[#75f2c6] rounded-[4px] shadow-[0_0_15px_rgba(117,242,198,0.4)]"></div>
-            <span className="text-xl font-bold tracking-tight">ArcPay</span>
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] stroke-[2.5]" />
+            <span className="text-lg sm:text-xl font-bold tracking-tight text-white">ArcPay</span>
+            <div className="w-[1px] h-4 sm:h-5 bg-white/20 mx-0.5 sm:mx-1"></div>
+            <img src="/src/assets/arcbyte.co Logo_white_transparent.png" alt="ArcByte" className="h-5 sm:h-6 opacity-90 object-contain" />
           </div>
-          
-          <div className="hidden lg:flex items-center gap-8 text-[15px] text-zinc-300 font-medium tracking-wide">
-            <a href="/" className="hover:text-white transition-colors">Home</a>
-            <a href="#" className="hover:text-white transition-colors text-white">Dashboard</a>
-            <a href="#" className="hover:text-white transition-colors">Products</a>
-            <a href="#" className="hover:text-white transition-colors">Contact</a>
-          </div>
+
           
           <div className="flex items-center gap-4">
             {isLocked && (
@@ -170,25 +200,42 @@ export default function Dashboard() {
                     <p className="text-zinc-400 text-sm italic">"{note}"</p>
                   </div>
                 )}
+
+                {/* NEW MOBILE CHECKOUT BLOCK (Hidden on LG and above) */}
+                <div className="lg:hidden mt-12 w-full max-w-sm mx-auto sm:mx-0">
+                  <div className="w-full bg-[#1c1c20] rounded-[32px] p-8 shadow-[0_0_40px_rgba(117,242,198,0.15)] border border-[#75f2c6]/20 relative overflow-hidden block mb-6">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#75f2c6] rounded-full opacity-[0.15] blur-[40px] pointer-events-none"></div>
+                    <div className="flex justify-between flex-col relative z-20">
+                      <span className="text-zinc-400 text-xs font-bold uppercase tracking-widest block mb-1">Paying Amount</span>
+                      <div className="flex items-baseline gap-1.5 mt-2">
+                        <span className="text-[#75f2c6]/60 text-4xl">₹</span>
+                        <span className="text-[#75f2c6] font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">{amount || "0.00"}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Slide to Pay Button */}
+                  <SlideToPay onComplete={handlePrimaryAction} />
+                </div>
               </motion.div>
 
-              {/* Center Mobile Mockup - 1:1 Match from Showcase.jsx */}
-              <motion.div initial={{ y: 30, opacity: 0}} animate={{ y: 0, opacity: 1}} transition={{ duration: 1, delay: 0.2 }} className="flex justify-center z-10 relative mt-10 lg:mt-0">
-                <div className="w-[320px] bg-white rounded-[40px] shadow-2xl p-4 relative border-[12px] border-white">
+              {/* Center Mobile Mockup - Redesigned to Dark Theme */}
+              <motion.div initial={{ y: 30, opacity: 0}} animate={{ y: 0, opacity: 1}} transition={{ duration: 1, delay: 0.2 }} className="hidden lg:flex justify-center z-10 relative mt-10 lg:mt-0">
+                <div className="w-[320px] bg-[#151518] rounded-[40px] shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-4 relative border-[12px] border-[#1c1c20]">
                    
                    {/* Phone header */}
                    <div className="flex items-center justify-between px-2 pt-2 mb-6">
-                     <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center">
-                       <ChevronLeft className="w-4 h-4 text-zinc-600" />
+                     <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
+                       <ChevronLeft className="w-4 h-4 text-zinc-300" />
                      </div>
-                     <span className="font-bold text-[#111] tracking-tight">Checkout</span>
-                     <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center">
-                       <Settings className="w-4 h-4 text-zinc-600" />
+                     <span className="font-bold text-white tracking-tight">Checkout</span>
+                     <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
+                       <Settings className="w-4 h-4 text-zinc-300" />
                      </div>
                    </div>
 
                    {/* Simulated App Card (Blue Gradient) */}
-                   <div className="w-full rounded-[24px] p-6 relative overflow-hidden shadow-xl mb-8"
+                   <div className="w-full rounded-[24px] p-6 relative overflow-hidden shadow-2xl mb-8 border border-white/5"
                       style={{ background: 'linear-gradient(to right bottom, #0088ff 0%, #0044ff 40%, #151515 90%)' }}>
                      <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-cyan-400/30 to-transparent opacity-80 mix-blend-screen"></div>
                      <div className="absolute top-6 right-6 text-white font-black text-xl tracking-widest drop-shadow-md opacity-90">UPI</div>
@@ -210,25 +257,25 @@ export default function Dashboard() {
 
                    {/* Actions Box */}
                    <div className="px-2 pb-4">
-                     <p className="text-zinc-400 text-xs font-bold uppercase tracking-wider mb-4 text-center">Scan to Pay</p>
+                     <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-4 text-center">Scan to Pay</p>
                      
                      <div className="w-full flex justify-center mb-6">
-                        <div className="p-4 rounded-2xl bg-zinc-50 border border-zinc-200">
+                        <div className="p-4 rounded-3xl bg-white shadow-[0_0_40px_rgba(255,255,255,0.05)] border border-white/10">
                            <QRCodeSVG
                               value={upiURI}
                               size={160}
                               level={"Q"}
                               includeMargin={false}
-                              className="rounded-md"
+                              className="rounded-xl"
                            />
                         </div>
                      </div>
 
                      <button 
                        onClick={handlePrimaryAction}
-                       className="w-full bg-[#111] hover:bg-black text-white py-4 rounded-[20px] text-[15px] font-semibold flex items-center justify-center gap-2 shadow-xl hover:-translate-y-1 transition-transform"
+                       className="w-full bg-[#0d6dfd] hover:bg-[#005cfa] text-white py-4 rounded-[20px] text-[15px] font-bold tracking-wide flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(13,109,253,0.3)] hover:-translate-y-1 transition-all group border border-[#0d6dfd]/50"
                      >
-                       <Smartphone className="w-5 h-5" /> Open Bank App
+                       <Smartphone className="w-5 h-5 group-hover:scale-110 transition-transform" /> Open Bank App
                      </button>
                    </div>
                 </div>
@@ -259,9 +306,19 @@ export default function Dashboard() {
                       <input 
                         type="number" 
                         value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '') {
+                            setAmount('');
+                            return;
+                          }
+                          const num = Number(val);
+                          if (!isNaN(num) && num <= 100000) {
+                            setAmount(val);
+                          }
+                        }}
                         placeholder="0.00"
-                        className="w-full bg-[#1c1c20] focus:bg-[#202024] border border-white/[0.05] focus:border-[#75f2c6] px-6 py-4 rounded-full outline-none text-white font-medium text-lg transition-colors placeholder:text-zinc-600"
+                        className="w-full bg-[#1c1c20] focus:bg-[#202024] border border-white/[0.05] focus:border-[#75f2c6] px-6 py-4 rounded-full outline-none text-white font-medium text-lg transition-colors placeholder:text-zinc-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                    </div>
 

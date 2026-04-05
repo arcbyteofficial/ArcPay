@@ -1,5 +1,5 @@
 import React from 'react';
-import { Camera, MessageCircle, Mail, Globe } from 'lucide-react';
+import { Camera, MessageCircle, Mail, Globe, ShieldCheck } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -8,9 +8,11 @@ export default function Footer() {
         
         {/* Brand Column */}
         <div className="lg:col-span-2 pr-8">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-5 h-5 bg-[#75f2c6] rounded-[4px] shadow-[0_0_15px_rgba(117,242,198,0.4)]"></div>
-            <span className="text-xl font-bold tracking-tight text-white">ArcPay</span>
+          <div className="flex items-center gap-2 sm:gap-2.5 mb-6">
+            <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] stroke-[2.5]" />
+            <span className="text-lg sm:text-xl font-bold tracking-tight text-white">ArcPay</span>
+            <div className="w-[1px] h-4 sm:h-5 bg-white/20 mx-0.5 sm:mx-1"></div>
+            <img src="/src/assets/arcbyte.co Logo_white_transparent.png" alt="ArcByte" className="h-5 sm:h-6 opacity-90 object-contain" />
           </div>
           <p className="text-zinc-500 text-sm font-medium leading-relaxed mb-8 max-w-[200px]">
             Discover the power of our secure and rewarding payment links

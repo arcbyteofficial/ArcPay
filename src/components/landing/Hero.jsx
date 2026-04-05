@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Wallet } from 'lucide-react';
+import { ArrowRight, Wallet, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Hero() {
@@ -11,9 +11,11 @@ export default function Hero() {
       
       {/* Navigation */}
       <nav className="flex items-center justify-between mb-24 max-w-[1200px] mx-auto z-50 relative">
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 bg-[#75f2c6] rounded-[4px] shadow-[0_0_15px_rgba(117,242,198,0.4)]"></div>
-          <span className="text-xl font-bold tracking-tight">ArcPay</span>
+        <div className="flex items-center gap-2 sm:gap-2.5">
+          <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] stroke-[2.5]" />
+          <span className="text-lg sm:text-xl font-bold tracking-tight text-white">ArcPay</span>
+          <div className="w-[1px] h-4 sm:h-5 bg-white/20 mx-0.5 sm:mx-1"></div>
+          <img src="/src/assets/arcbyte.co Logo_white_transparent.png" alt="ArcByte" className="h-5 sm:h-6 opacity-90 object-contain" />
         </div>
         
         <div className="hidden lg:flex items-center gap-8 text-[15px] text-zinc-300 font-medium tracking-wide">
