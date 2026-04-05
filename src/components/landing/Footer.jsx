@@ -4,8 +4,8 @@ import arcbyteLogo from '../../assets/arcbyte.co Logo_white_transparent.png';
 
 export default function Footer() {
   return (
-    <div className="bg-[#151518] w-full px-8 pt-24 pb-8 font-sans">
-      <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-12 mb-20 border-b border-white/10 pb-16">
+    <div className="bg-[#151518] w-full px-6 md:px-8 pt-16 md:pt-24 pb-8 font-sans">
+      <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-12 mb-10 lg:mb-20 border-b border-white/10 pb-10 lg:pb-16">
         
         {/* Brand Column */}
         <div className="lg:col-span-2 pr-8">

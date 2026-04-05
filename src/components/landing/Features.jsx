@@ -19,10 +19,10 @@ const Card = ({ icon: Icon, title, desc, iconBg }) => (
 
 export default function Features() {
   return (
-    <div className="bg-[#f8f9fc] w-full px-8 pb-32 pt-20 font-sans">
+    <div className="bg-[#f8f9fc] w-full px-4 md:px-8 pb-16 md:pb-32 pt-12 md:pt-20 font-sans">
       
       {/* Logos Marquee Mock */}
-      <div className="flex overflow-hidden space-x-6 mb-32 -mx-8 px-8 max-w-[1400px]">
+      <div className="flex overflow-hidden space-x-6 mb-16 md:mb-32 -mx-4 md:-mx-8 px-4 md:px-8 max-w-[1400px]">
         <div className="flex space-x-6 animate-[marquee_20s_linear_infinite] shrink-0">
           {['Rakuten', 'VICE', 'DELL', 'Upwork', 'Paypal', 'Stripe', 'Google', 'Amazon'].map((brand, i) => (
             <div key={i} className="bg-white px-10 py-5 rounded-[30px] shadow-sm flex items-center justify-center min-w-[200px]">
@@ -34,11 +34,11 @@ export default function Features() {
         </div>
       </div>
 
-      <div className="text-center max-w-[600px] mx-auto mb-20">
-        <h2 className="text-[52px] sm:text-6xl font-black text-[#111] tracking-[-0.04em] mb-6">
+      <div className="text-center max-w-[600px] mx-auto mb-16 md:mb-20">
+        <h2 className="text-4xl sm:text-[52px] md:text-6xl font-black text-[#111] tracking-[-0.04em] mb-4 sm:mb-6">
           What do we offer?
         </h2>
-        <p className="text-[#666] font-medium text-lg">
+        <p className="text-[#666] font-medium text-base sm:text-lg px-4 sm:px-0">
           Since 2013, we've guided millions of global users on their digital financial journey.
         </p>
       </div>

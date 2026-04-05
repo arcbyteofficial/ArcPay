@@ -22,9 +22,9 @@ const TestimonialCard = ({ quote, name, role, avatar }) => (
 
 export default function Testimonials() {
   return (
-    <div className="bg-[#f8f9fc] w-full px-8 py-32 font-sans relative">
-      <div className="text-center max-w-[800px] mx-auto mb-20">
-        <h2 className="text-5xl md:text-[56px] font-black text-[#111] tracking-[-0.04em] leading-tight">
+    <div className="bg-[#f8f9fc] w-full px-4 md:px-8 py-16 md:py-32 font-sans relative">
+      <div className="text-center max-w-[800px] mx-auto mb-16 md:mb-20">
+        <h2 className="text-4xl md:text-5xl lg:text-[56px] font-black text-[#111] tracking-[-0.04em] leading-tight">
           What our clients are<br />
           saying about us!
         </h2>

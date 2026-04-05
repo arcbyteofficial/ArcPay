@@ -19,11 +19,11 @@ export default function Showcase() {
         <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12 items-center">
           
           {/* Left Block */}
-          <div className="flex flex-col z-10">
-            <h2 className="text-5xl font-black text-white tracking-[-0.04em] leading-[1.1] mb-6">
-              Find the<br />
-              <span className="text-[#75f2c6]">Perfect</span><br />
-              Payment Link
+          <div className="flex flex-col z-10 text-center lg:text-left items-center lg:items-start">
+            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-[-0.04em] leading-[1.1] mb-6">
+              Find the<br className="hidden sm:block" />
+              <span className="sm:hidden"> </span><span className="text-[#75f2c6]">Perfect</span><br className="hidden sm:block" />
+              <span className="sm:hidden"> </span>Payment Link
             </h2>
             <p className="text-zinc-400 text-sm font-medium leading-relaxed max-w-[280px] mb-12">
               You have the freedom to personalize the design of your payment link, ensuring a truly unique experience that makes you feel extraordinary.
@@ -48,8 +48,8 @@ export default function Showcase() {
           </div>
 
           {/* Center Mobile Mockup */}
-          <div className="flex justify-center z-10 relative">
-            <div className="w-[300px] h-[600px] bg-white rounded-[40px] shadow-2xl p-4 relative border-8 border-white">
+          <div className="flex justify-center z-10 relative mt-8 lg:mt-0">
+            <div className="w-full max-w-[300px] h-[600px] bg-white rounded-[40px] shadow-2xl p-4 relative border-8 border-white mx-auto">
                {/* Phone header */}
                <div className="flex items-center justify-between px-2 pt-4 mb-6">
                  <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center">
@@ -107,11 +107,11 @@ export default function Showcase() {
           </div>
 
           {/* Right Block */}
-          <div className="flex flex-col justify-center items-start z-10 pl-10">
-            <h2 className="text-4xl font-black text-white tracking-[-0.04em] leading-[1.1] mb-10">
-              Easy Way to<br />
-              <span className="text-[#75f2c6]">Manage your</span><br />
-              Finance
+          <div className="flex flex-col justify-center items-center lg:items-start z-10 pl-0 lg:pl-10 text-center lg:text-left mt-10 lg:mt-0">
+            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-[-0.04em] leading-[1.1] mb-8 sm:mb-10">
+              Easy Way to<br className="hidden sm:block" />
+              <span className="sm:hidden"> </span><span className="text-[#75f2c6]">Manage your</span><br className="hidden sm:block" />
+              <span className="sm:hidden"> </span>Finance
             </h2>
             
             <button className="flex items-center gap-4 bg-[#75f2c6] hover:bg-[#5cdba6] transition-colors rounded-full pl-6 pr-2 py-2 group shadow-[0_0_30px_rgba(117,242,198,0.3)]">
@@ -126,20 +126,20 @@ export default function Showcase() {
       </div>
 
       {/* Light Mobile Screens Spread Section */}
-      <div className="bg-[#f8f9fc] px-8 py-32 overflow-hidden flex flex-col items-center">
-        <h2 className="text-3xl md:text-[40px] font-medium text-[#111] italic mb-20 text-center tracking-tight">
-          Easy to use mobile app that support on<br />android and ios.
+      <div className="bg-[#f8f9fc] px-4 md:px-8 py-20 lg:py-32 overflow-hidden flex flex-col items-center">
+        <h2 className="text-2xl sm:text-3xl md:text-[40px] font-medium text-[#111] italic mb-16 lg:mb-20 text-center tracking-tight leading-snug">
+          Easy to use mobile app that support on<br className="hidden sm:block" /> android and ios.
         </h2>
 
-        <div className="flex items-center justify-center gap-6 max-w-[1200px] w-full">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-6 max-w-[1200px] w-full">
           {/* Mock Screen 1 */}
-          <div className="w-[320px] h-[500px] bg-[#0066ff] rounded-[32px] p-6 relative overflow-hidden shadow-xl transform -rotate-3 hover:rotate-0 transition-transform duration-500">
+          <div className="w-full max-w-[320px] h-[450px] sm:h-[500px] bg-[#0066ff] rounded-[32px] p-6 relative overflow-hidden shadow-xl transform lg:-rotate-3 hover:rotate-0 transition-transform duration-500">
              <h3 className="text-3xl font-bold text-white tracking-tight mb-2">Visa<br/>Support</h3>
              <div className="absolute top-8 right-8 text-white">
                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-6 h-6"><path d="M12 2v20M17 5l-10 14M22 12H2M19 17L5 7"/></svg>
              </div>
              <motion.div 
-               className="absolute -bottom-10 -right-10 w-[300px] h-[180px] rounded-2xl shadow-2xl"
+               className="absolute -bottom-10 -right-10 w-[95%] sm:w-[300px] h-[160px] sm:h-[180px] rounded-2xl shadow-2xl"
                style={{ background: 'linear-gradient(135deg, rgba(230,230,250,1) 0%, rgba(135,206,235,1) 40%, rgba(255,105,180,0.8) 100%)', transform: 'rotate(-15deg)' }}
              >
                <div className="absolute top-4 right-6 text-white font-black text-xl">VISA</div>
@@ -148,9 +148,9 @@ export default function Showcase() {
           </div>
 
           {/* Mock Screen 2 */}
-          <div className="w-[340px] h-[540px] bg-[#e6f0ff] rounded-[32px] p-8 relative overflow-hidden shadow-2xl z-10 transform -translate-y-4 hover:-translate-y-6 transition-transform duration-500">
+          <div className="w-full max-w-[340px] h-[480px] sm:h-[540px] bg-[#e6f0ff] rounded-[32px] p-8 relative overflow-hidden shadow-2xl z-10 transform translate-y-0 lg:-translate-y-4 hover:-translate-y-6 transition-transform duration-500">
              <motion.div 
-               className="absolute -top-10 -left-10 w-[320px] h-[200px] rounded-[24px] shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
+               className="absolute -top-10 -left-10 w-[95%] sm:w-[320px] h-[180px] sm:h-[200px] rounded-[24px] shadow-[0_20px_40px_rgba(0,0,0,0.5)]"
                style={{ background: 'linear-gradient(to right bottom, #0088ff 0%, #0044ff 40%, #151515 90%)', transform: 'rotate(20deg)' }}
              >
                <div className="absolute bottom-4 right-6 text-white font-black text-2xl">VISA</div>
@@ -162,14 +162,14 @@ export default function Showcase() {
           </div>
 
           {/* Mock Screen 3 */}
-          <div className="w-[320px] h-[500px] bg-[#111] rounded-[32px] p-8 relative overflow-hidden shadow-xl transform rotate-3 hover:rotate-0 transition-transform duration-500 text-white">
-             <h3 className="text-[34px] font-medium tracking-tight leading-none mb-1">
-               Design your<br />
-               <span className="text-[#75f2c6] font-bold">Personalized</span><br />
-               <span className="text-zinc-500/50 mix-blend-screen text-4xl">Card</span>
+          <div className="w-full max-w-[320px] h-[450px] sm:h-[500px] bg-[#111] rounded-[32px] p-8 relative overflow-hidden shadow-xl transform lg:rotate-3 hover:rotate-0 transition-transform duration-500 text-white">
+             <h3 className="text-[28px] sm:text-[34px] font-medium tracking-tight leading-none mb-1">
+               Design your<br className="hidden sm:block" />
+               <span className="sm:hidden"> </span><span className="text-[#75f2c6] font-bold">Personalized</span><br className="hidden sm:block" />
+               <span className="sm:hidden"> </span><span className="text-zinc-500/50 mix-blend-screen text-4xl">Card</span>
              </h3>
              <motion.div 
-               className="absolute -bottom-4 right-4 w-[280px] h-[170px] rounded-[24px] shadow-2xl"
+               className="absolute -bottom-4 right-4 w-[85%] sm:w-[280px] h-[150px] sm:h-[170px] rounded-[24px] shadow-2xl"
                style={{ background: 'linear-gradient(135deg, rgba(230,230,250,1) 0%, rgba(135,206,235,1) 40%, rgba(255,105,180,0.8) 100%)', transform: 'rotate(-5deg)' }}
              >
                <div className="absolute top-4 left-6 font-mono text-white tracking-widest text-sm rotate-90 origin-left flex items-start text-nowrap">Zahra Mohamadi</div>
