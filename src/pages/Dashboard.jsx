@@ -6,6 +6,8 @@ import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { motion, AnimatePresence } from 'framer-motion';
 import arcbyteLogo from '../assets/arcbyte.co Logo_white_transparent.png';
+import paytmLogo from '../assets/paytm.png';
+import upiLogo from '../assets/upi.png';
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
@@ -13,11 +15,119 @@ function cn(...inputs) {
 const PAYEE_VPA = 'aidan.rodrigues@superyes';
 const PAYEE_NAME = 'Aidan Rodrigues';
 
+const SlideToCancel = ({ onComplete }) => {
+  const containerRef = useRef(null);
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full max-w-sm mx-auto h-[64px] bg-[#151518] rounded-full overflow-hidden flex items-center border border-white/5 shadow-[inset_0_4px_10px_rgba(0,0,0,0.4)] mt-12"
+    >
+      <div className="absolute inset-0 flex flex-col items-center justify-center pl-10 pointer-events-none">
+        <span className="text-zinc-500 font-bold tracking-[0.2em] text-xs">
+          SLIDE TO CANCEL
+        </span>
+      </div>
+
+      <motion.div
+        drag="x"
+        dragConstraints={containerRef}
+        dragElastic={0.05}
+        dragSnapToOrigin={true}
+        onDragEnd={(e, info) => {
+          if (containerRef.current) {
+            const trackWidth = containerRef.current.offsetWidth;
+            if (info.offset.x > trackWidth * 0.7) {
+              onComplete();
+            }
+          }
+        }}
+        className="absolute left-1.5 top-1.5 bottom-1.5 w-[52px] bg-zinc-800 border border-white/10 rounded-full flex items-center justify-center z-10 cursor-grab active:cursor-grabbing shadow-[0_0_15px_rgba(0,0,0,0.5)]"
+      >
+        <ArrowLeft className="w-5 h-5 text-white/50" />
+      </motion.div>
+    </div>
+  );
+};
+
+const AppChooser = ({ isOpen, onClose, upiParams }) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]"
+          />
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed bottom-0 left-0 right-0 bg-[#111114] rounded-t-[40px] border-t border-white/10 z-[100] p-8 pb-12 shadow-[0_-40px_80px_rgba(0,0,0,0.9)]"
+          >
+            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8" />
+            
+            <div className="flex items-center justify-center gap-2 sm:gap-2.5 mb-10">
+              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] stroke-[2.5]" />
+              <span className="text-lg sm:text-xl font-bold tracking-tight text-white">ArcPay</span>
+              <div className="w-[1px] h-4 sm:h-5 bg-white/20 mx-2 sm:mx-3"></div>
+              <img src={arcbyteLogo} alt="ArcByte" className="h-4 sm:h-5 opacity-90 object-contain" />
+            </div>
+            
+            <h3 className="text-3xl font-black text-white mb-10 text-center tracking-[-0.04em]">Select Payment App</h3>
+
+            <div className="grid grid-cols-4 gap-4 max-w-sm mx-auto">
+              {[
+                { name: 'GPay', id: 'gpay', prefix: 'tez://upi/pay?', iconUrl: 'https://img.icons8.com/color/512/google-pay.png' },
+                { name: 'PhonePe', id: 'phonepe', prefix: 'phonepe://pay?', iconUrl: 'https://img.icons8.com/color/512/phone-pe.png' },
+                { name: 'Paytm', id: 'paytm', prefix: 'paytmmp://pay?', iconUrl: paytmLogo },
+                { name: 'Other', id: 'other', prefix: 'upi://pay?', iconUrl: upiLogo }
+              ].map(app => (
+                <a
+                  key={app.id}
+                  href={`${app.prefix}${upiParams}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // Manually trigger the intent to ensure OS catches it
+                    window.location.href = `${app.prefix}${upiParams}`;
+                    // Defer unmounting the modal so it doesn't kill the event
+                    setTimeout(() => {
+                      onClose();
+                    }, 150);
+                  }}
+                  className="flex flex-col items-center gap-3 group"
+                >
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[22px] flex items-center justify-center relative overflow-hidden drop-shadow-xl hover:drop-shadow-2xl group-hover:-translate-y-1 transition-all duration-300">
+                    {app.iconUrl ? (
+                      <img src={app.iconUrl} alt={app.name} className="w-full h-full object-contain z-10 transition-transform group-hover:scale-105" />
+                    ) : app.id === 'other' ? (
+                      <Smartphone className="w-6 h-6 sm:w-7 sm:h-7" />
+                    ) : (
+                      app.name.charAt(0)
+                    )}
+                  </div>
+                  <span className="text-[10px] font-bold text-zinc-500 group-hover:text-white tracking-[0.1em] uppercase mt-1 transition-colors">{app.name}</span>
+                </a>
+              ))}
+            </div>
+
+            <SlideToCancel onComplete={onClose} />
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
 const SlideToPay = ({ onComplete }) => {
   const containerRef = useRef(null);
-  
+
   return (
-    <div 
+    <div
       ref={containerRef}
       className="relative w-full h-[64px] bg-[#1c1c20] rounded-full overflow-hidden flex items-center border border-white/10 shadow-[inset_0_4px_10px_rgba(0,0,0,0.5)] mt-8"
     >
@@ -27,7 +137,7 @@ const SlideToPay = ({ onComplete }) => {
           SLIDE TO PAY SECURELY
         </span>
       </div>
-      
+
       {/* Draggable thumb */}
       <motion.div
         drag="x"
@@ -56,11 +166,12 @@ export default function Dashboard() {
   const [note, setNote] = useState('');
   const [name, setName] = useState('');
   const [isLocked, setIsLocked] = useState(false);
+  const [showAppChooser, setShowAppChooser] = useState(false);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const payId = searchParams.get('pay_id');
-    
+
     if (payId) {
       try {
         const decoded = JSON.parse(atob(payId));
@@ -73,12 +184,12 @@ export default function Dashboard() {
       }
     }
   }, []);
-  
+
   const generateUPIParams = () => {
     const finalNote = name.trim() ? `${name.trim()} - ${note.trim()}` : note.trim();
     const encodedNote = encodeURIComponent(finalNote);
     const validAmount = amount && !isNaN(Number(amount)) && Number(amount) > 0 ? Number(amount).toFixed(2) : '';
-    
+
     if (!validAmount) return '';
     return `pa=${PAYEE_VPA}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${validAmount}&cu=INR${encodedNote ? `&tn=${encodedNote}` : ''}`;
   };
@@ -94,14 +205,14 @@ export default function Dashboard() {
 
   const handlePrimaryAction = () => {
     if (!isValid) return;
-    
+
     if (isLocked) {
-      window.location.href = `tez://upi/pay?${upiParams}`;
+      setShowAppChooser(true);
     } else {
       const payload = btoa(JSON.stringify({ a: amount, n: note, nm: name }));
       const baseUrl = window.location.origin + window.location.pathname;
       const shareableUrl = `${baseUrl}?pay_id=${payload}`;
-      
+
       navigator.clipboard.writeText(shareableUrl);
       toast.success('Your unique payment link is copied!');
     }
@@ -113,12 +224,12 @@ export default function Dashboard() {
     if (!isValid) return;
     const svg = qrRef.current;
     if (!svg) return;
-    
+
     const svgData = new XMLSerializer().serializeToString(svg);
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     const img = new Image();
-    
+
     img.onload = () => {
       const padding = 40;
       canvas.width = img.width + padding * 2;
@@ -126,7 +237,7 @@ export default function Dashboard() {
       ctx.fillStyle = "white";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, padding, padding);
-      
+
       const pngFile = canvas.toDataURL("image/png");
       const downloadLink = document.createElement("a");
       downloadLink.download = `ArcPay_QR_${amount}INR.png`;
@@ -149,10 +260,10 @@ export default function Dashboard() {
             <img src={arcbyteLogo} alt="ArcByte" className="h-5 sm:h-6 opacity-90 object-contain" />
           </div>
 
-          
+
           <div className="flex items-center gap-4">
             {isLocked && (
-              <button 
+              <button
                 onClick={() => {
                   window.history.replaceState({}, '', window.location.pathname);
                   setIsLocked(false);
@@ -168,9 +279,9 @@ export default function Dashboard() {
 
         {/* Abstract Top squiggly right */}
         <div className="absolute top-20 right-20 opacity-30 pointer-events-none">
-           <svg width="150" height="150" viewBox="0 0 120 80" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5" strokeLinecap="round">
-              <path d="M10 70 C 20 20, 60 100, 80 40 C 90 10, 110 30, 115 20 M 80 40 C 90 80, 50 10, 30 50" />
-            </svg>
+          <svg width="150" height="150" viewBox="0 0 120 80" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5" strokeLinecap="round">
+            <path d="M10 70 C 20 20, 60 100, 80 40 C 90 10, 110 30, 115 20 M 80 40 C 90 80, 50 10, 30 50" />
+          </svg>
         </div>
 
         <div className="max-w-[1200px] mx-auto relative z-10">
@@ -180,7 +291,7 @@ export default function Dashboard() {
             /* ========================================= */
             <div className="flex flex-col lg:flex-row items-center justify-center gap-20">
               {/* Left Typography Block */}
-              <motion.div initial={{ x: -20, opacity: 0}} animate={{ x: 0, opacity: 1}} transition={{ duration: 0.8 }} className="flex flex-col z-10 w-full lg:w-1/2">
+              <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.8 }} className="flex flex-col z-10 w-full lg:w-1/2">
                 <h2 className="text-5xl font-black text-white tracking-[-0.04em] leading-[1.1] mb-6">
                   Complete your<br />
                   <span className="text-[#75f2c6]">Secure</span><br />
@@ -189,7 +300,7 @@ export default function Dashboard() {
                 <p className="text-zinc-400 text-sm font-medium leading-relaxed max-w-[280px] mb-8">
                   Scan the verification code directly or click standard approval to open your system's native banking application.
                 </p>
-                
+
                 {name && (
                   <div className="flex items-center gap-4 mb-4">
                     <div className="w-12 h-12 rounded-full bg-zinc-800 border-[3px] border-[#151518] shadow-lg flex items-center justify-center text-xl font-black text-white">
@@ -220,71 +331,71 @@ export default function Dashboard() {
                       </div>
                     </div>
                   </div>
-                  
+
                   {/* Slide to Pay Button */}
                   <SlideToPay onComplete={handlePrimaryAction} />
                 </div>
               </motion.div>
 
               {/* Center Mobile Mockup - Redesigned to Dark Theme */}
-              <motion.div initial={{ y: 30, opacity: 0}} animate={{ y: 0, opacity: 1}} transition={{ duration: 1, delay: 0.2 }} className="hidden lg:flex justify-center z-10 relative mt-10 lg:mt-0">
+              <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 1, delay: 0.2 }} className="hidden lg:flex justify-center z-10 relative mt-10 lg:mt-0">
                 <div className="w-[320px] bg-[#151518] rounded-[40px] shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-4 relative border-[12px] border-[#1c1c20]">
-                   
-                   {/* Phone header */}
-                   <div className="flex items-center justify-between px-2 pt-2 mb-6">
-                     <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
-                       <ChevronLeft className="w-4 h-4 text-zinc-300" />
-                     </div>
-                     <span className="font-bold text-white tracking-tight">Checkout</span>
-                     <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
-                       <Settings className="w-4 h-4 text-zinc-300" />
-                     </div>
-                   </div>
 
-                   {/* Simulated App Card (Blue Gradient) */}
-                   <div className="w-full rounded-[24px] p-6 relative overflow-hidden shadow-2xl mb-8 border border-white/5"
-                      style={{ background: 'linear-gradient(to right bottom, #0088ff 0%, #0044ff 40%, #151515 90%)' }}>
-                     <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-cyan-400/30 to-transparent opacity-80 mix-blend-screen"></div>
-                     <div className="absolute top-6 right-6 text-white font-black text-xl tracking-widest drop-shadow-md opacity-90">UPI</div>
-                     
-                     <div className="mt-4 mb-8">
-                       <div className="text-white/70 text-xs font-semibold uppercase tracking-wider mb-1">Paying Amount</div>
-                       <div className="font-bold text-3xl tracking-tight text-white drop-shadow-md">
+                  {/* Phone header */}
+                  <div className="flex items-center justify-between px-2 pt-2 mb-6">
+                    <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
+                      <ChevronLeft className="w-4 h-4 text-zinc-300" />
+                    </div>
+                    <span className="font-bold text-white tracking-tight">Checkout</span>
+                    <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer">
+                      <Settings className="w-4 h-4 text-zinc-300" />
+                    </div>
+                  </div>
+
+                  {/* Simulated App Card (Blue Gradient) */}
+                  <div className="w-full rounded-[24px] p-6 relative overflow-hidden shadow-2xl mb-8 border border-white/5"
+                    style={{ background: 'linear-gradient(to right bottom, #0088ff 0%, #0044ff 40%, #151515 90%)' }}>
+                    <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-cyan-400/30 to-transparent opacity-80 mix-blend-screen"></div>
+                    <div className="absolute top-6 right-6 text-white font-black text-xl tracking-widest drop-shadow-md opacity-90">UPI</div>
+
+                    <div className="mt-4 mb-8">
+                      <div className="text-white/70 text-xs font-semibold uppercase tracking-wider mb-1">Paying Amount</div>
+                      <div className="font-bold text-3xl tracking-tight text-white drop-shadow-md">
                         {'\u20B9'}{amount}
-                       </div>
-                     </div>
-                     
-                     <div className="flex gap-12 text-[10px] text-zinc-300 font-semibold uppercase">
-                        <div className="flex flex-col">
-                          <span className="mb-1 opacity-70">Target</span>
-                          <span className="text-white text-xs">{PAYEE_NAME}</span>
-                        </div>
-                     </div>
-                   </div>
+                      </div>
+                    </div>
 
-                   {/* Actions Box */}
-                   <div className="px-2 pb-4">
-                     <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-4 text-center">Scan to Pay</p>
-                     
-                     <div className="w-full flex justify-center mb-6">
-                        <div className="p-4 rounded-3xl bg-white shadow-[0_0_40px_rgba(255,255,255,0.05)] border border-white/10">
-                           <QRCodeSVG
-                              value={upiURI}
-                              size={160}
-                              level={"Q"}
-                              includeMargin={false}
-                              className="rounded-xl"
-                           />
-                        </div>
-                     </div>
+                    <div className="flex gap-12 text-[10px] text-zinc-300 font-semibold uppercase">
+                      <div className="flex flex-col">
+                        <span className="mb-1 opacity-70">Target</span>
+                        <span className="text-white text-xs">{PAYEE_NAME}</span>
+                      </div>
+                    </div>
+                  </div>
 
-                     <button 
-                       onClick={handlePrimaryAction}
-                       className="w-full bg-[#0d6dfd] hover:bg-[#005cfa] text-white py-4 rounded-[20px] text-[15px] font-bold tracking-wide flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(13,109,253,0.3)] hover:-translate-y-1 transition-all group border border-[#0d6dfd]/50"
-                     >
-                       <Smartphone className="w-5 h-5 group-hover:scale-110 transition-transform" /> Open Bank App
-                     </button>
-                   </div>
+                  {/* Actions Box */}
+                  <div className="px-2 pb-4">
+                    <p className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-4 text-center">Scan to Pay</p>
+
+                    <div className="w-full flex justify-center mb-6">
+                      <div className="p-4 rounded-3xl bg-white shadow-[0_0_40px_rgba(255,255,255,0.05)] border border-white/10">
+                        <QRCodeSVG
+                          value={upiURI}
+                          size={160}
+                          level={"Q"}
+                          includeMargin={false}
+                          className="rounded-xl"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={handlePrimaryAction}
+                      className="w-full bg-[#0d6dfd] hover:bg-[#005cfa] text-white py-4 rounded-[20px] text-[15px] font-bold tracking-wide flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(13,109,253,0.3)] hover:-translate-y-1 transition-all group border border-[#0d6dfd]/50"
+                    >
+                      <Smartphone className="w-5 h-5 group-hover:scale-110 transition-transform" /> Open Bank App
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             </div>
@@ -295,8 +406,8 @@ export default function Dashboard() {
             /* CREATOR MODE: Dashboard Editor Setup      */
             /* ========================================= */
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start pt-10">
-              
-              <motion.div initial={{ y: 20, opacity: 0}} animate={{ y: 0, opacity: 1}} transition={{ duration: 0.6 }} className="flex flex-col">
+
+              <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6 }} className="flex flex-col">
                 <h1 className="text-5xl sm:text-6xl font-black leading-[1.05] tracking-[-0.03em] mb-6 drop-shadow-sm text-white">
                   Design the<br />
                   <span className="text-[#75f2c6]">Perfect</span><br />
@@ -308,112 +419,113 @@ export default function Dashboard() {
 
                 {/* Form Fields Styled with pill shapes from Hero/Showcase */}
                 <div className="space-y-6 max-w-md">
-                   <div>
-                      <p className="text-sm font-semibold tracking-wide text-zinc-300 mb-3 px-2">Amount (₹)</p>
-                      <input 
-                        type="number" 
-                        value={amount}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === '') {
-                            setAmount('');
-                            return;
-                          }
-                          const num = Number(val);
-                          if (!isNaN(num) && num <= 100000) {
-                            setAmount(val);
-                          }
-                        }}
-                        placeholder="0.00"
-                        className="w-full bg-[#1c1c20] focus:bg-[#202024] border border-white/[0.05] focus:border-[#75f2c6] px-6 py-4 rounded-full outline-none text-white font-medium text-lg transition-colors placeholder:text-zinc-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      />
-                   </div>
+                  <div>
+                    <p className="text-sm font-semibold tracking-wide text-zinc-300 mb-3 px-2">Amount (₹)</p>
+                    <input
+                      type="number"
+                      value={amount}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '') {
+                          setAmount('');
+                          return;
+                        }
+                        const num = Number(val);
+                        if (!isNaN(num) && num <= 100000) {
+                          setAmount(val);
+                        }
+                      }}
+                      placeholder="0.00"
+                      className="w-full bg-[#1c1c20] focus:bg-[#202024] border border-white/[0.05] focus:border-[#75f2c6] px-6 py-4 rounded-full outline-none text-white font-medium text-lg transition-colors placeholder:text-zinc-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    />
+                  </div>
 
-                   <div>
-                      <p className="text-sm font-semibold tracking-wide text-zinc-300 mb-3 px-2 flex justify-between">
-                         <span>Client Name</span> <span className="text-zinc-600 text-xs align-bottom">Optional</span>
-                      </p>
-                      <input 
-                        type="text" 
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Zahra Mohamadi"
-                        className="w-full bg-[#1c1c20] focus:bg-[#202024] border border-white/[0.05] focus:border-zinc-500 px-6 py-4 rounded-full outline-none text-white font-medium transition-colors placeholder:text-zinc-600"
-                      />
-                   </div>
+                  <div>
+                    <p className="text-sm font-semibold tracking-wide text-zinc-300 mb-3 px-2 flex justify-between">
+                      <span>Client Name</span> <span className="text-zinc-600 text-xs align-bottom">Optional</span>
+                    </p>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Zahra Mohamadi"
+                      className="w-full bg-[#1c1c20] focus:bg-[#202024] border border-white/[0.05] focus:border-zinc-500 px-6 py-4 rounded-full outline-none text-white font-medium transition-colors placeholder:text-zinc-600"
+                    />
+                  </div>
 
-                   <div>
-                      <p className="text-sm font-semibold tracking-wide text-zinc-300 mb-3 px-2 flex justify-between">
-                         <span>Target Goal</span> <span className="text-zinc-600 text-xs align-bottom">Optional</span>
-                      </p>
-                      <input 
-                        type="text" 
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                        placeholder="Design Consultation..."
-                        className="w-full bg-[#1c1c20] focus:bg-[#202024] border border-white/[0.05] focus:border-zinc-500 px-6 py-4 rounded-full outline-none text-white font-medium transition-colors placeholder:text-zinc-600"
-                      />
-                   </div>
+                  <div>
+                    <p className="text-sm font-semibold tracking-wide text-zinc-300 mb-3 px-2 flex justify-between">
+                      <span>Target Goal</span> <span className="text-zinc-600 text-xs align-bottom">Optional</span>
+                    </p>
+                    <input
+                      type="text"
+                      value={note}
+                      onChange={(e) => setNote(e.target.value)}
+                      placeholder="Design Consultation..."
+                      className="w-full bg-[#1c1c20] focus:bg-[#202024] border border-white/[0.05] focus:border-zinc-500 px-6 py-4 rounded-full outline-none text-white font-medium transition-colors placeholder:text-zinc-600"
+                    />
+                  </div>
 
-                   <button 
-                     onClick={handlePrimaryAction}
-                     disabled={!isValid}
-                     className={cn("w-full flex items-center justify-between bg-[#0d6dfd] hover:bg-blue-600 transition-colors rounded-full pl-8 pr-2 py-2 mt-8 shadow-[0_0_30px_rgba(13,109,253,0.4)] group overflow-hidden", !isValid && "opacity-50 grayscale cursor-not-allowed")}
-                   >
-                     <span className="font-semibold tracking-wide text-white">Generate Link</span>
-                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center transform group-hover:rotate-12 transition-transform">
-                       <Check className="w-5 h-5 text-black stroke-[3px]" />
-                     </div>
-                   </button>
+                  <button
+                    onClick={handlePrimaryAction}
+                    disabled={!isValid}
+                    className={cn("w-full flex items-center justify-between bg-[#0d6dfd] hover:bg-blue-600 transition-colors rounded-full pl-8 pr-2 py-2 mt-8 shadow-[0_0_30px_rgba(13,109,253,0.4)] group overflow-hidden", !isValid && "opacity-50 grayscale cursor-not-allowed")}
+                  >
+                    <span className="font-semibold tracking-wide text-white">Generate Link</span>
+                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center transform group-hover:rotate-12 transition-transform">
+                      <Check className="w-5 h-5 text-black stroke-[3px]" />
+                    </div>
+                  </button>
                 </div>
               </motion.div>
 
               {/* Right Side: Virtual Preview holographic card */}
               <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 1, delay: 0.2 }} className="relative h-[600px] hidden lg:block">
-                 <div className="absolute top-20 right-0 w-[420px] h-[480px] rounded-[40px] shadow-2xl overflow-hidden backdrop-blur-3xl border border-white/5 z-20 flex flex-col p-10 bg-[#1c1c20]">
-                    <div className="flex justify-between items-start w-full mb-12">
-                       <div className="text-white font-semibold text-lg tracking-tight">Invoice Details</div>
-                       <Wallet className="w-6 h-6 text-[#75f2c6]" />
+                <div className="absolute top-20 right-0 w-[420px] h-[480px] rounded-[40px] shadow-2xl overflow-hidden backdrop-blur-3xl border border-white/5 z-20 flex flex-col p-10 bg-[#1c1c20]">
+                  <div className="flex justify-between items-start w-full mb-12">
+                    <div className="text-white font-semibold text-lg tracking-tight">Invoice Details</div>
+                    <Wallet className="w-6 h-6 text-[#75f2c6]" />
+                  </div>
+
+                  <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">To Receiver</div>
+                  <div className="text-white font-bold text-2xl tracking-tight mb-8 truncate">{name || "Anonymous Client"}</div>
+
+                  <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Requesting</div>
+                  <div className="text-[#0d6dfd] font-black text-5xl tracking-tighter mb-10">
+                    <span className="text-zinc-600 text-3xl">₹</span>{amount || "0.00"}
+                  </div>
+
+                  <div className="mt-auto pt-6 border-t border-white/10 flex justify-between items-center">
+                    <div>
+                      <div className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1">Status</div>
+                      <div className="flex items-center gap-2 text-[#75f2c6] font-semibold text-sm">
+                        <div className="w-2 h-2 rounded-full bg-[#75f2c6] animate-pulse"></div> Active
+                      </div>
                     </div>
 
-                    <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">To Receiver</div>
-                    <div className="text-white font-bold text-2xl tracking-tight mb-8 truncate">{name || "Anonymous Client"}</div>
+                    <button onClick={handleDownloadQR} disabled={!isValid} className={cn("p-4 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-white", !isValid && "opacity-50")}>
+                      <Download className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
 
-                    <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Requesting</div>
-                    <div className="text-[#0d6dfd] font-black text-5xl tracking-tighter mb-10">
-                      <span className="text-zinc-600 text-3xl">₹</span>{amount || "0.00"}
-                    </div>
-
-                    <div className="mt-auto pt-6 border-t border-white/10 flex justify-between items-center">
-                       <div>
-                         <div className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1">Status</div>
-                         <div className="flex items-center gap-2 text-[#75f2c6] font-semibold text-sm">
-                           <div className="w-2 h-2 rounded-full bg-[#75f2c6] animate-pulse"></div> Active
-                         </div>
-                       </div>
-                       
-                       <button onClick={handleDownloadQR} disabled={!isValid} className={cn("p-4 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-white", !isValid && "opacity-50")}>
-                          <Download className="w-5 h-5" />
-                       </button>
-                    </div>
-                 </div>
-                 
-                 {/* Floating aesthetic background card */}
-                 <div 
-                   className="absolute top-6 left-10 w-[380px] h-[420px] rounded-[40px] overflow-hidden shadow-2xl backdrop-blur-xl border border-white/20 z-10"
-                   style={{ 
-                     transform: 'perspective(1000px) rotateX(15deg) rotateY(-10deg) rotateZ(-5deg)', 
-                     background: 'linear-gradient(135deg, rgba(230,230,250,0.8) 0%, rgba(135,206,235,0.8) 40%, rgba(255,105,180,0.6) 100%)'
-                   }}
-                 >
-                   <div className="absolute inset-0 bg-black/40 mix-blend-overlay"></div>
-                 </div>
+                {/* Floating aesthetic background card */}
+                <div
+                  className="absolute top-6 left-10 w-[380px] h-[420px] rounded-[40px] overflow-hidden shadow-2xl backdrop-blur-xl border border-white/20 z-10"
+                  style={{
+                    transform: 'perspective(1000px) rotateX(15deg) rotateY(-10deg) rotateZ(-5deg)',
+                    background: 'linear-gradient(135deg, rgba(230,230,250,0.8) 0%, rgba(135,206,235,0.8) 40%, rgba(255,105,180,0.6) 100%)'
+                  }}
+                >
+                  <div className="absolute inset-0 bg-black/40 mix-blend-overlay"></div>
+                </div>
               </motion.div>
 
             </div>
           )}
         </div>
 
+        <AppChooser isOpen={showAppChooser} onClose={() => setShowAppChooser(false)} upiParams={upiParams} />
       </div>
     </div>
   );
