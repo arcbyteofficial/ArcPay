@@ -59,16 +59,16 @@ const CharacterFade = ({ text, x, maxDistance = 120, disabled }) => {
         const charStep = maxDistance / characters.length;
         const start = i * charStep;
         const end = start + Math.min(charStep * 3, 40); // Overlap for smooth transition
-        
+
         // Use the hook inside the map's child component or calculate manually
         // Since we can't call hooks in a loop, we use a sub-component
         return (
-          <CharacterSpan 
-            key={i} 
-            char={char} 
-            x={x} 
-            range={[start, end]} 
-            disabled={disabled} 
+          <CharacterSpan
+            key={i}
+            char={char}
+            x={x}
+            range={[start, end]}
+            disabled={disabled}
           />
         );
       })}
@@ -79,8 +79,8 @@ const CharacterFade = ({ text, x, maxDistance = 120, disabled }) => {
 const CharacterSpan = ({ char, x, range, disabled }) => {
   const opacity = useTransform(x, range, [1, 0]);
   return (
-    <motion.span 
-      style={{ opacity: disabled ? 1 : opacity }} 
+    <motion.span
+      style={{ opacity: disabled ? 1 : opacity }}
       className="inline-block whitespace-pre"
     >
       {char}
@@ -198,6 +198,13 @@ const AppChooser = ({ isOpen, onClose, upiParams }) => {
             </div>
 
             <SlideToCancel onComplete={onClose} />
+            
+            <div className="flex items-center justify-center gap-3 mt-8 opacity-40 group">
+              <img src={arcbyteLogo} alt="ArcByte" className="h-2.5 object-contain grayscale brightness-200" />
+              <p className="text-[9px] text-white/80 leading-relaxed font-medium tracking-tight">
+                PROTOCOL NOTICE: Money will be debited from your linked bank account after proceeding with your selected application. ArcPay is a technology interface.
+              </p>
+            </div>
           </motion.div>
         </>
       )}
@@ -261,9 +268,9 @@ const SlideToGenerate = ({ onComplete, disabled }) => {
     >
       <div className="absolute inset-0 flex flex-col items-center justify-center pl-8 pointer-events-none select-none">
         <span className="text-black font-bold tracking-wide">
-          <CharacterFade 
-            text={disabled ? "Generate Link" : "Slide to Generate"} 
-            x={x} 
+          <CharacterFade
+            text={disabled ? "Generate Link" : "Slide to Generate"}
+            x={x}
             disabled={disabled}
           />
         </span>
@@ -344,11 +351,11 @@ const LinkGeneratedSheet = ({ isOpen, onClose, link }) => {
     } else {
       toast.error('Failed to copy. Please copy manually.');
     }
-    
+
     // Auto-close after a small delay for feedback
     setTimeout(() => {
       onClose();
-    }, 400); 
+    }, 400);
   };
 
   return (
@@ -387,10 +394,10 @@ const LinkGeneratedSheet = ({ isOpen, onClose, link }) => {
             </h3>
 
             <div className="w-full bg-[#151518] border border-white/5 rounded-2xl p-4 mb-8 flex items-center justify-between overflow-hidden">
-               <p className="text-zinc-400 text-sm truncate font-medium flex-1 mr-4">{link}</p>
-               <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
-                 <QrCode className="w-4 h-4 text-[#75f2c6]" />
-               </div>
+              <p className="text-zinc-400 text-sm truncate font-medium flex-1 mr-4">{link}</p>
+              <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
+                <QrCode className="w-4 h-4 text-[#75f2c6]" />
+              </div>
             </div>
 
             <div className="">
@@ -459,11 +466,11 @@ export default function Dashboard() {
     } else {
       const newInvoiceId = `AP-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
       setInvoiceId(newInvoiceId);
-      
+
       const payload = btoa(JSON.stringify({ a: amount, n: note, nm: name, p: payerName, iid: newInvoiceId }));
       const baseUrl = window.location.origin + window.location.pathname;
       const shareableUrl = `${baseUrl}?pay_id=${payload}`;
-      
+
       setGeneratedLink(shareableUrl);
       copyToClipboard(shareableUrl);
 
@@ -514,7 +521,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-black p-0 sm:p-4 md:p-6 lg:p-8 font-sans antialiased text-white selection:bg-[#75f2c6]/30">
-      <SEO 
+      <SEO
         title={isLocked ? `Pay ₹${amount} to ${name || PAYEE_NAME}` : "Create Professional Payment Link"}
         description={isLocked ? `Securely complete your payment of ₹${amount} to ${name || PAYEE_NAME} via ArcPay instant UPI settlement.` : undefined}
       />
@@ -610,13 +617,24 @@ export default function Dashboard() {
 
                 {/* NEW MOBILE CHECKOUT BLOCK (Hidden on LG and above) */}
                 <div className="lg:hidden mt-12 w-full max-w-sm mx-auto sm:mx-0">
-                  <div className="w-full bg-[#151518] rounded-[32px] p-8 shadow-[0_0_40px_rgba(117,242,198,0.15)] border border-[#75f2c6]/20 relative overflow-hidden block mb-6">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-[#75f2c6] rounded-full opacity-[0.15] blur-[40px] pointer-events-none"></div>
+                  <div className="w-full bg-[#08080a] rounded-[32px] p-8 shadow-[0_0_40px_rgba(117,242,198,0.1)] border border-white/[0.03] relative overflow-hidden block mb-6">
                     <div className="flex justify-between flex-col relative z-20">
+                      <div className="flex items-center gap-2 mb-8 opacity-40">
+                        <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                        <span className="text-[12px] font-black text-white tracking-tight">ArcPay</span>
+                        <div className="w-[0.5px] h-3 shadow-[0.5px_0_0_rgba(255,255,255,0.3)] mx-1"></div>
+                        <img src={arcbyteLogo} alt="ArcByte" className="h-3.5 opacity-100 object-contain" />
+                      </div>
                       <span className="text-zinc-400 text-xs font-bold uppercase tracking-widest block mb-1">Paying Amount</span>
-                      <div className="flex items-baseline gap-1.5 mt-2">
+                      <div className="flex items-baseline gap-1.5 mt-2 mb-6">
                         <span className="text-[#75f2c6]/60 text-4xl">₹</span>
                         <span className="text-[#75f2c6] font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">{amount || "0.00"}</span>
+                      </div>
+                      <div className="flex items-start gap-2 pt-4 border-t border-white/5 mt-auto">
+                        <ShieldCheck className="w-3 h-3 text-white/40 mt-0.5 shrink-0" />
+                        <p className="text-[10px] text-white/40 leading-relaxed font-medium">
+                          SECURITY DISCLAIMER: This is a verified settlement interface. Transaction processing is subject to your bank's native network protocol and UPI verification cipher.
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -635,7 +653,7 @@ export default function Dashboard() {
                     <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer shrink-0">
                       <ChevronLeft className="w-4 h-4 text-zinc-300" />
                     </div>
-                    
+
                     <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/[0.05] shadow-inner">
                       <ShieldCheck className="w-3.5 h-3.5 text-white" />
                       <span className="text-[13px] font-black text-white tracking-tight">ArcPay</span>
@@ -673,38 +691,38 @@ export default function Dashboard() {
                     </div>
                   </div>
 
-                    {/* Actions Box (QR only for desktop) */}
-                    <div className="px-2 pb-4">
-                      {/* Scan instruction for desktop */}
-                      <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-6 text-center">Scan To Pay</p>
+                  {/* Actions Box (QR only for desktop) */}
+                  <div className="px-2 pb-4">
+                    {/* Scan instruction for desktop */}
+                    <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-6 text-center">Scan To Pay</p>
 
-                      <div className="w-full flex justify-center mb-0">
-                        <div className="p-5 rounded-[32px] bg-white shadow-[0_20px_50px_rgba(255,255,255,0.05)] border border-white/10 relative group">
-                          <QRCodeSVG
-                            value={upiURI}
-                            size={210}
-                            level={"H"}
-                            includeMargin={false}
-                            className="rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
-                            imageSettings={{
-                                src: "https://img.icons8.com/fluency/96/security-checked--v1.png",
-                                x: undefined,
-                                y: undefined,
-                                height: 40,
-                                width: 40,
-                                excavate: true,
-                            }}
-                          />
-                        </div>
+                    <div className="w-full flex justify-center mb-0">
+                      <div className="p-5 rounded-[32px] bg-white shadow-[0_20px_50px_rgba(255,255,255,0.05)] border border-white/10 relative group">
+                        <QRCodeSVG
+                          value={upiURI}
+                          size={210}
+                          level={"H"}
+                          includeMargin={false}
+                          className="rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
+                          imageSettings={{
+                            src: "https://img.icons8.com/fluency/96/security-checked--v1.png",
+                            x: undefined,
+                            y: undefined,
+                            height: 40,
+                            width: 40,
+                            excavate: true,
+                          }}
+                        />
                       </div>
+                    </div>
 
-                        <button
-                          onClick={handlePrimaryAction}
-                          className="hidden"
-                        >
-                          Open Bank App
-                        </button>
-                      </div>
+                    <button
+                      onClick={handlePrimaryAction}
+                      className="hidden"
+                    >
+                      Open Bank App
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             </div>
