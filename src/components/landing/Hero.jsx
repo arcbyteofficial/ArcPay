@@ -77,7 +77,7 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
     if (value && index < 5) {
       inputs.current[index + 1].focus();
     }
-    
+
     // Check if code is complete
     if (newCode.every(digit => digit !== '')) {
       const fullCode = newCode.join('');
@@ -151,22 +151,22 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
                     animate={{ scale: 1, opacity: 1 }}
                     className="flex flex-col items-center justify-center"
                   >
-                    <img 
-                      src="https://img.icons8.com/fluency/240/verified-account--v1.png" 
-                      alt="Verified" 
-                      className="w-20 h-20 object-contain drop-shadow-[0_0_20px_rgba(117,242,198,0.3)]" 
+                    <img
+                      src="https://img.icons8.com/fluency/240/verified-account--v1.png"
+                      alt="Verified"
+                      className="w-20 h-20 object-contain drop-shadow-[0_0_20px_rgba(117,242,198,0.3)]"
                     />
                   </motion.div>
                 ) : (
-                  <motion.div 
+                  <motion.div
                     key="inputs"
                     initial={{ opacity: 0 }}
-                    animate={{ 
+                    animate={{
                       opacity: 1,
                       x: error ? [-10, 10, -10, 10, 0] : 0
                     }}
                     exit={{ opacity: 0 }}
-                    transition={{ 
+                    transition={{
                       opacity: { duration: 0.4 },
                       x: { duration: 0.4 }
                     }}
@@ -414,8 +414,8 @@ export default function Hero() {
         onClose={() => setShowComingSoon(false)}
       />
 
-      <AccessCodeSheet 
-        isOpen={showAccessCode} 
+      <AccessCodeSheet
+        isOpen={showAccessCode}
         onClose={() => setShowAccessCode(false)}
         onVerified={() => navigate('/app')}
       />
