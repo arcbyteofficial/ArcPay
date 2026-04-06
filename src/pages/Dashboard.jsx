@@ -523,11 +523,11 @@ export default function Dashboard() {
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="flex flex-col z-10 w-full lg:w-1/2">
                 <h2 className="text-5xl font-black text-white tracking-[-0.04em] leading-[1.1] mb-6">
                   Complete your<br />
-                  <span className="text-[#75f2c6]">Secure</span><br />
-                  Payment
+                  <span className="text-[#75f2c6]">Payment</span><br />
+                  Securely
                 </h2>
                 <p className="text-zinc-400 text-sm font-medium leading-relaxed max-w-[280px] mb-8">
-                  Scan the verification code directly or click standard approval to open your system's native banking application.
+                  Verify the transaction parameters below. Utilize the verification cipher or select standard authorization to initiate settlement via your service provider's native interface.
                 </p>
 
                 {name && (
