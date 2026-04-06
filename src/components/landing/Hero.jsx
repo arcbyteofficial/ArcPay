@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { ArrowRight, Wallet, ShieldCheck, Percent, Zap, ArrowLeft, Smartphone } from 'lucide-react';
+import { ArrowRight, Wallet, ShieldCheck, Percent, Zap, ArrowLeft, Smartphone, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import arcbyteLogo from '../../assets/arcbyte.co Logo_white_transparent.png';
 import heroImg from '../../assets/hero.png';
@@ -66,6 +66,7 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const inputs = useRef([]);
   const [error, setError] = useState(false);
+  const [success, setSuccess] = useState(false);
 
   const handleChange = (index, value) => {
     if (!/^\d*$/.test(value)) return;
@@ -81,8 +82,11 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
     if (newCode.every(digit => digit !== '')) {
       const fullCode = newCode.join('');
       if (fullCode === '151903') {
-        sessionStorage.setItem('merchant_verified', 'true');
-        onVerified();
+        setSuccess(true);
+        setTimeout(() => {
+          sessionStorage.setItem('merchant_verified', 'true');
+          onVerified();
+        }, 3500);
       } else {
         setError(true);
         setTimeout(() => {
@@ -135,26 +139,57 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
             </h3>
 
             <p className="text-zinc-400 text-center font-medium leading-relaxed max-w-xs mx-auto mb-10">
-              Enter the 6-digit secure access code for ArcByte official terminal deployment.
+              Enter the 6-digit secure access code to access ArcPay
             </p>
 
-            <motion.div 
-              animate={error ? { x: [-10, 10, -10, 10, 0], transition: { duration: 0.4 } } : {}}
-              className="flex justify-center gap-3 mb-10"
-            >
-              {code.map((digit, i) => (
-                <input
-                  key={i}
-                  ref={el => inputs.current[i] = el}
-                  type="text"
-                  maxLength={1}
-                  value={digit}
-                  onChange={e => handleChange(i, e.target.value)}
-                  onKeyDown={e => handleKeyDown(i, e)}
-                  className="w-12 h-14 bg-[#151518] border border-white/10 rounded-full text-center text-2xl font-black text-[#75f2c6] outline-none focus:border-[#75f2c6] transition-all duration-300 shadow-[inset_0_4px_10px_rgba(0,0,0,0.4)] focus:shadow-[0_0_20px_rgba(117,242,198,0.2)]"
-                />
-              ))}
-            </motion.div>
+            <div className="h-24 flex items-center justify-center mb-10">
+              <AnimatePresence mode="wait">
+                {success ? (
+                  <motion.div
+                    key="success"
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="flex flex-col items-center justify-center"
+                  >
+                    <img 
+                      src="https://img.icons8.com/fluency/240/verified-account--v1.png" 
+                      alt="Verified" 
+                      className="w-20 h-20 object-contain drop-shadow-[0_0_20px_rgba(117,242,198,0.3)]" 
+                    />
+                  </motion.div>
+                ) : (
+                  <motion.div 
+                    key="inputs"
+                    initial={{ opacity: 0 }}
+                    animate={{ 
+                      opacity: 1,
+                      x: error ? [-10, 10, -10, 10, 0] : 0
+                    }}
+                    exit={{ opacity: 0 }}
+                    transition={{ 
+                      opacity: { duration: 0.4 },
+                      x: { duration: 0.4 }
+                    }}
+                    className="flex justify-center gap-3"
+                  >
+                    {code.map((digit, i) => (
+                      <input
+                        key={i}
+                        ref={el => inputs.current[i] = el}
+                        type="text"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        maxLength={1}
+                        value={digit}
+                        onChange={e => handleChange(i, e.target.value)}
+                        onKeyDown={e => handleKeyDown(i, e)}
+                        className="w-12 h-14 bg-[#151518] border border-white/10 rounded-full text-center text-2xl font-black text-[#75f2c6] outline-none focus:border-[#75f2c6] transition-all duration-300 shadow-[inset_0_4px_10px_rgba(0,0,0,0.4)] focus:shadow-[0_0_20px_rgba(117,242,198,0.2)]"
+                      />
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             <SlideToClose onComplete={onClose} />
           </motion.div>
