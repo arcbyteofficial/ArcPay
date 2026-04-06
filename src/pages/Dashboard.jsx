@@ -637,7 +637,7 @@ export default function Dashboard() {
         description={isLocked ? `Securely complete your payment of ₹${amount} to ${name || PAYEE_NAME} via ArcPay instant UPI settlement.` : undefined}
       />
       <Toaster theme="dark" position="top-center" />
-      <div className="max-w-[1400px] mx-auto rounded-none sm:rounded-[40px] overflow-hidden shadow-2xl relative min-h-screen sm:min-h-[90vh] bg-[#0a0a0c] px-4 sm:px-8 pt-6 pb-20">
+      <div className="max-w-[1400px] mx-auto rounded-none sm:rounded-[40px] overflow-hidden shadow-2xl relative min-h-screen sm:min-h-[90vh] bg-[#0a0a0c] px-4 sm:px-8 pt-6 pb-10">
         {/* Navigation - Identical to Hero.jsx */}
         <nav className="flex items-center justify-between mb-16 max-w-[1200px] mx-auto z-50 relative">
           <div className="flex items-center gap-2 sm:gap-2.5">
@@ -995,6 +995,30 @@ export default function Dashboard() {
         <AppChooser isOpen={showAppChooser} onClose={() => setShowAppChooser(false)} upiParams={upiParams} />
         <LinkGeneratedSheet isOpen={showSuccessSheet} onClose={() => setShowSuccessSheet(false)} link={generatedLink} />
         <ComingSoonSheet isOpen={showHelp} onClose={() => setShowHelp(false)} />
+
+        {/* Footer */}
+        <footer className="mt-20 pt-16 pb-0 border-t border-white/[0.03] max-w-[1240px] mx-auto w-full">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-y-10 gap-x-8 mb-12">
+            <div className="flex items-center justify-center md:justify-start gap-2.5 opacity-60 hover:opacity-100 transition-opacity">
+              <ShieldCheck className="w-5 h-5 text-zinc-400 stroke-[2.5]" />
+              <span className="text-lg font-bold tracking-tight text-white uppercase">ArcPay</span>
+              <div className="w-[1px] h-4 bg-white/10 mx-1"></div>
+              <img src={arcbyteLogo} alt="ArcByte" className="h-5 opacity-90 object-contain" />
+            </div>
+
+            <div className="flex flex-nowrap items-center justify-center md:justify-end gap-x-3.5 sm:gap-x-8">
+              {['Investors', 'Security', 'Features', 'Documentation'].map((item) => (
+                <a
+                  key={item}
+                  href="https://arcbyte.co"
+                  className="text-zinc-500 text-[8.5px] sm:text-[10px] font-bold uppercase tracking-[0.05em] sm:tracking-widest hover:text-[#75f2c6] transition-colors whitespace-nowrap"
+                >
+                  {item}
+                </a>
+              ))}
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );
