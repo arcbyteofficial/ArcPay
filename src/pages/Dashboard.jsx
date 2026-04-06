@@ -628,7 +628,9 @@ export default function Dashboard() {
                       <span className="text-zinc-400 text-xs font-bold uppercase tracking-widest block mb-1">Paying Amount</span>
                       <div className="flex items-baseline gap-1.5 mt-2 mb-6">
                         <span className="text-[#75f2c6]/60 text-4xl">₹</span>
-                        <span className="text-[#75f2c6] font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">{amount || "0.00"}</span>
+                        <span className="text-[#75f2c6] font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
+                          {amount ? new Intl.NumberFormat('en-IN').format(amount) + '\u00A0/-' : "0.00\u00A0/-"}
+                        </span>
                       </div>
                       <div className="flex items-start gap-2 pt-4 border-t border-white/5 mt-auto">
                         <ShieldCheck className="w-3 h-3 text-white/40 mt-0.5 shrink-0" />
@@ -675,7 +677,7 @@ export default function Dashboard() {
                     <div className="mt-4 mb-8">
                       <div className="text-black/60 text-xs font-bold uppercase tracking-wider mb-1">Paying Amount</div>
                       <div className="font-bold text-4xl tracking-tight text-black drop-shadow-sm">
-                        {'\u20B9'}{amount || "0.00"}
+                        {'\u20B9'}{amount ? new Intl.NumberFormat('en-IN').format(amount) + '\u00A0/-' : "0.00\u00A0/-"}
                       </div>
                     </div>
 
