@@ -415,7 +415,7 @@ export default function Hero() {
         {/* Left Typography Block */}
         <div className="pt-10">
           <h1 className="text-5xl sm:text-7xl lg:text-[80px] font-bold leading-[1.05] tracking-[-0.03em] mb-6 drop-shadow-sm">
-            Seamless UPI<br />
+            Seamless<br />
             <span className="text-[#75f2c6]">payments</span> for<br />
             ArcByte
             <span className="inline-block ml-2 sm:ml-4 align-middle pb-1 sm:pb-2 w-8 h-8 sm:w-12 sm:h-12">
@@ -427,7 +427,7 @@ export default function Hero() {
           </h1>
 
           <p className="text-zinc-400 text-lg max-w-[420px] mb-12 font-medium leading-relaxed">
-            Generate highly converting, intent-driven payment links that securely route transactions through native UPI applications.
+            Generate highly converting, intent-driven payment links that securely route transactions through native applications.
           </p>
 
           <button
@@ -455,7 +455,7 @@ export default function Hero() {
             </div>
             <div>
               <p className="font-bold text-lg leading-tight">10.2k+</p>
-              <p className="text-[11px] text-zinc-500 font-medium max-w-[120px] leading-snug">Active users around the worlds</p>
+              <p className="text-[11px] text-zinc-500 font-medium max-w-[120px] leading-snug">Verified merchants around the globe</p>
             </div>
           </div>
         </div>
@@ -499,9 +499,7 @@ export default function Hero() {
 
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-1.5 sm:gap-3 mb-2">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#151518] border border-white/5 flex items-center justify-center shadow-sm">
-              <Percent className="w-4 h-4 sm:w-5 sm:h-5 text-[#75f2c6]" />
-            </div>
+            <Percent className="w-4 h-4 sm:w-5 sm:h-5 text-[#75f2c6]" />
             <p className="text-[1.1rem] sm:text-3xl font-bold text-white">0%</p>
           </div>
           <p className="text-[10px] sm:text-xs text-zinc-500 font-medium whitespace-nowrap">Platform Fees</p>
@@ -509,9 +507,7 @@ export default function Hero() {
 
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-1.5 sm:gap-3 mb-2">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#151518] border border-white/5 flex items-center justify-center shadow-sm">
-              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#75f2c6]" />
-            </div>
+            <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#75f2c6]" />
             <p className="text-[1.1rem] sm:text-3xl font-bold text-white">100%</p>
           </div>
           <p className="text-[10px] sm:text-xs text-zinc-500 font-medium whitespace-nowrap">Secure Delivery</p>
@@ -519,12 +515,10 @@ export default function Hero() {
 
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-1.5 sm:gap-3 mb-2">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#151518] border border-white/5 flex items-center justify-center shadow-sm">
-              <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#75f2c6]" />
-            </div>
+            <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#75f2c6]" />
             <p className="text-[1.1rem] sm:text-3xl font-bold text-white">Instant</p>
           </div>
-          <p className="text-[10px] sm:text-xs text-zinc-500 font-medium whitespace-nowrap">UPI Routing</p>
+          <p className="text-[10px] sm:text-xs text-zinc-500 font-medium whitespace-nowrap">Instant Routing</p>
         </div>
 
       </div>

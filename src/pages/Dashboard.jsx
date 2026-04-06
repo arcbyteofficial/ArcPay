@@ -1910,7 +1910,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-black p-0 sm:p-4 md:p-6 lg:p-8 font-sans antialiased text-white selection:bg-[#75f2c6]/30">
       <SEO
         title={isLocked ? `Pay ₹${new Intl.NumberFormat('en-IN').format(Number(amount))} to ${name || PAYEE_NAME}` : "Create Professional Payment Link"}
-        description={isLocked ? `Securely complete your payment of ₹${new Intl.NumberFormat('en-IN').format(Number(amount))} to ${name || PAYEE_NAME} via ArcPay instant UPI settlement.` : undefined}
+        description={isLocked ? `Securely complete your payment of ₹${new Intl.NumberFormat('en-IN').format(Number(amount))} to ${name || PAYEE_NAME} via ArcPay instant settlement.` : undefined}
       />
       <Toaster theme="dark" position="top-center" />
       <div className="max-w-[1400px] mx-auto rounded-none sm:rounded-[40px] overflow-hidden shadow-2xl relative min-h-screen sm:min-h-[90vh] bg-[#0a0a0c] px-4 sm:px-8 pt-6 pb-10">
