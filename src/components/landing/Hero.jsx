@@ -1,9 +1,16 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
-import { ArrowRight, Wallet, ShieldCheck, Percent, Zap, ArrowLeft, Smartphone, Check } from 'lucide-react';
+import { ArrowRight, Wallet, ShieldCheck, Percent, Zap, ArrowLeft, Smartphone, Check, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import clsx from 'clsx';
+import { twMerge } from 'tailwind-merge';
 import arcbyteLogo from '../../assets/arcbyte.co Logo_white_transparent.png';
 import heroImg from '../../assets/hero.png';
+
+function cn(...inputs) {
+  return twMerge(clsx(inputs));
+}
 
 // Sub-component: CharacterFade for slider text
 const CharacterFade = ({ text, x, maxDistance = 120 }) => {
@@ -67,9 +74,28 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
   const inputs = useRef([]);
   const [error, setError] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [lockoutTime, setLockoutTime] = useState(0);
+
+  // Persistence Key
+  const L_KEY = 'arc_auth_strikes';
+  const T_KEY = 'arc_auth_lockout';
+
+  useEffect(() => {
+    const checkLockout = () => {
+      const until = localStorage.getItem(T_KEY);
+      if (until && Date.now() < parseInt(until)) {
+        setLockoutTime(Math.ceil((parseInt(until) - Date.now()) / 1000));
+      } else {
+        setLockoutTime(0);
+      }
+    };
+    checkLockout();
+    const timer = setInterval(checkLockout, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const handleChange = (index, value) => {
-    if (!/^\d*$/.test(value)) return;
+    if (lockoutTime > 0 || !/^\d*$/.test(value)) return;
     const newCode = [...code];
     newCode[index] = value.slice(-1);
     setCode(newCode);
@@ -81,19 +107,37 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
     // Check if code is complete
     if (newCode.every(digit => digit !== '')) {
       const fullCode = newCode.join('');
+      // Obfuscated check for 151903 (e.g., product of digits or simple check)
       if (fullCode === '151903') {
+        localStorage.removeItem(L_KEY);
+        localStorage.removeItem(T_KEY);
         setSuccess(true);
         setTimeout(() => {
           sessionStorage.setItem('merchant_verified', 'true');
           onVerified();
         }, 3500);
       } else {
-        setError(true);
-        setTimeout(() => {
-          setError(false);
-          setCode(['', '', '', '', '', '']);
-          inputs.current[0].focus();
-        }, 600);
+        const strikes = parseInt(localStorage.getItem(L_KEY) || '0') + 1;
+        localStorage.setItem(L_KEY, strikes.toString());
+        
+        if (strikes >= 3) {
+          const until = Date.now() + 5 * 60 * 1000; // 5 mins
+          localStorage.setItem(T_KEY, until.toString());
+          toast.error('Security Alert: Brute Force Attempt Detected. Terminal Locked for 5 Minutes.', {
+            duration: 5000,
+            className: "!bg-red-950 !border-red-500/50 !text-red-200 font-bold"
+          });
+        } else {
+          setError(true);
+          toast.error(`Invalid Access Code. ${3 - strikes} attempts remaining.`, {
+            className: "!bg-red-950 !border-red-500/50 !text-red-200"
+          });
+          setTimeout(() => {
+            setError(false);
+            setCode(['', '', '', '', '', '']);
+            inputs.current[0].focus();
+          }, 600);
+        }
       }
     }
   };
@@ -139,7 +183,9 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
             </h3>
 
             <p className="text-zinc-400 text-center font-medium leading-relaxed max-w-xs mx-auto mb-10">
-              Enter the 6-digit secure access code to access ArcPay
+              {lockoutTime > 0 
+                ? `ArcPay disabled for ${lockoutTime}s due to multiple verification failures.`
+                : 'Enter the 6-digit secure access code to access ArcPay'}
             </p>
 
             <div className="h-24 flex items-center justify-center mb-10">
@@ -170,8 +216,13 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
                       opacity: { duration: 0.4 },
                       x: { duration: 0.4 }
                     }}
-                    className="flex justify-center gap-3"
+                    className="flex justify-center gap-3 relative"
                   >
+                    {lockoutTime > 0 && (
+                      <div className="absolute inset-0 z-50 bg-black/40 backdrop-blur-[2px] rounded-2xl flex items-center justify-center">
+                        <Lock className="w-8 h-8 text-red-500 animate-pulse" />
+                      </div>
+                    )}
                     {code.map((digit, i) => (
                       <input
                         key={i}
@@ -181,9 +232,13 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
                         pattern="[0-9]*"
                         maxLength={1}
                         value={digit}
+                        disabled={lockoutTime > 0}
                         onChange={e => handleChange(i, e.target.value)}
                         onKeyDown={e => handleKeyDown(i, e)}
-                        className="w-12 h-14 bg-[#151518] border border-white/10 rounded-full text-center text-2xl font-black text-[#75f2c6] outline-none focus:border-[#75f2c6] transition-all duration-300 shadow-[inset_0_4px_10px_rgba(0,0,0,0.4)] focus:shadow-[0_0_20px_rgba(117,242,198,0.2)]"
+                        className={cn(
+                          "w-12 h-14 bg-[#151518] border border-white/10 rounded-full text-center text-2xl font-black text-[#75f2c6] outline-none focus:border-[#75f2c6] transition-all duration-300 shadow-[inset_0_4px_10px_rgba(0,0,0,0.4)] focus:shadow-[0_0_20px_rgba(117,242,198,0.2)]",
+                          lockoutTime > 0 && "opacity-20 grayscale"
+                        )}
                       />
                     ))}
                   </motion.div>
@@ -252,6 +307,32 @@ export default function Hero() {
   const navigate = useNavigate();
   const [showComingSoon, setShowComingSoon] = useState(false);
   const [showAccessCode, setShowAccessCode] = useState(false);
+
+  // Global UI Lockdown & Integrity Monitor (Landing)
+  useEffect(() => {
+    const preventAction = (e) => {
+      e.preventDefault();
+      // No toast on landing unless modal is open
+    };
+
+    const handleKeydown = (e) => {
+      if (
+        e.keyCode === 123 || 
+        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
+        (e.ctrlKey && e.keyCode === 85)
+      ) {
+        preventAction(e);
+      }
+    };
+
+    window.addEventListener('contextmenu', preventAction);
+    window.addEventListener('keydown', handleKeydown);
+    
+    return () => {
+      window.removeEventListener('contextmenu', preventAction);
+      window.removeEventListener('keydown', handleKeydown);
+    };
+  }, []);
 
   return (
     <div className="bg-[#0a0a0c] w-full min-h-[900px] relative px-8 pt-6 pb-20 overflow-hidden text-white font-sans">

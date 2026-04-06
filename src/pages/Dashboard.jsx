@@ -18,6 +18,38 @@ import SEO from '../components/common/SEO';
 
 const PAYEE_VPA = 'aidan.rodrigues@superyes';
 const PAYEE_NAME = 'Aidan Rodrigues';
+const SECURITY_SALT = 'ARC_SEC_2024_PROT'; // Internal integrity salt
+
+// Integrity Signer
+const signPayload = (data) => {
+  const str = JSON.stringify(data);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash |= 0;
+  }
+  return btoa(str + "||" + btoa(hash.toString() + SECURITY_SALT).substring(0, 8));
+};
+
+// Integrity Verifier
+const verifyPayload = (payload) => {
+  try {
+    const raw = atob(payload);
+    const [dataStr, signature] = raw.split("||");
+    const data = JSON.parse(dataStr);
+    
+    // Recalculate hash
+    let hash = 0;
+    for (let i = 0; i < dataStr.length; i++) {
+      hash = ((hash << 5) - hash) + dataStr.charCodeAt(i);
+      hash |= 0;
+    }
+    const expectedSig = btoa(hash.toString() + SECURITY_SALT).substring(0, 8);
+    return signature === expectedSig ? data : null;
+  } catch (e) {
+    return null;
+  }
+};
 
 // Robust generic copy function
 const copyToClipboard = async (text) => {
@@ -522,34 +554,99 @@ export default function Dashboard() {
   const [showSuccessSheet, setShowSuccessSheet] = useState(false);
   const [generatedLink, setGeneratedLink] = useState('');
   const [showHelp, setShowHelp] = useState(false);
-
-  // Immediate block to prevent UI flash before redirect
+  
+  // Security Checks
   const searchParams = new URLSearchParams(location.search);
   const hasPayId = searchParams.has('pay_id');
   const sessionVerified = sessionStorage.getItem('merchant_verified') === 'true';
 
+  // Strict Input Sanitization Handlers
+  const handleAmountChange = (val) => {
+    if (val === '' || /^\d*\.?\d{0,2}$/.test(val)) setAmount(val);
+  };
+  const handleNoteChange = (val) => {
+    if (val.length <= 50) setNote(val.replace(/[<>]/g, ''));
+  };
+  const handleNameChange = (val) => {
+    if (/^[a-zA-Z\s.]*$/.test(val) && val.length <= 30) setName(val);
+  };
+  const handlePayerNameChange = (val) => {
+    if (/^[a-zA-Z\s.]*$/.test(val) && val.length <= 30) setPayerName(val);
+  };
+
+  // Session Security: Handle auto-expiry
+  useEffect(() => {
+    const sessionStart = sessionStorage.getItem('merchant_session_start');
+    if (sessionVerified && !sessionStart) {
+      sessionStorage.setItem('merchant_session_start', Date.now().toString());
+    }
+
+    const checkExpiry = setInterval(() => {
+      const start = sessionStorage.getItem('merchant_session_start');
+      if (start && Date.now() - parseInt(start) > 30 * 60 * 1000) { // 30 mins
+        sessionStorage.clear();
+        navigate('/', { replace: true });
+        toast.error('Session Expired for Security');
+      }
+    }, 60000); // Check every minute
+
+    return () => clearInterval(checkExpiry);
+  }, [sessionVerified, navigate]);
+
   if (!hasPayId && !sessionVerified) {
-    return null; // Don't render anything if merchant isn't verified
+    return null; 
   }
+
+  // Global UI Lockdown & Integrity Monitor
+  useEffect(() => {
+    const preventAction = (e) => {
+      e.preventDefault();
+      toast.error('Security Protocol Active: Inspection Restricted', {
+        className: "!bg-red-950 !border-red-500/50 !text-red-200"
+      });
+    };
+
+    const handleKeydown = (e) => {
+      if (
+        e.keyCode === 123 || // F12
+        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || // Ctrl+Shift+I/J/C
+        (e.ctrlKey && e.keyCode === 85) // Ctrl+U
+      ) {
+        preventAction(e);
+      }
+    };
+
+    window.addEventListener('contextmenu', preventAction);
+    window.addEventListener('keydown', handleKeydown);
+    
+    return () => {
+      window.removeEventListener('contextmenu', preventAction);
+      window.removeEventListener('keydown', handleKeydown);
+    };
+  }, []);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const payId = searchParams.get('pay_id');
 
     if (payId) {
-      try {
-        const decoded = JSON.parse(atob(payId));
+      const decoded = verifyPayload(payId);
+      if (decoded) {
         if (decoded.a) setAmount(decoded.a);
         if (decoded.n) setNote(decoded.n);
         if (decoded.nm) setName(decoded.nm);
         if (decoded.p) setPayerName(decoded.p);
         if (decoded.iid) setInvoiceId(decoded.iid);
         setIsLocked(true);
-      } catch (e) {
-        console.error("Invalid payment link", e);
+      } else {
+        toast.error("Security Alert: Invalid or Tampered Payment Link Detected", {
+          duration: 5000,
+          className: "!bg-red-950 !border-red-500/50 !text-red-200 font-bold"
+        });
+        setTimeout(() => navigate('/', { replace: true }), 3000);
       }
     }
-  }, []);
+  }, [navigate]);
 
   const generateUPIParams = () => {
     const finalNote = name.trim() ? `${name.trim()} - ${note.trim()}` : note.trim();
@@ -578,7 +675,7 @@ export default function Dashboard() {
       const newInvoiceId = `AP-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
       setInvoiceId(newInvoiceId);
 
-      const payload = btoa(JSON.stringify({ a: amount, n: note, nm: name, p: payerName, iid: newInvoiceId }));
+      const payload = signPayload({ a: amount, n: note, nm: name, p: payerName, iid: newInvoiceId });
       const baseUrl = window.location.origin + window.location.pathname;
       const shareableUrl = `${baseUrl}?pay_id=${payload}`;
 
@@ -897,8 +994,9 @@ export default function Dashboard() {
                       <input
                         type="text"
                         value={name}
-                        readOnly
-                        className="w-full bg-[#0a0a0c] border border-[white]/5 px-6 py-4 rounded-full outline-none text-zinc-400 font-bold transition-colors cursor-not-allowed opacity-80"
+                        onChange={(e) => handleNameChange(e.target.value)}
+                        placeholder="Your Merchant Name"
+                        className="w-full bg-[#08080a] border border-white/5 rounded-xl p-3 text-white placeholder:text-zinc-800 outline-none focus:border-[#75f2c6]/30 transition-all text-sm font-bold"
                       />
                       <ShieldCheck className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#75f2c6]/40" />
                     </div>
@@ -911,7 +1009,7 @@ export default function Dashboard() {
                     <input
                       type="text"
                       value={payerName}
-                      onChange={(e) => setPayerName(e.target.value)}
+                      onChange={(e) => handlePayerNameChange(e.target.value)}
                       placeholder="Enter payer's name..."
                       className="w-full bg-[#151518] focus:bg-[#1a1a1e] border border-white/[0.05] focus:border-zinc-500 px-6 py-4 rounded-full outline-none text-white font-medium transition-colors placeholder:text-zinc-600"
                     />
@@ -924,9 +1022,9 @@ export default function Dashboard() {
                     <input
                       type="text"
                       value={note}
-                      onChange={(e) => setNote(e.target.value)}
-                      placeholder="Design Consultation..."
-                      className="w-full bg-[#151518] focus:bg-[#1a1a1e] border border-white/[0.05] focus:border-zinc-500 px-6 py-4 rounded-full outline-none text-white font-medium transition-colors placeholder:text-zinc-600"
+                      onChange={(e) => handleNoteChange(e.target.value)}
+                      placeholder="Coffee payment, invoice #123..."
+                      className="w-full bg-[#08080a] border border-white/5 rounded-2xl p-6 text-lg font-medium text-white placeholder:text-zinc-800 outline-none focus:border-[#75f2c6]/30 transition-all shadow-inner"
                     />
                   </div>
 
