@@ -1,12 +1,118 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { ArrowRight, Wallet, ShieldCheck, Percent, Zap } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { ArrowRight, Wallet, ShieldCheck, Percent, Zap, ArrowLeft, Smartphone } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import arcbyteLogo from '../../assets/arcbyte.co Logo_white_transparent.png';
 import heroImg from '../../assets/hero.png';
 
+// Sub-component: CharacterFade for slider text
+const CharacterFade = ({ text, x, maxDistance = 120 }) => {
+  const characters = text.split('');
+  return (
+    <div className="flex">
+      {characters.map((char, index) => {
+        const threshold = (index / characters.length) * maxDistance;
+        const charOpacity = useTransform(x, [threshold, threshold + 25], [1, 0]);
+        return (
+          <motion.span key={index} style={{ opacity: charOpacity }} className="inline-block px-[0.5px]">
+            {char === ' ' ? '\u00A0' : char}
+          </motion.span>
+        );
+      })}
+    </div>
+  );
+};
+
+// Sub-component: SlideToClose slider
+const SlideToClose = ({ onComplete }) => {
+  const containerRef = useRef(null);
+  const x = useMotionValue(0);
+
+  return (
+    <div
+      ref={containerRef}
+      className="relative w-full h-[64px] bg-[#151518] rounded-full overflow-hidden flex items-center shadow-inner mt-10 border border-white/5"
+    >
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+        <span className="text-zinc-500 font-bold tracking-[0.2em] text-xs">
+          <CharacterFade text="SLIDE TO CLOSE" x={x} />
+        </span>
+      </div>
+
+      <motion.div
+        drag="x"
+        style={{ x }}
+        dragConstraints={{ left: 0, right: 280 }}
+        dragElastic={0.05}
+        dragSnapToOrigin={true}
+        onDragEnd={(e, info) => {
+          if (containerRef.current) {
+            const trackWidth = containerRef.current.offsetWidth;
+            if (info.offset.x > trackWidth * 0.7) {
+              onComplete();
+            }
+          }
+        }}
+        className="absolute left-1.5 top-1.5 bottom-1.5 w-[52px] bg-zinc-800 border border-white/10 rounded-full flex items-center justify-center z-10 cursor-grab active:cursor-grabbing shadow-[0_0_15px_rgba(0,0,0,0.5)]"
+      >
+        <ArrowLeft className="w-5 h-5 text-zinc-500" />
+      </motion.div>
+    </div>
+  );
+};
+
+// Standard Sheet component
+const ComingSoonSheet = ({ isOpen, onClose }) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]"
+          />
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed bottom-0 left-0 right-0 bg-[#0a0a0c] rounded-t-[40px] border-t border-white/10 z-[100] p-8 pb-12 shadow-[0_-40px_80px_rgba(0,0,0,0.9)] max-w-lg mx-auto"
+          >
+            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8" />
+
+            <div className="flex items-center justify-center gap-2 sm:gap-2.5 mb-10">
+              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] stroke-[2.5]" />
+              <span className="text-lg sm:text-xl font-bold tracking-tight text-white">ArcPay</span>
+              <div className="w-[1px] h-4 sm:h-5 bg-white/20 mx-2 sm:mx-3"></div>
+              <img src={arcbyteLogo} alt="ArcByte" className="h-4 sm:h-5 opacity-90 object-contain" />
+            </div>
+
+            <h3 className="text-3xl font-black text-white mb-6 text-center tracking-[-0.04em]">
+              Portal <span className="text-[#75f2c6] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
+                Coming Soon
+                <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#75f2c6] rounded-full" />
+                <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-[#75f2c6]/20 rounded-full blur-[2px]" />
+              </span>
+            </h3>
+
+            <p className="text-zinc-400 text-center font-medium leading-relaxed max-w-xs mx-auto mb-10">
+              The merchant portal is currently undergoing final verification. Secure account management will be enabled for all partners shortly.
+            </p>
+
+            <SlideToClose onComplete={onClose} />
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
 export default function Hero() {
   const navigate = useNavigate();
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
   return (
     <div className="bg-[#0a0a0c] w-full min-h-[900px] relative px-8 pt-6 pb-20 overflow-hidden text-white font-sans">
@@ -29,10 +135,16 @@ export default function Hero() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-          <button className="whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2.5 rounded-full border border-zinc-600 hover:bg-white/5 transition-colors text-[13px] sm:text-sm font-semibold">
+          <button 
+            onClick={() => setShowComingSoon(true)}
+            className="whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2.5 rounded-full border border-zinc-600 hover:bg-white/5 transition-colors text-[13px] sm:text-sm font-semibold"
+          >
             Log in
           </button>
-          <button className="whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2.5 rounded-full bg-white text-black hover:bg-zinc-200 transition-colors text-[13px] sm:text-sm font-semibold">
+          <button 
+            onClick={() => setShowComingSoon(true)}
+            className="whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2.5 rounded-full bg-white text-black hover:bg-zinc-200 transition-colors text-[13px] sm:text-sm font-semibold"
+          >
             Sign up
           </button>
         </div>
@@ -46,7 +158,7 @@ export default function Hero() {
           <h1 className="text-5xl sm:text-7xl lg:text-[80px] font-bold leading-[1.05] tracking-[-0.03em] mb-6 drop-shadow-sm">
             Seamless UPI<br />
             <span className="text-[#75f2c6]">payments</span> for<br />
-            your business
+            ArcByte
             <span className="inline-block ml-2 sm:ml-4 align-middle pb-1 sm:pb-2 w-8 h-8 sm:w-12 sm:h-12">
               {/* Pristine 4-point Sparkle SVG */}
               <svg viewBox="0 0 24 24" className="w-full h-full text-[#75f2c6] animate-pulse">
@@ -63,7 +175,7 @@ export default function Hero() {
             onClick={() => navigate('/app')}
             className="flex items-center gap-3 bg-[#75f2c6] text-black hover:bg-[#64e4b6] transition-all duration-300 rounded-full pl-8 pr-2 py-2 mb-20 shadow-[0_0_30px_rgba(117,242,198,0.3)] hover:shadow-[0_0_40px_rgba(117,242,198,0.5)] group"
           >
-            <span className="font-bold tracking-wide">Try for Free</span>
+            <span className="font-bold tracking-wide">Access ArcPay</span>
             <div className="w-10 h-10 bg-[#0a0a0c] rounded-full flex items-center justify-center transform group-hover:translate-x-1 transition-transform">
               <ArrowRight className="w-5 h-5 text-[#75f2c6]" />
             </div>
@@ -157,6 +269,11 @@ export default function Hero() {
         </div>
 
       </div>
+
+      <ComingSoonSheet 
+        isOpen={showComingSoon} 
+        onClose={() => setShowComingSoon(false)} 
+      />
     </div>
   );
 }
