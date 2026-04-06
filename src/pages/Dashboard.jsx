@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
-import { ArrowLeft, ArrowRight, Check, Smartphone, QrCode, Settings, ChevronLeft, Wallet, Download, ShieldCheck, FileText, Lock, HelpCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Clock, Smartphone, QrCode, Settings, ChevronLeft, Wallet, Download, ShieldCheck, FileText, Lock, HelpCircle, ExternalLink, Upload, Copy, Info, Building2, CreditCard, User, Eye, EyeOff, Image as ImageIcon, Landmark } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -10,6 +10,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-mo
 import arcbyteLogo from '../assets/arcbyte.co Logo_white_transparent.png';
 import paytmLogo from '../assets/paytm.png';
 import upiLogo from '../assets/upi.png';
+import federalBankLogo from '../assets/Federal_bank_India.svg.png';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -22,36 +23,558 @@ const SECURITY_SALT = 'ARC_SEC_2024_PROT'; // Internal integrity salt
 
 // Integrity Signer
 const signPayload = (data) => {
-  const str = JSON.stringify(data);
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return btoa(str + "||" + btoa(hash.toString() + SECURITY_SALT).substring(0, 8));
+  const json = JSON.stringify(data);
+  const signature = btoa(json + SECURITY_SALT).substring(0, 12);
+  return `${btoa(json)}--${signature}`;
 };
 
 // Integrity Verifier
 const verifyPayload = (payload) => {
   try {
-    const raw = atob(payload);
-    const [dataStr, signature] = raw.split("||");
-    const data = JSON.parse(dataStr);
-    
-    // Recalculate hash
-    let hash = 0;
-    for (let i = 0; i < dataStr.length; i++) {
-      hash = ((hash << 5) - hash) + dataStr.charCodeAt(i);
-      hash |= 0;
-    }
-    const expectedSig = btoa(hash.toString() + SECURITY_SALT).substring(0, 8);
-    return signature === expectedSig ? data : null;
+    const [encodedJson, signature] = payload.split('--');
+    const json = atob(encodedJson);
+    const expectedSignature = btoa(json + SECURITY_SALT).substring(0, 12);
+    if (signature !== expectedSignature) return null;
+    return JSON.parse(json);
   } catch (e) {
     return null;
   }
 };
 
-// Robust generic copy function
+// Integrity Verifier
+const DEFAULT_BANK_DETAILS = {
+  holder: "Aidan Daniel Rodrigues",
+  account: "77770136333982",
+  ifsc: "FDRL0000001",
+  branch: "NEO BANKING JUPITER",
+  swift: "FDRLINBBIBD",
+  micr: "682049069",
+  mmid: "9049982"
+};
+
+const PaymentMethodSelector = ({ method, onChange }) => {
+  return (
+    <div className="relative flex p-1.5 bg-[#151518] rounded-full border border-white/5 mb-8 overflow-hidden">
+      <button
+        onClick={() => onChange('upi')}
+        className={cn(
+          "relative flex-1 flex items-center justify-center gap-2.5 py-2.5 rounded-full z-10 transition-colors duration-500",
+          method === 'upi' ? "text-black" : "text-zinc-500 hover:text-zinc-300"
+        )}
+      >
+        {method === 'upi' && (
+          <motion.div
+            layoutId="activeTab"
+            className="absolute inset-0 bg-[#75f2c6] rounded-full shadow-[0_0_20px_rgba(117,242,198,0.3)] z-0"
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          />
+        )}
+        <QrCode className={cn("relative z-10 w-4 h-4 transition-transform duration-500", method === 'upi' && "scale-110")} />
+        <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.2em]">UPI Payment</span>
+      </button>
+
+      <button
+        onClick={() => onChange('bank')}
+        className={cn(
+          "relative flex-1 flex items-center justify-center gap-2.5 py-2.5 rounded-full z-10 transition-colors duration-500",
+          method === 'bank' ? "text-black" : "text-zinc-500 hover:text-zinc-300"
+        )}
+      >
+        {method === 'bank' && (
+          <motion.div
+            layoutId="activeTab"
+            className="absolute inset-0 bg-[#75f2c6] rounded-full shadow-[0_0_20px_rgba(117,242,198,0.3)] z-0"
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          />
+        )}
+        <Building2 className={cn("relative z-10 w-4 h-4 transition-transform duration-500", method === 'bank' && "scale-110")} />
+        <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.2em]">Bank Transfer</span>
+      </button>
+    </div>
+  );
+};
+
+const BankDetailsCard = ({ details }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  const handleCopy = (text, label) => {
+    copyToClipboard(text);
+    toast.success(`${label} copied!`, {
+      className: "!bg-zinc-900 !border-zinc-800 !text-[#75f2c6]"
+    });
+  };
+
+  return (
+    <div className="w-full bg-[#151518] border border-white/5 rounded-[32px] p-6 lg:p-8 shadow-2xl relative overflow-hidden group">
+      {/* Decorative background logo */}
+      <div className="absolute -right-20 -top-20 opacity-[0.03] pointer-events-none group-hover:opacity-[0.05] transition-opacity duration-700">
+        <ShieldCheck className="w-64 h-64 text-white" />
+      </div>
+
+      <div className="relative z-10">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+              <Wallet className="w-5 h-5 text-[#75f2c6]" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-0.5">Settlement Method</p>
+              <p className="text-white font-bold text-sm tracking-tight leading-none">Bank Transfer</p>
+            </div>
+          </div>
+          <img src={federalBankLogo} alt="Federal Bank" className="h-8 opacity-100 shrink-0" />
+        </div>
+
+        <div className="space-y-6">
+          <div>
+            <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-2 px-1">Account Holder</p>
+            <p className="text-white text-lg font-black tracking-tight bg-white/5 p-4 rounded-2xl border border-white/5">{details.holder}</p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <div className="bg-[#0a0a0c] border border-white/5 p-4 py-5 rounded-2xl relative group/item">
+              <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-3">Account Number</p>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-[#75f2c6] text-xl font-black tracking-widest font-mono">{details.account}</span>
+                <button
+                  onClick={() => handleCopy(details.account, "Account Number")}
+                  className="p-3 rounded-xl bg-white/5 hover:bg-[#75f2c6] text-white hover:text-black transition-all"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+
+            <div className="bg-[#0a0a0c] border border-white/5 p-4 py-5 rounded-2xl relative group/item">
+              <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-3">IFSC Code</p>
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-white text-xl font-black tracking-widest font-mono">{details.ifsc}</span>
+                <button
+                  onClick={() => handleCopy(details.ifsc, "IFSC Code")}
+                  className="p-3 rounded-xl bg-white/5 hover:bg-[#75f2c6] text-white hover:text-black transition-all"
+                >
+                  <Copy className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="flex items-center gap-2 text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] hover:text-white transition-colors"
+            >
+              <Info className={cn("w-3 h-3 transition-transform", expanded && "rotate-180")} />
+              {expanded ? "Hide Details" : "More Account Details"}
+            </button>
+
+            <AnimatePresence>
+              {expanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="grid grid-cols-2 gap-4 pt-6">
+                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                      <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest mb-1.5">Branch</p>
+                      <p className="text-white/80 text-[10px] font-bold truncate">{details.branch}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                      <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest mb-1.5">Swift Code</p>
+                      <p className="text-white/80 text-[10px] font-bold">{details.swift}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                      <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest mb-1.5">MICR Code</p>
+                      <p className="text-white/80 text-[10px] font-bold">{details.micr}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5">
+                      <p className="text-[8px] font-black text-zinc-600 uppercase tracking-widest mb-1.5">MMID</p>
+                      <p className="text-white/80 text-[10px] font-bold">{details.mmid}</p>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const BankConfirmationSheet = ({
+  isOpen, onClose, onConfirm, amount, setAmount,
+  name, payerName, setPayerName, note, setNote
+}) => {
+  const [localTxId, setLocalTxId] = useState('');
+  const [localScreenshot, setLocalScreenshot] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showInputs, setShowInputs] = useState(false);
+  const [showAllDetails, setShowAllDetails] = useState(false);
+
+  // Reset showInputs when sheet opens
+  useEffect(() => {
+    if (isOpen) {
+      setShowInputs(false);
+      setShowAllDetails(false);
+    }
+  }, [isOpen]);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setIsUploading(true);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLocalScreenshot(reader.result);
+        setIsUploading(false);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleAction = () => {
+    if (!localTxId) {
+      toast.error("Transaction ID is required");
+      return;
+    }
+    if (!localScreenshot) {
+      toast.error("Transfer screenshot is required");
+      return;
+    }
+    onConfirm(localTxId, localScreenshot);
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[120]"
+          />
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed bottom-0 left-0 right-0 bg-[#0a0a0c] rounded-t-[40px] border-t border-white/10 z-[120] p-8 pb-12 shadow-[0_-40px_80px_rgba(0,0,0,0.9)] max-w-lg mx-auto max-h-[92vh] overflow-y-auto"
+          >
+            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8 shrink-0" />
+
+            <div className="flex items-center justify-center gap-2 sm:gap-2.5 mb-10">
+              < ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-[#75f2c6] drop-shadow-[0_0_10px_rgba(117,242,198,0.3)] stroke-[2.5]" />
+              <span className="text-lg sm:text-xl font-bold tracking-tight text-white">ArcPay</span>
+              <div className="w-[1px] h-4 sm:h-5 bg-white/20 mx-2 sm:mx-3"></div>
+              <img src={arcbyteLogo} alt="ArcByte" className="h-4 sm:h-5 w-auto object-contain opacity-80" />
+            </div>
+
+            <h3 className="text-3xl font-black text-white mb-8 text-center tracking-[-0.04em]">
+              Confirm <span className="text-[#75f2c6] relative inline-block">
+                Transfer
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+                  className="absolute -bottom-1.5 left-0 h-1 bg-[#75f2c6] rounded-full"
+                />
+              </span>
+            </h3>
+
+            <div className="space-y-0.5 mb-10">
+              <div className="py-4 border-b border-white/[0.03]">
+                <div className="flex items-center gap-2 mb-3 px-1">
+                  <CreditCard className="w-3 h-3 text-zinc-600" />
+                  <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Beneficiary Account</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-[#75f2c6] text-2xl font-black tracking-widest font-mono drop-shadow-[0_0_15px_rgba(117,242,198,0.2)]">
+                    {DEFAULT_BANK_DETAILS.account}
+                  </p>
+                  <button
+                    onClick={() => {
+                      copyToClipboard(DEFAULT_BANK_DETAILS.account);
+                      toast.success("Account Number Copied");
+                    }}
+                    className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white transition-all border border-white/5 hover:border-[#75f2c6]/30 active:scale-95"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="py-4 border-b border-white/[0.03]">
+                <div className="flex items-center gap-2 mb-3 px-1">
+                  <Building2 className="w-3 h-3 text-zinc-600" />
+                  <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">IFSC Code</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <p className="text-white text-2xl font-black tracking-widest font-mono">
+                    {DEFAULT_BANK_DETAILS.ifsc}
+                  </p>
+                  <button
+                    onClick={() => {
+                      copyToClipboard(DEFAULT_BANK_DETAILS.ifsc);
+                      toast.success("IFSC Code Copied");
+                    }}
+                    className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white transition-all border border-white/5 hover:border-[#75f2c6]/30 active:scale-95"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="py-4 border-b border-white/[0.03]">
+                <div className="flex items-center gap-2 mb-1.5 px-1">
+                  <User className="w-3 h-3 text-zinc-600" />
+                  <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Account Holder</p>
+                </div>
+                <p className="text-white font-black text-lg tracking-tight px-1">{DEFAULT_BANK_DETAILS.holder}</p>
+              </div>
+
+              <div className="pt-4 pb-2">
+                <button
+                  onClick={() => setShowAllDetails(!showAllDetails)}
+                  className="flex items-center gap-3 group/btn py-2"
+                >
+                  <div className="flex items-center gap-3">
+                    {showAllDetails ? (
+                      <EyeOff className="w-3.5 h-3.5 text-[#75f2c6] transition-all duration-500" />
+                    ) : (
+                      <Eye className="w-3.5 h-3.5 text-zinc-500 group-hover/btn:text-white transition-all duration-500" />
+                    )}
+                    <span className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em] group-hover/btn:text-white transition-colors">
+                      {showAllDetails ? "Hide Secondary Details" : "View All Account Details"}
+                    </span>
+                  </div>
+                </button>
+
+                <AnimatePresence>
+                  {showAllDetails && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-8 space-y-8 pb-4">
+                        <div className="grid grid-cols-2 gap-8">
+                          <div>
+                            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-2">Branch</p>
+                            <p className="text-white/80 font-bold text-xs uppercase">{DEFAULT_BANK_DETAILS.branch}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-2">SWIFT / BIC</p>
+                            <p className="text-white/80 font-mono text-xs">{DEFAULT_BANK_DETAILS.swift}</p>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-8">
+                          <div>
+                            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-2">MICR Code</p>
+                            <p className="text-white/80 font-mono text-xs">{DEFAULT_BANK_DETAILS.micr}</p>
+                          </div>
+                          <div>
+                            <p className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em] mb-2">MMID</p>
+                            <p className="text-white/80 font-mono text-xs">{DEFAULT_BANK_DETAILS.mmid}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {!showInputs ? (
+                <motion.div
+                  key="details-step"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="space-y-6"
+                >
+                  <SlideToPay text="COMPLETE TO LOG PAYMENT" onComplete={() => setShowInputs(true)} />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="inputs-step"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
+                  className="space-y-0.5 pt-8"
+                >
+
+                  {/* Document Input List */}
+                  <div className="space-y-0.5 mb-10">
+
+                    <div className="py-6 border-b border-white/[0.03]">
+                      <div className="flex items-center gap-2 mb-4 px-1">
+                        <FileText className="w-3 h-3 text-zinc-600" />
+                        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Transaction ID (UTR)</p>
+                      </div>
+                      <input
+                        type="text"
+                        value={localTxId}
+                        onChange={(e) => setLocalTxId(e.target.value)}
+                        placeholder="Enter UTR or reference number"
+                        className="w-full bg-transparent border-b border-white/5 focus:border-[#75f2c6]/50 py-2 outline-none text-white font-black text-lg tracking-widest font-mono placeholder:text-zinc-800 transition-all px-1"
+                      />
+                    </div>
+                  </div>
+
+
+                  <div className="py-8">
+                    <div className="flex items-center gap-2 mb-6 px-1">
+                      <ImageIcon className="w-3 h-3 text-zinc-600" />
+                      <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Proof of Transfer (Screenshot)</p>
+                    </div>
+
+                    <div className="relative group/upload">
+                      <input
+                        type="file"
+                        id="receipt-upload-confirmation"
+                        className="hidden"
+                        accept="image/*"
+                        onChange={handleFileChange}
+                      />
+                      {localScreenshot ? (
+                        <div className="relative rounded-3xl overflow-hidden border border-white/10 group-hover/upload:border-[#75f2c6]/30 transition-all duration-500">
+                          <img
+                            src={localScreenshot}
+                            alt="Receipt Preview"
+                            className="w-full h-48 object-cover opacity-60 group-hover/upload:opacity-80 transition-opacity"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[2px]">
+                            <label
+                              htmlFor="receipt-upload-confirmation"
+                              className="px-6 py-2.5 rounded-full bg-white text-black font-black text-[10px] uppercase tracking-widest cursor-pointer hover:scale-105 transition-transform"
+                            >
+                              Replace Image
+                            </label>
+                          </div>
+                        </div>
+                      ) : (
+                        <label
+                          htmlFor="receipt-upload-confirmation"
+                          className="flex flex-col items-center justify-center py-16 rounded-3xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] hover:border-[#75f2c6]/20 transition-all duration-500 cursor-pointer group/label"
+                        >
+                          <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-zinc-500 group-hover/label:text-[#75f2c6] group-hover/label:bg-[#75f2c6]/10 transition-all duration-500 mb-6 border border-white/5">
+                            {isUploading ? (
+                              <div className="w-5 h-5 border-2 border-[#75f2c6] border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <Upload className="w-5 h-5" />
+                            )}
+                          </div>
+                          <div className="text-center">
+                            <p className="text-zinc-300 font-black text-[11px] uppercase tracking-[0.2em]">Upload Payment Specification</p>
+                            <p className="text-zinc-600 text-[8px] font-black uppercase tracking-[0.2em] mt-2">JPEG, PNG Max 5MB</p>
+                          </div>
+                        </label>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="pt-6">
+                    <SlideToPay
+                      text="SLIDE TO CONFIRM"
+                      onComplete={handleAction}
+                      disabled={localTxId.length < 12 || !localScreenshot || isUploading}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const SuccessState = ({ amount, name, txId, method }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="flex flex-col items-center justify-center py-20 px-8 text-center"
+    >
+      <div className="relative mb-12">
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", damping: 12, stiffness: 200, delay: 0.2 }}
+          className="w-32 h-32 rounded-full bg-[#75f2c6] flex items-center justify-center shadow-[0_0_50px_rgba(117,242,198,0.4)]"
+        >
+          <Check className="w-16 h-16 text-black stroke-[4]" />
+        </motion.div>
+        <motion.div
+          animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.3, 0.1] }}
+          transition={{ duration: 3, repeat: Infinity }}
+          className="absolute inset-0 rounded-full bg-[#75f2c6]"
+        />
+      </div>
+
+      <h3 className="text-3xl sm:text-4xl font-black text-white mb-4 tracking-tight leading-none whitespace-nowrap">
+        Payment <span className="text-[#75f2c6]">Received</span>
+      </h3>
+      <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-[9px] mb-10 px-8 max-w-sm mx-auto leading-relaxed">
+        Our team will take 8-12 hours to review your payment. We will update you via mail.
+      </p>
+
+      <div className="w-full max-w-sm space-y-0.5">
+        <div className="py-5 border-b border-white/[0.03] flex justify-between items-center group">
+          <div className="flex items-center gap-2">
+            <Wallet className="w-3 h-3 text-zinc-600" />
+            <span className="text-zinc-500 font-black uppercase tracking-[0.2em] text-[9px]">Amount Paid</span>
+          </div>
+          <span className="text-white font-black text-lg">₹{new Intl.NumberFormat('en-IN').format(Number(amount))}</span>
+        </div>
+
+        <div className="py-5 border-b border-white/[0.03] flex justify-between items-center group">
+          <div className="flex items-center gap-2">
+            <User className="w-3 h-3 text-zinc-600" />
+            <span className="text-zinc-500 font-black uppercase tracking-[0.2em] text-[9px]">Receiver</span>
+          </div>
+          <span className="text-white font-black text-lg">{name}</span>
+        </div>
+
+        <div className="py-5 border-b border-white/[0.03] flex justify-between items-center group">
+          <div className="flex items-center gap-2">
+            <Smartphone className="w-3 h-3 text-zinc-600" />
+            <span className="text-zinc-500 font-black uppercase tracking-[0.2em] text-[9px]">Method</span>
+          </div>
+          <span className="text-[#75f2c6] font-black tracking-widest text-[10px] uppercase">{method === 'bank' ? 'Bank Transfer' : 'UPI Payment'}</span>
+        </div>
+
+        <div className="py-8 text-center">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <FileText className="w-3 h-3 text-zinc-600" />
+            <span className="text-zinc-500 font-black uppercase tracking-[0.2em] text-[9px]">Transaction / UTR ID</span>
+          </div>
+          <p className="text-white font-black text-2xl sm:text-3xl font-mono tracking-widest drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+            {txId}
+          </p>
+        </div>
+      </div>
+
+      <div className="w-full max-w-sm mt-4">
+        <SlideToPay
+          text="SLIDE TO DISMISS"
+          onComplete={() => {
+            window.location.href = '/';
+          }}
+        />
+      </div>
+    </motion.div>
+  );
+};
 const copyToClipboard = async (text) => {
   try {
     if (navigator.clipboard && window.isSecureContext) {
@@ -176,6 +699,16 @@ const SlideToCancel = ({ onComplete }) => {
 };
 
 const AppChooser = ({ isOpen, onClose, upiParams }) => {
+  const [showQR, setShowQR] = useState(false);
+  const upiURI = `upi://pay?${upiParams}`;
+
+  // Reset view when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setTimeout(() => setShowQR(false), 300);
+    }
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -192,7 +725,7 @@ const AppChooser = ({ isOpen, onClose, upiParams }) => {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed bottom-0 left-0 right-0 bg-[#0a0a0c] rounded-t-[40px] border-t border-white/10 z-[100] p-8 pb-12 shadow-[0_-40px_80px_rgba(0,0,0,0.9)]"
+            className="fixed bottom-0 left-0 right-0 bg-[#0a0a0c] rounded-t-[40px] border-t border-white/10 z-[100] p-8 pb-12 shadow-[0_-40px_80px_rgba(0,0,0,0.9)] max-w-lg mx-auto"
           >
             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8" />
 
@@ -203,48 +736,105 @@ const AppChooser = ({ isOpen, onClose, upiParams }) => {
               <img src={arcbyteLogo} alt="ArcByte" className="h-4 sm:h-5 opacity-90 object-contain" />
             </div>
 
-            <h3 className="text-3xl font-black text-white mb-10 text-center tracking-[-0.04em]">
-              Select <span className="text-[#75f2c6] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
-                Payment
-                <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#75f2c6] rounded-full" />
-                <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-[#75f2c6]/20 rounded-full blur-[2px]" />
-              </span> App
-            </h3>
-
-            <div className="grid grid-cols-4 gap-4 max-w-sm mx-auto">
-              {[
-                { name: 'GPay', id: 'gpay', prefix: 'tez://upi/pay?', iconUrl: 'https://img.icons8.com/color/512/google-pay.png' },
-                { name: 'PhonePe', id: 'phonepe', prefix: 'phonepe://pay?', iconUrl: 'https://img.icons8.com/color/512/phone-pe.png' },
-                { name: 'Paytm', id: 'paytm', prefix: 'paytmmp://pay?', iconUrl: paytmLogo },
-                { name: 'Other', id: 'other', prefix: 'upi://pay?', iconUrl: upiLogo }
-              ].map(app => (
-                <a
-                  key={app.id}
-                  href={`${app.prefix}${upiParams}`}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    // Manually trigger the intent to ensure OS catches it
-                    window.location.href = `${app.prefix}${upiParams}`;
-                    // Defer unmounting the modal so it doesn't kill the event
-                    setTimeout(() => {
-                      onClose();
-                    }, 150);
-                  }}
-                  className="flex flex-col items-center gap-3 group"
+            <AnimatePresence mode="wait">
+              {!showQR ? (
+                <motion.div
+                  key="app-grid"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
                 >
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[22px] flex items-center justify-center relative overflow-hidden drop-shadow-xl hover:drop-shadow-2xl group-hover:-translate-y-1 transition-all duration-300">
-                    {app.iconUrl ? (
-                      <img src={app.iconUrl} alt={app.name} className="w-full h-full object-contain z-10 transition-transform group-hover:scale-105" />
-                    ) : app.id === 'other' ? (
-                      <Smartphone className="w-6 h-6 sm:w-7 sm:h-7" />
-                    ) : (
-                      app.name.charAt(0)
-                    )}
+                  <h3 className="text-3xl font-black text-white mb-10 text-center tracking-[-0.04em]">
+                    Select <span className="text-[#75f2c6] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
+                      Payment
+                      <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#75f2c6] rounded-full" />
+                      <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-[#75f2c6]/20 rounded-full blur-[2px]" />
+                    </span> App
+                  </h3>
+
+                  <div className="grid grid-cols-4 gap-y-10 gap-x-4 max-w-sm mx-auto mb-10">
+                    {[
+                      { name: 'GPay', id: 'gpay', prefix: 'tez://upi/pay?', iconUrl: 'https://img.icons8.com/color/512/google-pay.png' },
+                      { name: 'PhonePe', id: 'phonepe', prefix: 'phonepe://pay?', iconUrl: 'https://img.icons8.com/color/512/phone-pe.png' },
+                      { name: 'Paytm', id: 'paytm', prefix: 'paytmmp://pay?', iconUrl: paytmLogo },
+                      { name: 'Other', id: 'other', prefix: 'upi://pay?', iconUrl: upiLogo }
+                    ].map(app => (
+                      <a
+                        key={app.id}
+                        href={`${app.prefix}${upiParams}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.location.href = `${app.prefix}${upiParams}`;
+                          setTimeout(() => onClose(), 150);
+                        }}
+                        className="flex flex-col items-center gap-3 group"
+                      >
+                        <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-[22px] flex items-center justify-center relative overflow-hidden drop-shadow-xl hover:drop-shadow-2xl group-hover:-translate-y-1 transition-all duration-300">
+                          {app.iconUrl ? (
+                            <img src={app.iconUrl} alt={app.name} className="w-full h-full object-contain z-10 transition-transform group-hover:scale-105" />
+                          ) : (
+                            <span className="text-white font-black text-xl">{app.name.charAt(0)}</span>
+                          )}
+                        </div>
+                        <span className="text-[10px] font-bold text-zinc-500 group-hover:text-white tracking-[0.1em] uppercase mt-1 transition-colors">{app.name}</span>
+                      </a>
+                    ))}
                   </div>
-                  <span className="text-[10px] font-bold text-zinc-500 group-hover:text-white tracking-[0.1em] uppercase mt-1 transition-colors">{app.name}</span>
-                </a>
-              ))}
-            </div>
+
+                  <div className="flex justify-center mb-8">
+                    <button
+                      onClick={() => setShowQR(true)}
+                      className="group flex flex-col items-center gap-2"
+                    >
+                      <div className="flex items-center gap-2 mb-1 py-2 px-4 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 transition-all">
+                        <QrCode className="w-3.5 h-3.5 text-[#75f2c6]" />
+                        <span className="text-[10px] font-black text-zinc-500 group-hover:text-[#75f2c6] tracking-[0.2em] uppercase transition-colors">
+                          Pay via QR Code
+                        </span>
+                      </div>
+                    </button>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="qr-view"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="flex flex-col items-center"
+                >
+                  <h3 className="text-3xl font-black text-white mb-10 text-center tracking-[-0.04em]">
+                    Scan <span className="text-[#75f2c6] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
+                      QR Code
+                      <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#75f2c6] rounded-full" />
+                    </span>
+                  </h3>
+
+                  <div className="relative group/qr p-6 rounded-[40px] bg-[#f8fcfb] border border-white/20 shadow-[0_30px_60px_rgba(117,242,198,0.15)] mb-10">
+                    <QRCodeSVG
+                      value={upiURI}
+                      size={200}
+                      level={"H"}
+                      fgColor="#0a0a0c"
+                      imageSettings={{
+                        src: "https://img.icons8.com/fluency/96/security-checked--v1.png",
+                        height: 34,
+                        width: 34,
+                        excavate: true,
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    onClick={() => setShowQR(false)}
+                    className="flex items-center gap-2 text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] hover:text-white transition-colors mb-4"
+                  >
+                    <ArrowLeft className="w-3 h-3" />
+                    Back to Apps
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <SlideToCancel onComplete={onClose} />
 
@@ -356,32 +946,34 @@ const SecurityAlertSheet = ({ isOpen, onClose }) => {
   );
 };
 
-const SlideToPay = ({ onComplete }) => {
+const SlideToPay = ({ onComplete, text = "SLIDE TO PAY SECURELY", disabled = false }) => {
   const containerRef = useRef(null);
   const x = useMotionValue(0);
-  const opacity = useTransform(x, [0, 64], [1, 0]);
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[64px] bg-[#151518] rounded-full overflow-hidden flex items-center border border-white/10 shadow-[inset_0_4px_10px_rgba(0,0,0,0.5)] mt-8"
+      className={cn(
+        "relative w-full h-[64px] bg-[#151518] rounded-full overflow-hidden flex items-center border border-white/10 shadow-[inset_0_4px_10px_rgba(0,0,0,0.5)] mt-8 transition-all duration-500",
+        disabled && "opacity-40 grayscale cursor-not-allowed border-transparent"
+      )}
     >
       {/* Track text */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center pl-10 pointer-events-none">
-        <span className="text-zinc-500 font-bold tracking-[0.2em] text-xs">
-          <CharacterFade text="SLIDE TO PAY SECURELY" x={x} />
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+        <span className="text-zinc-500 font-black tracking-[0.2em] text-[10px] uppercase">
+          <CharacterFade text={text} x={x} disabled={disabled} />
         </span>
       </div>
 
       {/* Draggable thumb */}
       <motion.div
-        drag="x"
+        drag={disabled ? false : "x"}
         style={{ x }}
         dragConstraints={{ left: 0, right: 300 }}
         dragElastic={0.05}
         dragSnapToOrigin={true}
         onDragEnd={(e, info) => {
-          if (containerRef.current) {
+          if (!disabled && containerRef.current) {
             const trackWidth = containerRef.current.offsetWidth;
             // Activate if dragged past 70%
             if (info.offset.x > trackWidth * 0.7) {
@@ -389,14 +981,17 @@ const SlideToPay = ({ onComplete }) => {
             }
           }
         }}
-        animate={{ x: [0, 8, 0] }}
+        animate={!disabled ? { x: [0, 8, 0] } : {}}
         transition={{
           duration: 2,
           repeat: Infinity,
           ease: "easeInOut",
           repeatDelay: 1
         }}
-        className="absolute left-1.5 top-1.5 bottom-1.5 w-[52px] bg-white rounded-full flex items-center justify-center z-10 cursor-grab active:cursor-grabbing shadow-[0_0_15px_rgba(255,255,255,0.4)]"
+        className={cn(
+          "absolute left-1.5 top-1.5 bottom-1.5 w-[52px] bg-white rounded-full flex items-center justify-center z-10",
+          disabled ? "cursor-not-allowed opacity-50" : "cursor-grab active:cursor-grabbing shadow-[0_0_15px_rgba(255,255,255,0.4)]"
+        )}
       >
         <ShieldCheck className="w-5 h-5 text-black" />
       </motion.div>
@@ -575,6 +1170,526 @@ const LinkGeneratedSheet = ({ isOpen, onClose, link }) => {
   );
 };
 
+const InspectionRestrictedSheet = ({ isOpen, onClose }) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200]"
+          />
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed bottom-0 left-0 right-0 bg-[#0a0a0c] rounded-t-[40px] border-t border-red-500/20 z-[200] p-8 pb-12 shadow-[0_-40px_80px_rgba(0,0,0,0.9)] max-w-lg mx-auto"
+          >
+            <div className="w-12 h-1.5 bg-red-500/20 rounded-full mx-auto mb-8" />
+
+            <div className="flex items-center justify-center gap-2.5 mb-10">
+              <ShieldCheck className="w-6 h-6 text-red-500 scale-110 drop-shadow-[0_0_15px_rgba(239,68,68,0.4)]" />
+              <span className="text-xl font-bold tracking-tight text-white">ArcPay Security</span>
+              <div className="w-[1px] h-5 bg-white/10 mx-2"></div>
+              <img src={arcbyteLogo} alt="ArcByte" className="h-5 opacity-40 grayscale brightness-200" />
+            </div>
+
+            <h3 className="text-3xl font-black text-white mb-6 text-center tracking-[-0.04em] leading-tight">
+              Action <span className="text-red-500 relative inline-block">
+                Restricted
+                <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-red-500/30 rounded-full blur-[2px]" />
+              </span>
+            </h3>
+
+            <p className="text-zinc-500 text-center font-bold uppercase tracking-[0.15em] text-[8px] leading-relaxed max-w-xs mx-auto mb-10">
+              Security Protocol Active. Core inspection and source visualization are restricted to protect interface integrity and transaction metadata.
+            </p>
+
+            <SlideToCancel onComplete={onClose} />
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const CreatorView = ({
+  paymentMethod, setPaymentMethod, amount, setAmount, name, handleNameChange,
+  payerName, handlePayerNameChange, note, handleNoteChange, isValid,
+  handlePrimaryAction, handleDownloadQR, arcbyteLogo
+}) => {
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start pt-10">
+      <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6 }} className="flex flex-col">
+        <h1 className="text-5xl sm:text-6xl font-black leading-[1.05] tracking-[-0.03em] mb-6 drop-shadow-sm text-white">
+          Configure Payment<br />
+          <span className="text-[#75f2c6]">Specifications</span><br />
+        </h1>
+        <p className="text-zinc-400 text-lg max-w-[420px] mb-12 font-medium leading-relaxed">
+          Specify exact transaction parameters to facilitate a professional and highly-verified settlement process.
+        </p>
+
+        <div className="space-y-6 max-w-md">
+          <PaymentMethodSelector method={paymentMethod} onChange={setPaymentMethod} />
+
+          {/* Editorial Amount Specification */}
+          <div className="pt-4 pb-10 border-b border-white/[0.03] space-y-4">
+            <div className="flex items-center gap-2 mb-2 px-1">
+              <Wallet className="w-3.5 h-3.5 text-zinc-600" />
+              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Amount Specification (INR)</p>
+            </div>
+            <div className="flex items-center gap-4 px-1">
+              <span className="text-[#75f2c6] text-4xl font-black drop-shadow-[0_0_15px_rgba(117,242,198,0.2)]">₹</span>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={amount ? new Intl.NumberFormat('en-IN').format(Number(amount)) : ''}
+                onChange={(e) => {
+                  const rawVal = e.target.value.replace(/,/g, '');
+                  if (rawVal === '' || /^\d+$/.test(rawVal)) {
+                    setAmount(rawVal === '' ? 0 : Number(rawVal));
+                  }
+                }}
+                placeholder="0"
+                className="w-full bg-transparent overflow-hidden text-white font-mono text-5xl font-black tracking-tighter outline-none placeholder:text-zinc-800"
+              />
+            </div>
+          </div>
+
+          {/* Document Input List */}
+          <div className="space-y-0.5 mb-10">
+            <div className="py-6 border-b border-white/[0.03]">
+              <div className="flex items-center gap-2 mb-4 px-1">
+                <User className="w-3.5 h-3.5 text-zinc-600" />
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Receiver Name</p>
+              </div>
+              <div className="relative group">
+                <div className="absolute left-1 top-1/2 -translate-y-1/2">
+                  <ShieldCheck className="w-5 h-5 text-[#75f2c6] drop-shadow-[0_0_10px_rgba(117,242,198,0.4)]" />
+                </div>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => handleNameChange(e.target.value)}
+                  placeholder="Merchant branding name"
+                  className="w-full bg-transparent border-b border-white/5 focus:border-[#75f2c6]/50 py-2 pl-8 outline-none text-white font-black text-lg tracking-tight placeholder:text-zinc-800 transition-all font-sans"
+                />
+              </div>
+            </div>
+
+            <div className="py-6 border-b border-white/[0.03]">
+              <div className="flex items-center gap-2 mb-4 px-1">
+                <User className="w-3.5 h-3.5 text-zinc-600" />
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Payer Identifier</p>
+              </div>
+              <input
+                type="text"
+                value={payerName}
+                onChange={(e) => handlePayerNameChange(e.target.value)}
+                placeholder="Enter payer's full name"
+                className="w-full bg-transparent border-b border-white/5 focus:border-[#75f2c6]/50 py-2 outline-none text-white font-black text-lg tracking-tight placeholder:text-zinc-800 transition-all font-sans"
+              />
+            </div>
+
+            <div className="py-6 border-b border-white/[0.03]">
+              <div className="flex items-center gap-2 mb-4 px-1">
+                <FileText className="w-3.5 h-3.5 text-zinc-600" />
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Payment Note / Ref</p>
+              </div>
+              <input
+                type="text"
+                value={note}
+                onChange={(e) => handleNoteChange(e.target.value)}
+                placeholder="Payment details (e.g. Invoice #123)"
+                className="w-full bg-transparent border-b border-white/5 focus:border-[#75f2c6]/50 py-2 outline-none text-white font-black text-lg tracking-tight placeholder:text-zinc-800 transition-all font-sans"
+              />
+            </div>
+          </div>
+
+          <div className="pt-2">
+            <SlideToGenerate
+              onComplete={handlePrimaryAction}
+              disabled={!isValid}
+            />
+          </div>
+        </div>
+      </motion.div>
+
+      <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 1, delay: 0.2 }} className="relative h-[600px] hidden lg:block">
+        <div className="absolute top-20 right-0 w-[420px] h-[420px] rounded-[40px] shadow-2xl overflow-hidden backdrop-blur-3xl border border-white/5 z-20 flex flex-col p-10 bg-[#151518]">
+          <div className="flex justify-between items-center w-full mb-12 px-1">
+            <div className="flex items-center gap-2.5">
+              <ShieldCheck className="w-4.5 h-4.5 text-white" />
+              <span className="text-sm font-black text-white tracking-tight leading-none">ArcPay</span>
+              <div className="w-[1px] h-3.5 shadow-[0.5px_0_0_rgba(255,255,255,0.3)] mx-1"></div>
+              <img src={arcbyteLogo} alt="ArcByte" className="h-3.5 opacity-100 object-contain" />
+            </div>
+            <Wallet className="w-5 h-5 text-[#75f2c6]/60" />
+          </div>
+
+          <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">To Receiver</div>
+          <div className="text-white font-bold text-2xl tracking-tight mb-8 leading-tight">{name || "Anonymous Client"}</div>
+
+          <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">From Payer</div>
+          <div className="text-[#75f2c6] font-bold text-2xl tracking-tight mb-8 leading-tight">{payerName || "Valued Payer"}</div>
+
+          <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Requesting</div>
+          <div className="text-[#75f2c6] font-black text-5xl tracking-tighter mb-10 drop-shadow-[0_0_15px_rgba(117,242,198,0.2)] leading-none">
+            <span className="text-[#75f2c6]/60 text-3xl mr-1 self-center">₹</span>
+            {amount ? new Intl.NumberFormat('en-IN').format(Number(amount)) + '\u00A0/-' : "0.00\u00A0/-"}
+          </div>
+
+          <div className="mt-auto pt-6 border-t border-white/10 flex justify-between items-center">
+            <div>
+              <div className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1">Status</div>
+              <div className="flex items-center gap-2 text-[#75f2c6] font-semibold text-sm">
+                <div className="w-2 h-2 rounded-full bg-[#75f2c6] animate-pulse"></div> Active
+              </div>
+            </div>
+
+            <button onClick={handleDownloadQR} disabled={!isValid} className={cn("p-4 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-white", !isValid && "opacity-50")}>
+              <Download className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        <div
+          className="absolute top-6 left-10 w-[380px] h-[420px] rounded-[40px] overflow-hidden shadow-2xl backdrop-blur-xl border border-white/20 z-10"
+          style={{
+            transform: 'perspective(1000px) rotateX(15deg) rotateY(-10deg) rotateZ(-5deg)',
+            background: 'linear-gradient(135deg, rgba(230,230,250,0.8) 0%, rgba(135,206,235,0.8) 40%, rgba(255,105,180,0.6) 100%)'
+          }}
+        >
+          <div className="absolute inset-0 bg-black/40 mix-blend-overlay"></div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+const PayerView = ({
+  amount, note, name, payerName, invoiceId, paymentMethod, upiURI,
+  handlePrimaryAction, PAYEE_NAME, DEFAULT_BANK_DETAILS, arcbyteLogo
+}) => {
+  return (
+    <div className="flex flex-col lg:flex-row items-start justify-center gap-20">
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="flex flex-col z-10 w-full lg:w-1/2">
+        <h2 className="text-5xl font-black text-white tracking-[-0.04em] leading-[1.1] mb-6">
+          Complete your<br />
+          <span className="text-[#75f2c6]">Payment</span><br />
+          Securely
+        </h2>
+        <p className="text-zinc-400 text-sm font-medium leading-relaxed max-w-[280px] mb-8">
+          Verify the transaction parameters below. Utilize the verification cipher or select standard authorization to initiate settlement via your service provider's native interface.
+        </p>
+        <div className="mb-10 sm:mb-12 relative group/settlement">
+          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-4 ml-1">Settlement Mode</p>
+          <div className="flex items-center gap-4 bg-white/[0.02] border border-white/[0.05] rounded-2xl p-4 pr-6 backdrop-blur-sm transition-all duration-500 hover:bg-white/[0.04] hover:border-white/[0.1] shadow-2xl relative overflow-hidden">
+            {/* Background Glow */}
+            <div className="absolute -top-10 -left-10 w-20 h-20 bg-[#75f2c6]/5 blur-3xl rounded-full" />
+
+            {paymentMethod === 'upi' ? (
+              <>
+                <div className="relative">
+                  <img src={upiLogo} alt="UPI" className="h-5 w-auto relative z-10" />
+                  <div className="absolute inset-0 bg-[#75f2c6]/20 blur-lg rounded-full opacity-0 group-hover/settlement:opacity-100 transition-opacity duration-500" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-black text-white tracking-tight uppercase leading-none">UPI</h3>
+                  </div>
+                  <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Unified Payments Interface</p>
+                </div>
+                <ShieldCheck className="w-6 h-6 text-[#75f2c6] animate-pulse ml-auto opacity-90 drop-shadow-[0_0_12px_rgba(117,242,198,0.4)]" />
+              </>
+            ) : (
+              <>
+                <Landmark className="w-5 h-5 text-amber-500/80 mr-3 shrink-0" />
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-black text-white tracking-tight leading-none">Bank Transfer</h3>
+                  </div>
+                  <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">IMPS/NEFT/RTGS</p>
+                </div>
+                <ShieldCheck className="w-6 h-6 text-[#75f2c6] animate-pulse ml-auto opacity-90 drop-shadow-[0_0_12px_rgba(117,242,198,0.4)]" />
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Section Separator */}
+        <div className="h-px w-full bg-gradient-to-r from-transparent via-white/[0.05] to-transparent mb-10 sm:mb-12" />
+
+        {name && (
+          <div className="flex flex-col gap-5 mb-8">
+            <div className="flex items-center gap-5">
+              <img src={arcbyteLogo} alt="ArcByte" className="h-6 opacity-100 object-contain shrink-0" />
+              <div>
+                <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">Requesting User</p>
+                <p className="text-white text-lg font-bold tracking-tight">{name}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-5">
+              <ShieldCheck className="w-6 h-6 text-[#75f2c6]" />
+              <div>
+                <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">Payer Name</p>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-[#75f2c6] text-lg font-black tracking-tight">{payerName || "Valued Payer"}</p>
+                  <span className="text-white/20 text-[10px] font-mono tracking-widest">{invoiceId || "#AP-XXXX"}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {note && (
+          <div className="mt-4 mb-10 p-4 px-6 rounded-full bg-[#151518] border border-white/10 max-w-sm">
+            <p className="text-zinc-400 text-sm italic">"{note}"</p>
+          </div>
+        )}
+
+        {/* Desktop Amount Display - Editorial Flow */}
+        <div className="hidden lg:block w-full max-w-md mb-12">
+          <div className={cn(
+            "w-full rounded-[40px] p-10 border border-white/[0.03] relative overflow-hidden transition-all duration-700 bg-[#0a0a0c] shadow-[0_60px_100px_rgba(0,0,0,0.9)]"
+          )}>
+            <div className="flex justify-between flex-col relative z-20">
+              <div className="flex items-center gap-2 mb-1">
+                <QrCode className="w-3 h-3 text-zinc-500" />
+                <span className="text-zinc-600 text-[10px] font-black uppercase tracking-[0.2em]">
+                  Paying Amount
+                </span>
+              </div>
+              <div className="flex items-baseline gap-2 mt-2 mb-10">
+                <span className="text-[#75f2c6]/60 text-4xl">₹</span>
+                <span className="text-white font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.1)]">
+                  {amount ? new Intl.NumberFormat('en-IN').format(Number(amount)) + '\u00A0/-' : "0.00\u00A0/-"}
+                </span>
+              </div>
+
+              <div className="flex items-start gap-3 pt-8 border-t border-white/[0.04] mt-auto">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#75f2c6] mt-0.5 shrink-0" />
+                <p className="text-[8px] text-zinc-500 leading-relaxed font-bold uppercase tracking-[0.15em]">
+                  <span className="text-zinc-400">SECURITY DISCLAIMER:</span> This is a verified settlement interface. ArcPay facilitates high-fidelity peer-to-peer technology.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="w-full max-w-sm lg:hidden">
+          <div className={cn(
+            "w-full rounded-[40px] p-10 border border-white/[0.03] relative overflow-hidden block mb-8 transition-all duration-700",
+            paymentMethod === 'bank'
+              ? "bg-[#0a0a0c] shadow-[0_40px_80px_rgba(0,0,0,0.8)]"
+              : "bg-[#08080a]"
+          )}>
+            <div className="flex justify-between flex-col relative z-20">
+              <div className="flex items-center gap-2 mb-8 opacity-40">
+                <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                <span className="text-[12px] font-black text-white tracking-tight leading-none">ArcPay</span>
+                <div className="w-[1px] h-3 bg-white/20 mx-1"></div>
+                <img src={arcbyteLogo} alt="ArcByte" className="h-3.5 opacity-100 object-contain" />
+                {paymentMethod === 'bank' && (
+                  <>
+                    <div className="w-[1px] h-3 bg-white/20 mx-1"></div>
+                    <img src={federalBankLogo} alt="Federal Bank" className="h-4 opacity-100 object-contain mx-2" />
+                  </>
+                )}
+                {paymentMethod === 'upi' && (
+                  <>
+                    <div className="w-[1px] h-3 bg-white/20 mx-1"></div>
+                    <img src={upiLogo} alt="UPI" className="h-3.5 opacity-100 object-contain mx-1" />
+                  </>
+                )}
+              </div>
+
+                <div className="flex items-center gap-2 mb-1">
+                  <QrCode className="w-3 h-3 text-zinc-500" />
+                  <span className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">
+                    Paying Amount
+                  </span>
+                </div>
+              <div className="flex items-baseline gap-2 mt-2 mb-8">
+                <span className="text-[#75f2c6]/60 text-4xl">₹</span>
+                <span className="text-[#75f2c6] font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
+                  {amount ? new Intl.NumberFormat('en-IN').format(Number(amount)) + '\u00A0/-' : "0.00\u00A0/-"}
+                </span>
+              </div>
+
+              <div className="flex items-start gap-2.5 pt-6 border-t border-white/[0.05] mt-auto">
+                <ShieldCheck className="w-3 h-3 text-zinc-500 mt-0.5 shrink-0" />
+                <p className="text-[9px] text-zinc-500 leading-relaxed font-bold uppercase tracking-wider">
+                  <span className="text-zinc-400">SECURITY DISCLAIMER:</span> This is a verified settlement interface. ArcPay is a technology interface.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <SlideToPay onComplete={handlePrimaryAction} />
+        </div>
+      </motion.div>
+
+      <div className="hidden lg:flex flex-col items-center gap-12 z-10 relative lg:w-1/2">
+        <motion.div initial={{ y: 0, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 1, delay: 0.2 }} className="flex justify-center w-full">
+          <div className="w-[420px] bg-[#0a0a0c] rounded-[56px] shadow-[0_60px_120px_rgba(0,0,0,0.9)] p-6 relative border-[12px] border-[#1c1c20]">
+            <div className="flex items-center justify-between px-2 pt-2 mb-8">
+              <div className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                <ChevronLeft className="w-4 h-4 text-zinc-300" />
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/[0.05]">
+                <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                <span className="text-[13px] font-black text-white tracking-tight">ArcPay</span>
+                <div className="w-[1px] h-3 bg-white/20 mx-1"></div>
+                <img src={arcbyteLogo} alt="ArcByte" className="h-3 opacity-100 object-contain" />
+              </div>
+              <div className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                <Settings className="w-4 h-4 text-zinc-300" />
+              </div>
+            </div>
+
+            <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="px-2 pb-6 flex flex-col items-center flex-1">
+              {paymentMethod === 'bank' && (
+                <div className={cn(
+                  "w-full rounded-[32px] p-8 border border-white/[0.03] relative overflow-hidden block mb-8 transition-all duration-500",
+                  "bg-[#0a0a0c] shadow-[0_0_80px_rgba(117,242,198,0.15)] opacity-100"
+                )}>
+                  <div className="flex justify-between flex-col relative z-20">
+                    <div className="flex items-center gap-2 mb-10 opacity-60">
+                      <ShieldCheck className="w-3.5 h-3.5 text-white" />
+                      <span className="text-[12px] font-black tracking-tight leading-none text-white">ArcPay</span>
+                      <div className="w-[1px] h-3 mx-1 bg-white/20"></div>
+                      <img src={arcbyteLogo} alt="ArcByte" className="h-3.5 opacity-100 object-contain" />
+                      <div className="w-[1px] h-3 bg-white/20 mx-1"></div>
+                      <img src={federalBankLogo} alt="Federal Bank" className="h-4 opacity-100 object-contain mx-2" />
+                    </div>
+
+                    <span className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] block mb-1">
+                      Paying Amount
+                    </span>
+                    <div className="flex items-baseline gap-2 mt-2 mb-10">
+                      <span className="text-[#75f2c6]/60 text-4xl">₹</span>
+                      <span className="text-[#75f2c6] font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
+                        {amount ? new Intl.NumberFormat('en-IN').format(Number(amount)) + '\u00A0/-' : "0.00\u00A0/-"}
+                      </span>
+                    </div>
+
+                    <div className="flex items-start gap-2.5 pt-6 border-t border-white/[0.05] mt-auto">
+                      <ShieldCheck className="w-3 h-3 text-zinc-500 mt-0.5 shrink-0" />
+                      <p className="text-[9px] leading-relaxed font-bold uppercase tracking-wider text-zinc-500">
+                        <span className="text-zinc-400">SECURITY DISCLAIMER:</span> This is a verified settlement interface. ArcPay is a technology interface.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {paymentMethod === 'bank' ? (
+                <div className="w-full mt-auto">
+                  <SlideToPay onComplete={handlePrimaryAction} />
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center justify-center gap-2 mb-6">
+                    <QrCode className="w-3 h-3 text-zinc-500" />
+                    <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest">Scan To Pay</p>
+                  </div>
+                  <div className="relative group/qr p-6 rounded-[40px] bg-[#f8fcfb] border border-white/20 shadow-[0_30px_60px_rgba(117,242,198,0.15)] mb-12 transition-all duration-700 hover:scale-[1.02]">
+                    <QRCodeSVG
+                      value={upiURI}
+                      size={200}
+                      level={"H"}
+                      fgColor="#0a0a0c"
+                      imageSettings={{
+                        src: "https://img.icons8.com/fluency/96/security-checked--v1.png",
+                        height: 34,
+                        width: 34,
+                        excavate: true,
+                      }}
+                    />
+
+                    {/* Subtle Scanning Animation Line */}
+                    <motion.div
+                      animate={{ top: ['10%', '90%', '10%'] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                      className="absolute left-6 right-6 h-[1px] bg-gradient-to-r from-transparent via-[#75f2c6] to-transparent z-20 opacity-40 shadow-[0_0_8px_rgba(117,242,198,0.5)]"
+                    />
+
+                    {/* Corner Accents */}
+                    <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#75f2c6]/20 rounded-tl-[40px]" />
+                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#75f2c6]/20 rounded-br-[40px]" />
+                  </div>
+
+                  <div className="flex flex-col items-center gap-3 opacity-40 px-4">
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#75f2c6] shrink-0" />
+                    <p className="text-[9px] leading-relaxed font-bold uppercase tracking-[0.15em] text-zinc-500 text-center">
+                      <span className="text-zinc-400">SECURITY PROTOCOL:</span> ARCPAY IS A TECHNOLOGY INTERFACE FACILITATING HIGH-FIDELITY P2P SETTLEMENTS.
+                    </p>
+                  </div>
+                  {paymentMethod !== 'upi' && (
+                    <div className="w-full mt-auto">
+                      <SlideToPay onComplete={handlePrimaryAction} />
+                    </div>
+                  )}
+                </>
+              )}
+            </motion.div>
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+          className="flex flex-col w-full max-w-[380px] pl-4"
+        >
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-8 h-[1px] bg-[#75f2c6]/30"></div>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#75f2c6]/80">
+              Payment Protocols & Terms
+            </span>
+          </div>
+
+          <div className="space-y-10">
+            <div className="flex items-start gap-6 group/term">
+              <ShieldCheck className="w-5 h-5 text-[#75f2c6] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
+              <p className="text-[10px] leading-[1.8] font-bold text-zinc-500 uppercase tracking-widest">
+                <span className="text-zinc-400">P2P SETTLEMENT:</span> TRANSACTIONS ARE DIRECT PEER-TO-PEER SETTLEMENTS. ONCE LOGGED, PARAMETERS ARE IMMUTABLE FOR INTEGRITY.
+              </p>
+            </div>
+
+            <div className="flex items-start gap-6 group/term">
+              <Clock className="w-5 h-5 text-[#75f2c6] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
+              <p className="text-[10px] leading-[1.8] font-bold text-zinc-500 uppercase tracking-widest">
+                <span className="text-zinc-400">VERIFICATION WINDOW:</span> HIGH-FIDELITY VERIFICATION IS CONDUCTED WITHIN AN 8-12 HOUR OPERATIONAL WINDOW.
+              </p>
+            </div>
+
+            <div className="flex items-start gap-6 group/term">
+              <User className="w-5 h-5 text-[#75f2c6] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
+              <p className="text-[10px] leading-[1.8] font-bold text-zinc-500 uppercase tracking-widest">
+                <span className="text-zinc-400">IDENTIFIER INTEGRITY:</span> ENSURE THE PAYOR NAME MATCHES BANK RECORDS TO FACILITATE AUTOMATED RECONCILIATION.
+              </p>
+            </div>
+
+            <div className="flex items-start gap-6 group/term">
+              <Info className="w-5 h-5 text-[#75f2c6] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
+              <p className="text-[10px] leading-[1.8] font-bold text-zinc-500 uppercase tracking-widest">
+                <span className="text-zinc-400">TECHNOLOGY NOTICE:</span> ARCPAY IS A TECHNOLOGY INTERFACE AND DOES NOT HOLD, ESCROW, OR MANAGE USER FUNDS DIRECTLY.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -600,9 +1715,25 @@ export default function Dashboard() {
   const [showAppChooser, setShowAppChooser] = useState(false);
   const [showSuccessSheet, setShowSuccessSheet] = useState(false);
   const [showSecurityAlert, setShowSecurityAlert] = useState(false);
-  const [generatedLink, setGeneratedLink] = useState('');
   const [showHelp, setShowHelp] = useState(false);
-  
+  const [paymentMethod, setPaymentMethod] = useState('upi');
+  const [txId, setTxId] = useState('');
+  const [screenshot, setScreenshot] = useState(null);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showBankSheet, setShowBankSheet] = useState(false);
+  const [isInspectionAlertOpen, setIsInspectionAlertOpen] = useState(false);
+  const [generatedLink, setGeneratedLink] = useState('');
+
+  const handleBankConfirm = (id, img) => {
+    setTxId(id);
+    setScreenshot(img);
+    setShowBankSheet(false);
+    setIsSubmitted(true);
+    toast.success("Transaction Logged Successfully", {
+      className: "!bg-zinc-900 !border-zinc-800 !text-[#75f2c6]"
+    });
+  };
+
   // Security Checks
   const searchParams = new URLSearchParams(location.search);
   const hasPayId = searchParams.has('pay_id');
@@ -642,16 +1773,14 @@ export default function Dashboard() {
   }, [sessionVerified, navigate]);
 
   if (!hasPayId && !sessionVerified) {
-    return null; 
+    return null;
   }
 
   // Global UI Lockdown & Integrity Monitor
   useEffect(() => {
     const preventAction = (e) => {
       e.preventDefault();
-      toast.error('Security Protocol Active: Inspection Restricted', {
-        className: "!bg-red-950 !border-red-500/50 !text-red-200"
-      });
+      setIsInspectionAlertOpen(true);
     };
 
     const handleKeydown = (e) => {
@@ -666,7 +1795,7 @@ export default function Dashboard() {
 
     window.addEventListener('contextmenu', preventAction);
     window.addEventListener('keydown', handleKeydown);
-    
+
     return () => {
       window.removeEventListener('contextmenu', preventAction);
       window.removeEventListener('keydown', handleKeydown);
@@ -685,6 +1814,7 @@ export default function Dashboard() {
         if (decoded.nm) setName(decoded.nm);
         if (decoded.p) setPayerName(decoded.p);
         if (decoded.iid) setInvoiceId(decoded.iid);
+        if (decoded.m) setPaymentMethod(decoded.m);
         setIsLocked(true);
       } else {
         setShowSecurityAlert(true);
@@ -715,12 +1845,16 @@ export default function Dashboard() {
     if (!isValid) return;
 
     if (isLocked) {
-      setShowAppChooser(true);
+      if (paymentMethod === 'bank') {
+        setShowBankSheet(true);
+      } else {
+        setShowAppChooser(true);
+      }
     } else {
       const newInvoiceId = `AP-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
       setInvoiceId(newInvoiceId);
 
-      const payload = signPayload({ a: amount, n: note, nm: name, p: payerName, iid: newInvoiceId });
+      const payload = signPayload({ a: amount, n: note, nm: name, p: payerName, iid: newInvoiceId, m: paymentMethod });
       const baseUrl = window.location.origin + window.location.pathname;
       const shareableUrl = `${baseUrl}?pay_id=${payload}`;
 
@@ -775,8 +1909,8 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-black p-0 sm:p-4 md:p-6 lg:p-8 font-sans antialiased text-white selection:bg-[#75f2c6]/30">
       <SEO
-        title={isLocked ? `Pay ₹${amount} to ${name || PAYEE_NAME}` : "Create Professional Payment Link"}
-        description={isLocked ? `Securely complete your payment of ₹${amount} to ${name || PAYEE_NAME} via ArcPay instant UPI settlement.` : undefined}
+        title={isLocked ? `Pay ₹${new Intl.NumberFormat('en-IN').format(Number(amount))} to ${name || PAYEE_NAME}` : "Create Professional Payment Link"}
+        description={isLocked ? `Securely complete your payment of ₹${new Intl.NumberFormat('en-IN').format(Number(amount))} to ${name || PAYEE_NAME} via ArcPay instant UPI settlement.` : undefined}
       />
       <Toaster theme="dark" position="top-center" />
       <div className="max-w-[1400px] mx-auto rounded-none sm:rounded-[40px] overflow-hidden shadow-2xl relative min-h-screen sm:min-h-[90vh] bg-[#0a0a0c] px-4 sm:px-8 pt-6 pb-10">
@@ -830,314 +1964,45 @@ export default function Dashboard() {
             <path d="M10 70 C 20 20, 60 100, 80 40 C 90 10, 110 30, 115 20 M 80 40 C 90 80, 50 10, 30 50" />
           </svg>
         </div>
-
         <div className="max-w-[1200px] mx-auto relative z-10">
-          {isLocked ? (
-            /* ========================================= */
-            /* PAYER MODE: Mockup Mobile App Style 1:1   */
-            /* ========================================= */
-            <div className="flex flex-col lg:flex-row items-center justify-center gap-20">
-              {/* Left Typography Block */}
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="flex flex-col z-10 w-full lg:w-1/2">
-                <h2 className="text-5xl font-black text-white tracking-[-0.04em] leading-[1.1] mb-6">
-                  Complete your<br />
-                  <span className="text-[#75f2c6]">Payment</span><br />
-                  Securely
-                </h2>
-                <p className="text-zinc-400 text-sm font-medium leading-relaxed max-w-[280px] mb-8">
-                  Verify the transaction parameters below. Utilize the verification cipher or select standard authorization to initiate settlement via your service provider's native interface.
-                </p>
-
-                {name && (
-                  <div className="flex flex-col gap-5 mb-8">
-                    <div className="flex items-center gap-5">
-                      <img src={arcbyteLogo} alt="ArcByte" className="h-6 opacity-100 object-contain shrink-0" />
-                      <div>
-                        <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">Requesting User</p>
-                        <p className="text-white text-lg font-bold tracking-tight">{name}</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-5">
-                      <ShieldCheck className="w-6 h-6 text-[#75f2c6]" />
-                      <div>
-                        <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">Payer Name</p>
-                        <div className="flex items-baseline gap-2">
-                          <p className="text-[#75f2c6] text-lg font-black tracking-tight">{payerName || "Valued Payer"}</p>
-                          <span className="text-white/20 text-[10px] font-mono tracking-widest">{invoiceId || "#AP-XXXX"}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {note && (
-                  <div className="mt-4 p-4 px-6 rounded-full bg-[#151518] border border-white/10 max-w-sm">
-                    <p className="text-zinc-400 text-sm italic">"{note}"</p>
-                  </div>
-                )}
-
-                {/* NEW MOBILE CHECKOUT BLOCK (Hidden on LG and above) */}
-                <div className="lg:hidden mt-12 w-full max-w-sm mx-auto sm:mx-0">
-                  <div className="w-full bg-[#08080a] rounded-[32px] p-8 shadow-[0_0_40px_rgba(117,242,198,0.1)] border border-white/[0.03] relative overflow-hidden block mb-6">
-                    <div className="flex justify-between flex-col relative z-20">
-                      <div className="flex items-center gap-2 mb-8 opacity-40">
-                        <ShieldCheck className="w-3.5 h-3.5 text-white" />
-                        <span className="text-[12px] font-black text-white tracking-tight">ArcPay</span>
-                        <div className="w-[0.5px] h-3 shadow-[0.5px_0_0_rgba(255,255,255,0.3)] mx-1"></div>
-                        <img src={arcbyteLogo} alt="ArcByte" className="h-3.5 opacity-100 object-contain" />
-                      </div>
-                      <span className="text-zinc-400 text-xs font-bold uppercase tracking-widest block mb-1">Paying Amount</span>
-                      <div className="flex items-baseline gap-1.5 mt-2 mb-6">
-                        <span className="text-[#75f2c6]/60 text-4xl">₹</span>
-                        <span className="text-[#75f2c6] font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
-                          {amount ? new Intl.NumberFormat('en-IN').format(amount) + '\u00A0/-' : "0.00\u00A0/-"}
-                        </span>
-                      </div>
-                      <div className="flex items-start gap-2 pt-4 border-t border-white/5 mt-auto">
-                        <ShieldCheck className="w-3 h-3 text-white/40 mt-0.5 shrink-0" />
-                        <p className="text-[10px] text-white/40 leading-relaxed font-medium">
-                          SECURITY DISCLAIMER: This is a verified settlement interface. Transaction processing is subject to your bank's native network protocol and UPI verification cipher.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Slide to Pay Button */}
-                  <SlideToPay onComplete={handlePrimaryAction} />
-                </div>
-              </motion.div>
-
-              {/* Center Mobile Mockup - Redesigned to Dark Theme */}
-              <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 1, delay: 0.2 }} className="hidden lg:flex justify-center z-10 relative mt-10 lg:mt-0">
-                <div className="w-[320px] bg-[#0a0a0c] rounded-[40px] shadow-[0_40px_80px_rgba(0,0,0,0.8)] p-4 relative border-[12px] border-[#1c1c20]">
-
-                  {/* Phone header */}
-                  <div className="flex items-center justify-between px-2 pt-2 mb-6">
-                    <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer shrink-0">
-                      <ChevronLeft className="w-4 h-4 text-zinc-300" />
-                    </div>
-
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 border border-white/[0.05] shadow-inner">
-                      <ShieldCheck className="w-3.5 h-3.5 text-white" />
-                      <span className="text-[13px] font-black text-white tracking-tight">ArcPay</span>
-                      <div className="w-[0.5px] h-3 shadow-[0.5px_0_0_rgba(255,255,255,0.3)] mx-1"></div>
-                      <img src={arcbyteLogo} alt="ArcByte" className="h-3.5 opacity-100 object-contain" />
-                    </div>
-
-                    <div className="w-8 h-8 rounded-full bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors cursor-pointer shrink-0">
-                      <Settings className="w-4 h-4 text-zinc-300" />
-                    </div>
-                  </div>
-
-                  {/* Simulated App Card (Emerald Green & Black) */}
-                  <div className="w-full rounded-[24px] p-6 relative overflow-hidden shadow-2xl mb-8 border border-black/5"
-                    style={{ background: 'linear-gradient(135deg, #75f2c6 0%, #a2f9dd 50%, #75f2c6 100%)' }}>
-                    <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-br from-white/20 to-transparent opacity-40 pointer-events-none"></div>
-                    <img src="https://img.icons8.com/ios-filled/100/bhim-upi.png" alt="BHIM UPI" className="absolute top-6 right-6 h-8 opacity-80" />
-
-                    <div className="mt-4 mb-8">
-                      <div className="text-black/60 text-xs font-bold uppercase tracking-wider mb-1">Paying Amount</div>
-                      <div className="font-bold text-4xl tracking-tight text-black drop-shadow-sm">
-                        {'\u20B9'}{amount ? new Intl.NumberFormat('en-IN').format(amount) + '\u00A0/-' : "0.00\u00A0/-"}
-                      </div>
-                    </div>
-
-                    <div className="flex gap-12 text-[10px] text-black/60 font-bold uppercase tracking-wider">
-                      <div className="flex flex-col">
-                        <span className="mb-1 opacity-70">Receiver</span>
-                        <span className="text-black text-xs font-black">{PAYEE_NAME}</span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="mb-1 opacity-70">Payer</span>
-                        <span className="text-black text-xs font-black">{payerName || "Valued Payer"}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions Box (QR only for desktop) */}
-                  <div className="px-2 pb-4">
-                    {/* Scan instruction for desktop */}
-                    <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-6 text-center">Scan To Pay</p>
-
-                    <div className="w-full flex justify-center mb-0">
-                      <div className="p-5 rounded-[32px] bg-white shadow-[0_20px_50px_rgba(255,255,255,0.05)] border border-white/10 relative group">
-                        <QRCodeSVG
-                          value={upiURI}
-                          size={210}
-                          level={"H"}
-                          includeMargin={false}
-                          className="rounded-xl transition-transform duration-500 group-hover:scale-[1.02]"
-                          imageSettings={{
-                            src: "https://img.icons8.com/fluency/96/security-checked--v1.png",
-                            x: undefined,
-                            y: undefined,
-                            height: 40,
-                            width: 40,
-                            excavate: true,
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={handlePrimaryAction}
-                      className="hidden"
-                    >
-                      Open Bank App
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            </div>
-
+          {isSubmitted ? (
+            <SuccessState amount={amount} name={name || PAYEE_NAME} txId={txId} method={paymentMethod} />
+          ) : isLocked ? (
+            <PayerView
+              amount={amount} note={note} name={name} payerName={payerName}
+              invoiceId={invoiceId} paymentMethod={paymentMethod} upiURI={upiURI}
+              handlePrimaryAction={handlePrimaryAction} PAYEE_NAME={PAYEE_NAME}
+              DEFAULT_BANK_DETAILS={DEFAULT_BANK_DETAILS} arcbyteLogo={arcbyteLogo}
+            />
           ) : (
-
-            /* ========================================= */
-            /* CREATOR MODE: Dashboard Editor Setup      */
-            /* ========================================= */
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start pt-10">
-
-              <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6 }} className="flex flex-col">
-                <h1 className="text-5xl sm:text-6xl font-black leading-[1.05] tracking-[-0.03em] mb-6 drop-shadow-sm text-white">
-                  Configure Payment<br />
-                  <span className="text-[#75f2c6]">Specifications</span><br />
-                </h1>
-                <p className="text-zinc-400 text-lg max-w-[420px] mb-12 font-medium leading-relaxed">
-                  Specify exact transaction parameters to facilitate a professional and highly-verified settlement process.
-                </p>
-
-                {/* Form Fields Styled with pill shapes from Hero/Showcase */}
-                <div className="space-y-6 max-w-md">
-                  <div>
-                    <p className="text-sm font-semibold tracking-wide text-zinc-300 mb-3 px-2">Amount (₹)</p>
-                    <input
-                      type="text"
-                      inputMode="decimal"
-                      value={amount ? new Intl.NumberFormat('en-IN').format(amount) : ''}
-                      onChange={(e) => {
-                        const rawVal = e.target.value.replace(/,/g, '');
-                        if (rawVal === '') {
-                          setAmount('');
-                          return;
-                        }
-                        const num = Number(rawVal);
-                        if (!isNaN(num) && num <= 100000) {
-                          setAmount(rawVal);
-                        }
-                      }}
-                      placeholder="0"
-                      className="w-full bg-[#151518] focus:bg-[#1a1a1e] border border-white/[0.05] focus:border-[#75f2c6] px-6 py-4 rounded-full outline-none text-white font-medium text-lg transition-colors placeholder:text-zinc-600"
-                    />
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-semibold tracking-wide text-zinc-300 mb-3 px-2">
-                      Receiver Name
-                    </p>
-                    <div className="relative">
-                      <input
-                        type="text"
-                        value={name}
-                        onChange={(e) => handleNameChange(e.target.value)}
-                        placeholder="Your Merchant Name"
-                        className="w-full bg-[#08080a] border border-white/5 rounded-xl p-3 text-white placeholder:text-zinc-800 outline-none focus:border-[#75f2c6]/30 transition-all text-sm font-bold"
-                      />
-                      <ShieldCheck className="absolute right-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#75f2c6]/40" />
-                    </div>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-semibold tracking-wide text-zinc-300 mb-3 px-2 flex justify-between">
-                      <span>Payer Name</span> <span className="text-[#75f2c6] text-[10px] uppercase tracking-widest align-bottom">Required</span>
-                    </p>
-                    <input
-                      type="text"
-                      value={payerName}
-                      onChange={(e) => handlePayerNameChange(e.target.value)}
-                      placeholder="Enter payer's name..."
-                      className="w-full bg-[#151518] focus:bg-[#1a1a1e] border border-white/[0.05] focus:border-zinc-500 px-6 py-4 rounded-full outline-none text-white font-medium transition-colors placeholder:text-zinc-600"
-                    />
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-semibold tracking-wide text-white mb-3 px-2 flex justify-between">
-                      <span>Payment Note</span> <span className="text-[#75f2c6] text-[10px] uppercase tracking-widest align-bottom">Required</span>
-                    </p>
-                    <input
-                      type="text"
-                      value={note}
-                      onChange={(e) => handleNoteChange(e.target.value)}
-                      placeholder="Coffee payment, invoice #123..."
-                      className="w-full bg-[#08080a] border border-white/5 rounded-2xl p-6 text-lg font-medium text-white placeholder:text-zinc-800 outline-none focus:border-[#75f2c6]/30 transition-all shadow-inner"
-                    />
-                  </div>
-
-                  <SlideToGenerate
-                    onComplete={handlePrimaryAction}
-                    disabled={!isValid}
-                  />
-                </div>
-              </motion.div>
-
-              {/* Right Side: Virtual Preview holographic card */}
-              <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 1, delay: 0.2 }} className="relative h-[600px] hidden lg:block">
-                <div className="absolute top-20 right-0 w-[420px] h-[420px] rounded-[40px] shadow-2xl overflow-hidden backdrop-blur-3xl border border-white/5 z-20 flex flex-col p-10 bg-[#151518]">
-                  <div className="flex justify-between items-center w-full mb-12 px-1">
-                    <div className="flex items-center gap-2.5">
-                      <ShieldCheck className="w-4.5 h-4.5 text-white" />
-                      <span className="text-sm font-black text-white tracking-tight leading-none">ArcPay</span>
-                      <div className="w-[0.5px] h-3.5 shadow-[0.5px_0_0_rgba(255,255,255,0.3)] mx-1"></div>
-                      <img src={arcbyteLogo} alt="ArcByte" className="h-3.5 opacity-100 object-contain" />
-                    </div>
-                    <Wallet className="w-5 h-5 text-[#75f2c6]/60" />
-                  </div>
-
-                  <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">To Receiver</div>
-                  <div className="text-white font-bold text-2xl tracking-tight mb-8 leading-tight">{name || "Anonymous Client"}</div>
-
-                  <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">From Payer</div>
-                  <div className="text-[#75f2c6] font-bold text-2xl tracking-tight mb-8 leading-tight">{payerName || "Valued Payer"}</div>
-
-                  <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Requesting</div>
-                  <div className="text-[#75f2c6] font-black text-5xl tracking-tighter mb-10 drop-shadow-[0_0_15px_rgba(117,242,198,0.2)] leading-none">
-                    <span className="text-[#75f2c6]/60 text-3xl mr-1 self-center">₹</span>
-                    {amount ? new Intl.NumberFormat('en-IN').format(amount) + '\u00A0/-' : "0.00\u00A0/-"}
-                  </div>
-
-                  <div className="mt-auto pt-6 border-t border-white/10 flex justify-between items-center">
-                    <div>
-                      <div className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1">Status</div>
-                      <div className="flex items-center gap-2 text-[#75f2c6] font-semibold text-sm">
-                        <div className="w-2 h-2 rounded-full bg-[#75f2c6] animate-pulse"></div> Active
-                      </div>
-                    </div>
-
-                    <button onClick={handleDownloadQR} disabled={!isValid} className={cn("p-4 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-colors text-white", !isValid && "opacity-50")}>
-                      <Download className="w-5 h-5" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Floating aesthetic background card */}
-                <div
-                  className="absolute top-6 left-10 w-[380px] h-[420px] rounded-[40px] overflow-hidden shadow-2xl backdrop-blur-xl border border-white/20 z-10"
-                  style={{
-                    transform: 'perspective(1000px) rotateX(15deg) rotateY(-10deg) rotateZ(-5deg)',
-                    background: 'linear-gradient(135deg, rgba(230,230,250,0.8) 0%, rgba(135,206,235,0.8) 40%, rgba(255,105,180,0.6) 100%)'
-                  }}
-                >
-                  <div className="absolute inset-0 bg-black/40 mix-blend-overlay"></div>
-                </div>
-              </motion.div>
-
-            </div>
+            <CreatorView
+              paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod}
+              amount={amount} setAmount={setAmount}
+              name={name} handleNameChange={handleNameChange}
+              payerName={payerName} handlePayerNameChange={handlePayerNameChange}
+              note={note} handleNoteChange={handleNoteChange}
+              isValid={isValid} handlePrimaryAction={handlePrimaryAction}
+              handleDownloadQR={handleDownloadQR} arcbyteLogo={arcbyteLogo}
+            />
           )}
         </div>
 
         <AppChooser isOpen={showAppChooser} onClose={() => setShowAppChooser(false)} upiParams={upiParams} />
         <LinkGeneratedSheet isOpen={showSuccessSheet} onClose={() => setShowSuccessSheet(false)} link={generatedLink} />
         <ComingSoonSheet isOpen={showHelp} onClose={() => setShowHelp(false)} />
+        <InspectionRestrictedSheet isOpen={isInspectionAlertOpen} onClose={() => setIsInspectionAlertOpen(false)} />
+        <BankConfirmationSheet
+          isOpen={showBankSheet}
+          onClose={() => setShowBankSheet(false)}
+          onConfirm={handleBankConfirm}
+          amount={amount}
+          setAmount={setAmount}
+          name={name}
+          payerName={payerName}
+          setPayerName={setPayerName}
+          note={note}
+          setNote={setNote}
+        />
         <SecurityAlertSheet isOpen={showSecurityAlert} onClose={() => setShowSecurityAlert(false)} />
 
         {/* Footer */}
@@ -1145,7 +2010,7 @@ export default function Dashboard() {
           <div className="flex flex-col md:flex-row items-center justify-between gap-y-10 gap-x-8 mb-12">
             <div className="flex items-center justify-center md:justify-start gap-2.5 opacity-60 hover:opacity-100 transition-opacity">
               <ShieldCheck className="w-5 h-5 text-zinc-400 stroke-[2.5]" />
-              <span className="text-lg font-bold tracking-tight text-white uppercase">ArcPay</span>
+              <span className="text-lg font-bold tracking-tight text-white">ArcPay</span>
               <div className="w-[1px] h-4 bg-white/10 mx-1"></div>
               <img src={arcbyteLogo} alt="ArcByte" className="h-5 opacity-90 object-contain" />
             </div>
