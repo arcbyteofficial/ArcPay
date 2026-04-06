@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
-import { ArrowLeft, ArrowRight, Check, Smartphone, QrCode, Settings, ChevronLeft, Wallet, Download, ShieldCheck, FileText } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Smartphone, QrCode, Settings, ChevronLeft, Wallet, Download, ShieldCheck, FileText, Lock, HelpCircle } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -198,13 +199,61 @@ const AppChooser = ({ isOpen, onClose, upiParams }) => {
             </div>
 
             <SlideToCancel onComplete={onClose} />
-            
+
             <div className="flex items-center justify-center gap-3 mt-8 opacity-40 group">
               <img src={arcbyteLogo} alt="ArcByte" className="h-2.5 object-contain grayscale brightness-200" />
               <p className="text-[9px] text-white/80 leading-relaxed font-medium tracking-tight">
                 PROTOCOL NOTICE: Money will be debited from your linked bank account after proceeding with your selected application. ArcPay is a technology interface.
               </p>
             </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+const ComingSoonSheet = ({ isOpen, onClose }) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]"
+          />
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed bottom-0 left-0 right-0 bg-[#0a0a0c] rounded-t-[40px] border-t border-white/10 z-[100] p-8 pb-12 shadow-[0_-40px_80px_rgba(0,0,0,0.9)] max-w-lg mx-auto"
+          >
+            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8" />
+
+            <div className="flex items-center justify-center gap-2 sm:gap-2.5 mb-10">
+              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] stroke-[2.5]" />
+              <span className="text-lg sm:text-xl font-bold tracking-tight text-white">ArcPay</span>
+              <div className="w-[1px] h-4 sm:h-5 bg-white/20 mx-2 sm:mx-3"></div>
+              <img src={arcbyteLogo} alt="ArcByte" className="h-4 sm:h-5 opacity-90 object-contain" />
+            </div>
+
+            <h3 className="text-3xl font-black text-white mb-6 text-center tracking-[-0.04em]">
+              Support <span className="text-[#75f2c6] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
+                Coming Soon
+                <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#75f2c6] rounded-full" />
+                <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-[#75f2c6]/20 rounded-full blur-[2px]" />
+              </span>
+            </h3>
+
+            <p className="text-zinc-400 text-center font-medium leading-relaxed max-w-xs mx-auto mb-10">
+              Personalized merchant support and live chat features are currently under development. Please reach out via our official portal for immediate assistance.
+            </p>
+
+            <SlideToCancel onComplete={onClose} />
           </motion.div>
         </>
       )}
@@ -411,7 +460,22 @@ const LinkGeneratedSheet = ({ isOpen, onClose, link }) => {
 };
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [amount, setAmount] = useState('');
+
+  // Security Layer: Protect merchant configuration terminal
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const payId = searchParams.get('pay_id');
+    const isVerified = sessionStorage.getItem('merchant_verified') === 'true';
+
+    // Redirect iff NOT on a shared payment link AND NOT verified
+    if (!payId && !isVerified) {
+      navigate('/', { replace: true });
+    }
+  }, [location.search, navigate]);
+
   const [note, setNote] = useState('');
   const [name, setName] = useState('Aidan Rodrigues');
   const [payerName, setPayerName] = useState('');
@@ -420,6 +484,16 @@ export default function Dashboard() {
   const [showAppChooser, setShowAppChooser] = useState(false);
   const [showSuccessSheet, setShowSuccessSheet] = useState(false);
   const [generatedLink, setGeneratedLink] = useState('');
+  const [showHelp, setShowHelp] = useState(false);
+
+  // Immediate block to prevent UI flash before redirect
+  const searchParams = new URLSearchParams(location.search);
+  const hasPayId = searchParams.has('pay_id');
+  const sessionVerified = sessionStorage.getItem('merchant_verified') === 'true';
+
+  if (!hasPayId && !sessionVerified) {
+    return null; // Don't render anything if merchant isn't verified
+  }
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -540,24 +614,33 @@ export default function Dashboard() {
           <div className="flex items-center gap-4">
             {isLocked ? (
               <button
-                onClick={() => {
-                  window.history.replaceState({}, '', window.location.pathname);
-                  setIsLocked(false);
-                  setAmount(''); setNote(''); setName('Aidan Rodrigues');
-                }}
+                onClick={() => setShowHelp(true)}
                 className="px-6 py-2.5 rounded-full border border-zinc-600 hover:bg-white/5 transition-colors text-sm font-semibold flex items-center gap-2"
               >
-                <ArrowLeft className="w-4 h-4" /> Create New
+                <HelpCircle className="w-4 h-4" /> Help
               </button>
             ) : (
-              <button
-                onClick={() => {
-                  window.location.href = '/';
-                }}
-                className="px-6 py-2.5 rounded-full border border-zinc-600 hover:bg-white/5 transition-colors text-sm font-semibold flex items-center gap-2"
-              >
-                <ArrowLeft className="w-4 h-4" /> Home
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => {
+                    sessionStorage.removeItem('merchant_verified');
+                    window.location.href = '/';
+                  }}
+                  className="px-4 py-2.5 rounded-full border border-zinc-600 hover:bg-white/5 transition-colors text-sm font-semibold flex items-center gap-2"
+                  title="Lock Terminal"
+                >
+                  <Lock className="w-4 h-4 text-white" />
+                  <span className="hidden sm:inline">Lock</span>
+                </button>
+                <button
+                  onClick={() => {
+                    window.location.href = '/';
+                  }}
+                  className="px-6 py-2.5 rounded-full border border-zinc-600 hover:bg-white/5 transition-colors text-sm font-semibold flex items-center gap-2"
+                >
+                  <ArrowLeft className="w-4 h-4" /> Home
+                </button>
+              </div>
             )}
           </div>
         </nav>
@@ -750,21 +833,22 @@ export default function Dashboard() {
                   <div>
                     <p className="text-sm font-semibold tracking-wide text-zinc-300 mb-3 px-2">Amount (₹)</p>
                     <input
-                      type="number"
-                      value={amount}
+                      type="text"
+                      inputMode="decimal"
+                      value={amount ? new Intl.NumberFormat('en-IN').format(amount) : ''}
                       onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === '') {
+                        const rawVal = e.target.value.replace(/,/g, '');
+                        if (rawVal === '') {
                           setAmount('');
                           return;
                         }
-                        const num = Number(val);
+                        const num = Number(rawVal);
                         if (!isNaN(num) && num <= 100000) {
-                          setAmount(val);
+                          setAmount(rawVal);
                         }
                       }}
-                      placeholder="0.00"
-                      className="w-full bg-[#151518] focus:bg-[#1a1a1e] border border-white/[0.05] focus:border-[#75f2c6] px-6 py-4 rounded-full outline-none text-white font-medium text-lg transition-colors placeholder:text-zinc-600 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                      placeholder="0"
+                      className="w-full bg-[#151518] focus:bg-[#1a1a1e] border border-white/[0.05] focus:border-[#75f2c6] px-6 py-4 rounded-full outline-none text-white font-medium text-lg transition-colors placeholder:text-zinc-600"
                     />
                   </div>
 
@@ -837,7 +921,8 @@ export default function Dashboard() {
 
                   <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Requesting</div>
                   <div className="text-[#75f2c6] font-black text-5xl tracking-tighter mb-10 drop-shadow-[0_0_15px_rgba(117,242,198,0.2)] leading-none">
-                    <span className="text-[#75f2c6]/60 text-3xl mr-1 self-center">₹</span>{amount || "0.00"}
+                    <span className="text-[#75f2c6]/60 text-3xl mr-1 self-center">₹</span>
+                    {amount ? new Intl.NumberFormat('en-IN').format(amount) + '\u00A0/-' : "0.00\u00A0/-"}
                   </div>
 
                   <div className="mt-auto pt-6 border-t border-white/10 flex justify-between items-center">
@@ -872,6 +957,7 @@ export default function Dashboard() {
 
         <AppChooser isOpen={showAppChooser} onClose={() => setShowAppChooser(false)} upiParams={upiParams} />
         <LinkGeneratedSheet isOpen={showSuccessSheet} onClose={() => setShowSuccessSheet(false)} link={generatedLink} />
+        <ComingSoonSheet isOpen={showHelp} onClose={() => setShowHelp(false)} />
       </div>
     </div>
   );

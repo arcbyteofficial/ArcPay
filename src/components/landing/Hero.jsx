@@ -61,6 +61,109 @@ const SlideToClose = ({ onComplete }) => {
   );
 };
 
+// Sheet for 6-digit access code verification
+const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
+  const [code, setCode] = useState(['', '', '', '', '', '']);
+  const inputs = useRef([]);
+  const [error, setError] = useState(false);
+
+  const handleChange = (index, value) => {
+    if (!/^\d*$/.test(value)) return;
+    const newCode = [...code];
+    newCode[index] = value.slice(-1);
+    setCode(newCode);
+
+    if (value && index < 5) {
+      inputs.current[index + 1].focus();
+    }
+    
+    // Check if code is complete
+    if (newCode.every(digit => digit !== '')) {
+      const fullCode = newCode.join('');
+      if (fullCode === '151903') {
+        sessionStorage.setItem('merchant_verified', 'true');
+        onVerified();
+      } else {
+        setError(true);
+        setTimeout(() => {
+          setError(false);
+          setCode(['', '', '', '', '', '']);
+          inputs.current[0].focus();
+        }, 600);
+      }
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !code[index] && index > 0) {
+      inputs.current[index - 1].focus();
+    }
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]"
+          />
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed bottom-0 left-0 right-0 bg-[#0a0a0c] rounded-t-[40px] border-t border-white/10 z-[100] p-8 pb-12 shadow-[0_-40px_80px_rgba(0,0,0,0.9)] max-w-lg mx-auto"
+          >
+            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8" />
+
+            <div className="flex items-center justify-center gap-2 sm:gap-2.5 mb-10">
+              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] stroke-[2.5]" />
+              <span className="text-lg sm:text-xl font-bold tracking-tight text-white">ArcPay</span>
+              <div className="w-[1px] h-4 sm:h-5 bg-white/20 mx-2 sm:mx-3"></div>
+              <img src={arcbyteLogo} alt="ArcByte" className="h-4 sm:h-5 opacity-90 object-contain" />
+            </div>
+
+            <h3 className="text-3xl font-black text-white mb-6 text-center tracking-[-0.04em]">
+              Security <span className="text-[#75f2c6] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
+                Verification
+                <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#75f2c6] rounded-full" />
+              </span>
+            </h3>
+
+            <p className="text-zinc-400 text-center font-medium leading-relaxed max-w-xs mx-auto mb-10">
+              Enter the 6-digit secure access code for ArcByte official terminal deployment.
+            </p>
+
+            <motion.div 
+              animate={error ? { x: [-10, 10, -10, 10, 0], transition: { duration: 0.4 } } : {}}
+              className="flex justify-center gap-3 mb-10"
+            >
+              {code.map((digit, i) => (
+                <input
+                  key={i}
+                  ref={el => inputs.current[i] = el}
+                  type="text"
+                  maxLength={1}
+                  value={digit}
+                  onChange={e => handleChange(i, e.target.value)}
+                  onKeyDown={e => handleKeyDown(i, e)}
+                  className="w-12 h-14 bg-[#151518] border border-white/10 rounded-full text-center text-2xl font-black text-[#75f2c6] outline-none focus:border-[#75f2c6] transition-all duration-300 shadow-[inset_0_4px_10px_rgba(0,0,0,0.4)] focus:shadow-[0_0_20px_rgba(117,242,198,0.2)]"
+                />
+              ))}
+            </motion.div>
+
+            <SlideToClose onComplete={onClose} />
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
 // Standard Sheet component
 const ComingSoonSheet = ({ isOpen, onClose }) => {
   return (
@@ -113,6 +216,7 @@ const ComingSoonSheet = ({ isOpen, onClose }) => {
 export default function Hero() {
   const navigate = useNavigate();
   const [showComingSoon, setShowComingSoon] = useState(false);
+  const [showAccessCode, setShowAccessCode] = useState(false);
 
   return (
     <div className="bg-[#0a0a0c] w-full min-h-[900px] relative px-8 pt-6 pb-20 overflow-hidden text-white font-sans">
@@ -135,13 +239,13 @@ export default function Hero() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
-          <button 
+          <button
             onClick={() => setShowComingSoon(true)}
             className="whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2.5 rounded-full border border-zinc-600 hover:bg-white/5 transition-colors text-[13px] sm:text-sm font-semibold"
           >
             Log in
           </button>
-          <button 
+          <button
             onClick={() => setShowComingSoon(true)}
             className="whitespace-nowrap px-4 py-2 sm:px-6 sm:py-2.5 rounded-full bg-white text-black hover:bg-zinc-200 transition-colors text-[13px] sm:text-sm font-semibold"
           >
@@ -172,7 +276,7 @@ export default function Hero() {
           </p>
 
           <button
-            onClick={() => navigate('/app')}
+            onClick={() => setShowAccessCode(true)}
             className="flex items-center gap-3 bg-[#75f2c6] text-black hover:bg-[#64e4b6] transition-all duration-300 rounded-full pl-8 pr-2 py-2 mb-20 shadow-[0_0_30px_rgba(117,242,198,0.3)] hover:shadow-[0_0_40px_rgba(117,242,198,0.5)] group"
           >
             <span className="font-bold tracking-wide">Access ArcPay</span>
@@ -205,14 +309,14 @@ export default function Hero() {
         <div className="relative pt-10 flex-1 flex items-center justify-center lg:justify-end">
           <motion.div
             initial={{ opacity: 0, scale: 0.9, rotateY: -10 }}
-            animate={{ 
-              opacity: 1, 
-              scale: 1, 
+            animate={{
+              opacity: 1,
+              scale: 1,
               rotateY: 0,
-              y: [0, -15, 0] 
+              y: [0, -15, 0]
             }}
-            transition={{ 
-              duration: 1.2, 
+            transition={{
+              duration: 1.2,
               y: {
                 duration: 4,
                 repeat: Infinity,
@@ -221,12 +325,12 @@ export default function Hero() {
             }}
             className="relative z-10 w-full max-w-[550px] drop-shadow-[0_20px_50px_rgba(117,242,198,0.15)]"
           >
-            <img 
-              src={heroImg} 
-              alt="ArcPay Dashboard" 
+            <img
+              src={heroImg}
+              alt="ArcPay Dashboard"
               className="w-full h-auto object-contain rounded-[24px] pointer-events-none select-none"
             />
-            
+
             {/* Absolute decorative accents */}
             <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#75f2c6]/10 rounded-full blur-[80px] -z-10" />
             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-500/10 rounded-full blur-[80px] -z-10" />
@@ -270,9 +374,15 @@ export default function Hero() {
 
       </div>
 
-      <ComingSoonSheet 
-        isOpen={showComingSoon} 
-        onClose={() => setShowComingSoon(false)} 
+      <ComingSoonSheet
+        isOpen={showComingSoon}
+        onClose={() => setShowComingSoon(false)}
+      />
+
+      <AccessCodeSheet 
+        isOpen={showAccessCode} 
+        onClose={() => setShowAccessCode(false)}
+        onVerified={() => navigate('/app')}
       />
     </div>
   );
