@@ -14,6 +14,36 @@ function cn(...inputs) {
 
 const PAYEE_VPA = 'aidan.rodrigues@superyes';
 const PAYEE_NAME = 'Aidan Rodrigues';
+
+// Robust generic copy function
+const copyToClipboard = async (text) => {
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch (err) {
+    console.error('Clipboard API failed, using fallback', err);
+  }
+
+  // Fallback for older browsers or non-secure contexts
+  try {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    textArea.style.position = "fixed";
+    textArea.style.left = "-9999px";
+    textArea.style.top = "0";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    const successful = document.execCommand('copy');
+    document.body.removeChild(textArea);
+    return successful;
+  } catch (err) {
+    console.error('Fallback copy failed', err);
+    return false;
+  }
+};
 const CharacterFade = ({ text, x, maxDistance = 120, disabled }) => {
   const characters = text.split('');
   // We want the fade to be staggered. 
@@ -304,9 +334,14 @@ const SlideToCopy = ({ onComplete }) => {
 };
 
 const LinkGeneratedSheet = ({ isOpen, onClose, link }) => {
-  const handleCopy = () => {
-    navigator.clipboard.writeText(link);
-    toast.success('Link copied to clipboard!');
+  const handleCopy = async () => {
+    const success = await copyToClipboard(link);
+    if (success) {
+      toast.success('Link copied to clipboard!');
+    } else {
+      toast.error('Failed to copy. Please copy manually.');
+    }
+    
     // Auto-close after a small delay for feedback
     setTimeout(() => {
       onClose();
@@ -420,7 +455,7 @@ export default function Dashboard() {
       const shareableUrl = `${baseUrl}?pay_id=${payload}`;
       
       setGeneratedLink(shareableUrl);
-      navigator.clipboard.writeText(shareableUrl);
+      copyToClipboard(shareableUrl);
 
       // Mobile Success Sheet vs Desktop Toast
       if (window.innerWidth < 1024) {
