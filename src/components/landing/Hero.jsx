@@ -1,13 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { ArrowRight, Wallet, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Wallet, ShieldCheck, Percent, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import arcbyteLogo from '../../assets/arcbyte.co Logo_white_transparent.png';
 export default function Hero() {
   const navigate = useNavigate();
 
   return (
-    <div className="bg-[#151518] w-full min-h-[900px] relative px-8 pt-6 pb-20 overflow-hidden text-white font-sans">
+    <div className="bg-[#0a0a0c] w-full min-h-[900px] relative px-8 pt-6 pb-20 overflow-hidden text-white font-sans">
 
       {/* Navigation */}
       <nav className="flex items-center justify-between mb-24 max-w-[1200px] mx-auto z-50 relative">
@@ -62,7 +62,7 @@ export default function Hero() {
             className="flex items-center gap-3 bg-[#75f2c6] text-black hover:bg-[#64e4b6] transition-all duration-300 rounded-full pl-8 pr-2 py-2 mb-20 shadow-[0_0_30px_rgba(117,242,198,0.3)] hover:shadow-[0_0_40px_rgba(117,242,198,0.5)] group"
           >
             <span className="font-bold tracking-wide">Try for Free</span>
-            <div className="w-10 h-10 bg-[#151518] rounded-full flex items-center justify-center transform group-hover:translate-x-1 transition-transform">
+            <div className="w-10 h-10 bg-[#0a0a0c] rounded-full flex items-center justify-center transform group-hover:translate-x-1 transition-transform">
               <ArrowRight className="w-5 h-5 text-[#75f2c6]" />
             </div>
           </button>
@@ -70,13 +70,13 @@ export default function Hero() {
           {/* Social Proof Stats */}
           <div className="flex items-center gap-6">
             <div className="flex -space-x-3">
-              <div className="w-12 h-12 rounded-full border-2 border-[#151518] overflow-hidden bg-zinc-800">
+              <div className="w-12 h-12 rounded-full border-2 border-[#0a0a0c] overflow-hidden bg-zinc-800">
                 <img src="https://i.pravatar.cc/150?u=1" alt="user" className="w-full h-full object-cover" />
               </div>
-              <div className="w-12 h-12 rounded-full border-2 border-[#151518] overflow-hidden bg-zinc-800">
+              <div className="w-12 h-12 rounded-full border-2 border-[#0a0a0c] overflow-hidden bg-zinc-800">
                 <img src="https://i.pravatar.cc/150?u=2" alt="user" className="w-full h-full object-cover" />
               </div>
-              <div className="w-12 h-12 rounded-full border-2 border-[#151518] overflow-hidden bg-zinc-800">
+              <div className="w-12 h-12 rounded-full border-2 border-[#0a0a0c] overflow-hidden bg-zinc-800">
                 <img src="https://i.pravatar.cc/150?u=3" alt="user" className="w-full h-full object-cover" />
               </div>
             </div>
@@ -95,19 +95,38 @@ export default function Hero() {
       </div>
 
       {/* Bottom Global Stats */}
-      <div className="relative mt-12 sm:mt-20 lg:mt-0 lg:absolute lg:bottom-12 lg:right-20 flex flex-wrap justify-center lg:justify-end gap-8 sm:gap-12 z-20 w-full lg:w-auto">
-        <div className="text-center lg:text-left">
-          <p className="text-2xl sm:text-3xl font-bold mb-1 text-white">0%</p>
-          <p className="text-[10px] sm:text-xs text-zinc-500 font-medium">Platform Fees</p>
+      <div className="relative mt-12 sm:mt-20 lg:mt-0 lg:absolute lg:bottom-12 lg:right-20 flex flex-nowrap justify-between sm:justify-center lg:justify-end gap-2 sm:gap-12 z-20 w-full lg:w-auto overflow-visible">
+
+        <div className="flex flex-col items-center">
+          <div className="flex items-center gap-1.5 sm:gap-3 mb-2">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#151518] border border-white/5 flex items-center justify-center shadow-sm">
+              <Percent className="w-4 h-4 sm:w-5 sm:h-5 text-[#75f2c6]" />
+            </div>
+            <p className="text-[1.1rem] sm:text-3xl font-bold text-white">0%</p>
+          </div>
+          <p className="text-[10px] sm:text-xs text-zinc-500 font-medium whitespace-nowrap">Platform Fees</p>
         </div>
-        <div className="text-center lg:text-left">
-          <p className="text-2xl sm:text-3xl font-bold mb-1 text-white">100%</p>
-          <p className="text-[10px] sm:text-xs text-zinc-500 font-medium">Secure Delivery</p>
+
+        <div className="flex flex-col items-center">
+          <div className="flex items-center gap-1.5 sm:gap-3 mb-2">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#151518] border border-white/5 flex items-center justify-center shadow-sm">
+              <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#75f2c6]" />
+            </div>
+            <p className="text-[1.1rem] sm:text-3xl font-bold text-white">100%</p>
+          </div>
+          <p className="text-[10px] sm:text-xs text-zinc-500 font-medium whitespace-nowrap">Secure Delivery</p>
         </div>
-        <div className="text-center lg:text-left">
-          <p className="text-2xl sm:text-3xl font-bold mb-1 text-white">Instant</p>
-          <p className="text-[10px] sm:text-xs text-zinc-500 font-medium">UPI Routing</p>
+
+        <div className="flex flex-col items-center">
+          <div className="flex items-center gap-1.5 sm:gap-3 mb-2">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-[#151518] border border-white/5 flex items-center justify-center shadow-sm">
+              <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#75f2c6]" />
+            </div>
+            <p className="text-[1.1rem] sm:text-3xl font-bold text-white">Instant</p>
+          </div>
+          <p className="text-[10px] sm:text-xs text-zinc-500 font-medium whitespace-nowrap">UPI Routing</p>
         </div>
+
       </div>
     </div>
   );
