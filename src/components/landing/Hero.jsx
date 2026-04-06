@@ -121,7 +121,7 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
         localStorage.setItem(L_KEY, strikes.toString());
         
         if (strikes >= 3) {
-          const until = Date.now() + 5 * 60 * 1000; // 5 mins
+          const until = Date.now() + 10 * 60 * 1000; // 10 mins
           localStorage.setItem(T_KEY, until.toString());
           toast.error('Security Alert: Brute Force Attempt Detected. Terminal Locked for 5 Minutes.', {
             duration: 5000,
@@ -175,16 +175,31 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
               <img src={arcbyteLogo} alt="ArcByte" className="h-4 sm:h-5 opacity-90 object-contain" />
             </div>
 
-            <h3 className="text-3xl font-black text-white mb-6 text-center tracking-[-0.04em]">
-              Security <span className="text-[#75f2c6] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
-                Verification
-                <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#75f2c6] rounded-full" />
+            <h3 className="text-3xl font-black text-white mb-6 text-center tracking-[-0.04em] leading-tight">
+              Security <span className={cn(
+                "relative inline-block transition-colors duration-500",
+                lockoutTime > 0 ? "text-red-500" : "text-[#75f2c6]"
+              )}>
+                {lockoutTime > 0 ? 'Alert' : 'Verification'}
+                <motion.div 
+                  initial={{ width: 0 }} 
+                  animate={{ width: "100%" }} 
+                  transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} 
+                  className={cn(
+                    "absolute -bottom-1.5 left-0 h-1 transition-colors duration-500 rounded-full",
+                    lockoutTime > 0 ? "bg-red-500" : "bg-[#75f2c6]"
+                  )} 
+                />
+                <div className={cn(
+                  "absolute -bottom-1.5 left-0 w-full h-1 blur-[3px] rounded-full transition-colors duration-500",
+                  lockoutTime > 0 ? "bg-red-500/40" : "bg-[#75f2c6]/20"
+                )} />
               </span>
             </h3>
 
             <p className="text-zinc-400 text-center font-medium leading-relaxed max-w-xs mx-auto mb-10">
               {lockoutTime > 0 
-                ? `ArcPay disabled for ${lockoutTime}s due to multiple verification failures.`
+                ? 'ArcPay disabled due to multiple verification failures.'
                 : 'Enter the 6-digit secure access code to access ArcPay'}
             </p>
 
@@ -218,29 +233,53 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
                     }}
                     className="flex justify-center gap-3 relative"
                   >
-                    {lockoutTime > 0 && (
-                      <div className="absolute inset-0 z-50 bg-black/40 backdrop-blur-[2px] rounded-2xl flex items-center justify-center">
-                        <Lock className="w-8 h-8 text-red-500 animate-pulse" />
+                    {lockoutTime > 0 ? (
+                      <div className="flex items-center justify-center w-full">
+                        <div className="relative w-32 h-32 flex items-center justify-center">
+                          <svg className="w-full h-full -rotate-90">
+                            <circle
+                              cx="64"
+                              cy="64"
+                              r="58"
+                              fill="none"
+                              stroke="rgba(239, 68, 68, 0.1)"
+                              strokeWidth="4"
+                            />
+                            <motion.circle
+                              cx="64"
+                              cy="64"
+                              r="58"
+                              fill="none"
+                              stroke="#ef4444"
+                              strokeWidth="4"
+                              strokeDasharray="364"
+                              animate={{ strokeDashoffset: 364 - (364 * (lockoutTime / 600)) }}
+                              transition={{ duration: 0.5, ease: "linear" }}
+                              strokeLinecap="round"
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-3xl font-black text-red-500 tabular-nums">{lockoutTime}s</span>
+                            <span className="text-[8px] font-black text-red-500/50 uppercase tracking-[0.2em] mt-1">Locked</span>
+                          </div>
+                        </div>
                       </div>
+                    ) : (
+                      code.map((digit, i) => (
+                        <input
+                          key={i}
+                          ref={el => inputs.current[i] = el}
+                          type="text"
+                          inputMode="numeric"
+                          pattern="[0-9]*"
+                          maxLength={1}
+                          value={digit}
+                          onChange={e => handleChange(i, e.target.value)}
+                          onKeyDown={e => handleKeyDown(i, e)}
+                          className="w-12 h-14 bg-[#151518] border border-white/10 rounded-full text-center text-2xl font-black text-[#75f2c6] outline-none focus:border-[#75f2c6] transition-all duration-300 shadow-[inset_0_4px_10px_rgba(0,0,0,0.4)] focus:shadow-[0_0_20px_rgba(117,242,198,0.2)]"
+                        />
+                      ))
                     )}
-                    {code.map((digit, i) => (
-                      <input
-                        key={i}
-                        ref={el => inputs.current[i] = el}
-                        type="text"
-                        inputMode="numeric"
-                        pattern="[0-9]*"
-                        maxLength={1}
-                        value={digit}
-                        disabled={lockoutTime > 0}
-                        onChange={e => handleChange(i, e.target.value)}
-                        onKeyDown={e => handleKeyDown(i, e)}
-                        className={cn(
-                          "w-12 h-14 bg-[#151518] border border-white/10 rounded-full text-center text-2xl font-black text-[#75f2c6] outline-none focus:border-[#75f2c6] transition-all duration-300 shadow-[inset_0_4px_10px_rgba(0,0,0,0.4)] focus:shadow-[0_0_20px_rgba(117,242,198,0.2)]",
-                          lockoutTime > 0 && "opacity-20 grayscale"
-                        )}
-                      />
-                    ))}
                   </motion.div>
                 )}
               </AnimatePresence>

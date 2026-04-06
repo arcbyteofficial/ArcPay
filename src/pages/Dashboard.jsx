@@ -309,6 +309,53 @@ const ComingSoonSheet = ({ isOpen, onClose }) => {
   );
 };
 
+const SecurityAlertSheet = ({ isOpen, onClose }) => {
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[110]"
+          />
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed bottom-0 left-0 right-0 bg-[#0a0a0c] rounded-t-[40px] border-t border-red-500/20 z-[110] p-8 pb-12 shadow-[0_-40px_80px_rgba(153,27,27,0.3)] max-w-lg mx-auto"
+          >
+            <div className="w-12 h-1.5 bg-red-500/20 rounded-full mx-auto mb-8" />
+
+            <div className="flex items-center justify-center gap-2 sm:gap-2.5 mb-10">
+              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.3)] stroke-[2.5]" />
+              <span className="text-lg sm:text-xl font-bold tracking-tight text-white">ArcPay</span>
+              <div className="w-[1px] h-4 sm:h-5 bg-white/20 mx-2 sm:mx-3"></div>
+              <img src={arcbyteLogo} alt="ArcByte" className="h-4 sm:h-5 opacity-90 object-contain grayscale brightness-200" />
+            </div>
+
+            <h3 className="text-3xl font-black text-white mb-6 text-center tracking-[-0.04em] leading-tight">
+              Security <span className="text-red-500 relative inline-block">
+                Alert
+                <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-red-500 rounded-full" />
+              </span>
+            </h3>
+
+            <p className="text-zinc-400 text-center font-medium leading-relaxed max-w-xs mx-auto mb-10">
+              An invalid or tampered payment link was detected. Our protocol has restricted access to protect your account integrity.
+            </p>
+
+            <SlideToCancel onComplete={onClose} />
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
 const SlideToPay = ({ onComplete }) => {
   const containerRef = useRef(null);
   const x = useMotionValue(0);
@@ -552,6 +599,7 @@ export default function Dashboard() {
   const [isLocked, setIsLocked] = useState(false);
   const [showAppChooser, setShowAppChooser] = useState(false);
   const [showSuccessSheet, setShowSuccessSheet] = useState(false);
+  const [showSecurityAlert, setShowSecurityAlert] = useState(false);
   const [generatedLink, setGeneratedLink] = useState('');
   const [showHelp, setShowHelp] = useState(false);
   
@@ -639,11 +687,8 @@ export default function Dashboard() {
         if (decoded.iid) setInvoiceId(decoded.iid);
         setIsLocked(true);
       } else {
-        toast.error("Security Alert: Invalid or Tampered Payment Link Detected", {
-          duration: 5000,
-          className: "!bg-red-950 !border-red-500/50 !text-red-200 font-bold"
-        });
-        setTimeout(() => navigate('/', { replace: true }), 3000);
+        setShowSecurityAlert(true);
+        setTimeout(() => navigate('/', { replace: true }), 5000);
       }
     }
   }, [navigate]);
@@ -1093,6 +1138,7 @@ export default function Dashboard() {
         <AppChooser isOpen={showAppChooser} onClose={() => setShowAppChooser(false)} upiParams={upiParams} />
         <LinkGeneratedSheet isOpen={showSuccessSheet} onClose={() => setShowSuccessSheet(false)} link={generatedLink} />
         <ComingSoonSheet isOpen={showHelp} onClose={() => setShowHelp(false)} />
+        <SecurityAlertSheet isOpen={showSecurityAlert} onClose={() => setShowSecurityAlert(false)} />
 
         {/* Footer */}
         <footer className="mt-20 pt-16 pb-0 border-t border-white/[0.03] max-w-[1240px] mx-auto w-full">
