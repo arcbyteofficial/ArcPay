@@ -38,36 +38,36 @@ export default function Footer() {
         {/* Links Column 1 */}
         <div className="flex flex-col gap-5">
           <h4 className="text-white font-bold tracking-wide">About us</h4>
-          <a href="#" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Investors</a>
-          <a href="#" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Features</a>
-          <a href="#" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Book a demo</a>
-          <a href="#" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Security</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Investors</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Features</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Book a demo</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Security</a>
         </div>
 
         {/* Links Column 2 */}
         <div className="flex flex-col gap-5">
           <h4 className="text-white font-bold tracking-wide">Products</h4>
-          <a href="#" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Credits Cards</a>
-          <a href="#" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Gift Cards</a>
-          <a href="#" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Savings accounts</a>
-          <a href="#" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">NFT</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Credits Cards</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Gift Cards</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Savings accounts</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">NFT</a>
         </div>
 
         {/* Links Column 3 */}
         <div className="flex flex-col gap-5">
           <h4 className="text-white font-bold tracking-wide">Useful Links</h4>
-          <a href="#" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Free rewards</a>
-          <a href="#" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Documentation</a>
-          <a href="#" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Affiliate program</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Free rewards</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Documentation</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Affiliate program</a>
         </div>
 
         {/* Links Column 4 */}
         <div className="flex flex-col gap-5">
           <h4 className="text-white font-bold tracking-wide">Social</h4>
-          <a href="#" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Changelog</a>
-          <a href="#" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">License</a>
-          <a href="#" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Site Maps</a>
-          <a href="#" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">News</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Changelog</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">License</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Site Maps</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">News</a>
         </div>
 
       </div>

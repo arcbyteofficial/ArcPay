@@ -266,11 +266,11 @@ export default function Hero() {
         </div>
 
         <div className="hidden lg:flex items-center gap-8 text-[15px] text-zinc-300 font-medium tracking-wide">
-          <a href="#" className="hover:text-white transition-colors">Projects</a>
-          <a href="#" className="hover:text-white transition-colors">Products</a>
-          <a href="#" className="hover:text-white transition-colors">Community</a>
-          <a href="#" className="hover:text-white transition-colors">Company</a>
-          <a href="#" className="hover:text-white transition-colors">Contact</a>
+          <a href="https://arcbyte.co" className="hover:text-white transition-colors">Projects</a>
+          <a href="https://arcbyte.co" className="hover:text-white transition-colors">Products</a>
+          <a href="https://arcbyte.co" className="hover:text-white transition-colors">Community</a>
+          <a href="https://arcbyte.co" className="hover:text-white transition-colors">Company</a>
+          <a href="https://arcbyte.co" className="hover:text-white transition-colors">Contact</a>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">

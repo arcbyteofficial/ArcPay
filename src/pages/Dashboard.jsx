@@ -92,7 +92,23 @@ const CharacterSpan = ({ char, x, range, disabled }) => {
 const SlideToCancel = ({ onComplete }) => {
   const containerRef = useRef(null);
   const x = useMotionValue(0);
-  const opacity = useTransform(x, [0, 64], [1, 0]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (x.get() === 0) {
+        animate(x, 12, {
+          duration: 0.5,
+          ease: "easeInOut",
+          onComplete: () => {
+            setTimeout(() => {
+              if (x.get() === 12) animate(x, 0, { duration: 0.5, ease: "easeInOut" });
+            }, 200);
+          }
+        });
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [x]);
 
   return (
     <div
@@ -294,6 +310,13 @@ const SlideToPay = ({ onComplete }) => {
             }
           }
         }}
+        animate={{ x: [0, 8, 0] }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut",
+          repeatDelay: 1
+        }}
         className="absolute left-1.5 top-1.5 bottom-1.5 w-[52px] bg-white rounded-full flex items-center justify-center z-10 cursor-grab active:cursor-grabbing shadow-[0_0_15px_rgba(255,255,255,0.4)]"
       >
         <ShieldCheck className="w-5 h-5 text-black" />
@@ -340,6 +363,13 @@ const SlideToGenerate = ({ onComplete, disabled }) => {
             }
           }
         }}
+        animate={!disabled ? { x: [0, 8, 0] } : {}}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut",
+          repeatDelay: 1
+        }}
         className={cn(
           "absolute left-2 top-2 bottom-2 w-[48px] bg-[#0a0a0c] rounded-full flex items-center justify-center z-10",
           disabled ? "cursor-not-allowed opacity-50" : "cursor-grab active:cursor-grabbing shadow-[0_0_15px_rgba(10,10,12,0.5)]"
@@ -383,6 +413,13 @@ const SlideToCopy = ({ onComplete }) => {
               onComplete();
             }
           }
+        }}
+        animate={{ x: [0, 8, 0] }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut",
+          repeatDelay: 1
         }}
         className="absolute left-2 top-2 bottom-2 w-[48px] bg-[#0a0a0c] rounded-full flex items-center justify-center z-10 cursor-grab active:cursor-grabbing shadow-[0_0_15px_rgba(10,10,12,0.5)]"
       >
