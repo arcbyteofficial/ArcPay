@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Wallet, ShieldCheck, Percent, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import arcbyteLogo from '../../assets/arcbyte.co Logo_white_transparent.png';
+import heroImg from '../../assets/hero.png';
+
 export default function Hero() {
   const navigate = useNavigate();
 
@@ -88,8 +90,35 @@ export default function Hero() {
         </div>
 
         {/* Right Column Content Container */}
-        <div className="relative pt-10 flex-1 flex items-center justify-center">
-          {/* Intentionally blank per user request */}
+        <div className="relative pt-10 flex-1 flex items-center justify-center lg:justify-end">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, rotateY: -10 }}
+            animate={{ 
+              opacity: 1, 
+              scale: 1, 
+              rotateY: 0,
+              y: [0, -15, 0] 
+            }}
+            transition={{ 
+              duration: 1.2, 
+              y: {
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }
+            }}
+            className="relative z-10 w-full max-w-[550px] drop-shadow-[0_20px_50px_rgba(117,242,198,0.15)]"
+          >
+            <img 
+              src={heroImg} 
+              alt="ArcPay Dashboard" 
+              className="w-full h-auto object-contain rounded-[24px] pointer-events-none select-none"
+            />
+            
+            {/* Absolute decorative accents */}
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#75f2c6]/10 rounded-full blur-[80px] -z-10" />
+            <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-500/10 rounded-full blur-[80px] -z-10" />
+          </motion.div>
         </div>
 
       </div>

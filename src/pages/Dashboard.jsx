@@ -11,6 +11,7 @@ import upiLogo from '../assets/upi.png';
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
+import SEO from '../components/common/SEO';
 
 const PAYEE_VPA = 'aidan.rodrigues@superyes';
 const PAYEE_NAME = 'Aidan Rodrigues';
@@ -503,7 +504,11 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-black p-0 sm:p-4 md:p-6 lg:p-8 font-sans antialiased text-white selection:bg-teal-500/30">
+    <div className="min-h-screen bg-black p-0 sm:p-4 md:p-6 lg:p-8 font-sans antialiased text-white selection:bg-[#75f2c6]/30">
+      <SEO 
+        title={isLocked ? `Pay ₹${amount} to ${name || PAYEE_NAME}` : "Create Professional Payment Link"}
+        description={isLocked ? `Securely complete your payment of ₹${amount} to ${name || PAYEE_NAME} via ArcPay instant UPI settlement.` : undefined}
+      />
       <Toaster theme="dark" position="top-center" />
       <div className="max-w-[1400px] mx-auto rounded-none sm:rounded-[40px] overflow-hidden shadow-2xl relative min-h-screen sm:min-h-[90vh] bg-[#0a0a0c] px-4 sm:px-8 pt-6 pb-20">
         {/* Navigation - Identical to Hero.jsx */}
