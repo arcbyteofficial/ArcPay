@@ -1818,12 +1818,18 @@ export default function Dashboard() {
   }, [navigate]);
 
   const generateUPIParams = () => {
-    const finalNote = name.trim() ? `${name.trim()} - ${note.trim()}` : note.trim();
+    // Sanitize note: Remove problematic characters that trigger bank filters
+    const sanitizedNote = note.trim().replace(/[&?=#%]/g, '');
+    const finalNote = name.trim() ? `${name.trim()} - ${sanitizedNote}` : sanitizedNote;
     const encodedNote = encodeURIComponent(finalNote);
     const validAmount = amount && !isNaN(Number(amount)) && Number(amount) > 0 ? Number(amount).toFixed(2) : '';
 
     if (!validAmount) return '';
-    return `pa=${PAYEE_VPA}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${validAmount}&cu=INR${encodedNote ? `&tn=${encodedNote}` : ''}`;
+
+    // Advanced Intent Parameters:
+    // mode=02 (Secure App-to-App Intent)
+    // mc=0000 (Generic P2P/Merchant code to avoid strict P2M blocks on personal IDs)
+    return `pa=${PAYEE_VPA}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${validAmount}&cu=INR${encodedNote ? `&tn=${encodedNote}` : ''}&mc=0000&mode=02`;
   };
 
   const generateUPIURI = () => {
