@@ -255,7 +255,6 @@ const BankConfirmationSheet = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[120]"
           />
           <motion.div
@@ -717,7 +716,6 @@ const AppChooser = ({ isOpen, onClose, upiParams }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]"
           />
           <motion.div
@@ -860,7 +858,6 @@ const ComingSoonSheet = ({ isOpen, onClose }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]"
           />
           <motion.div
@@ -908,7 +905,6 @@ const SecurityAlertSheet = ({ isOpen, onClose }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[110]"
           />
           <motion.div
@@ -1126,7 +1122,6 @@ const LinkGeneratedSheet = ({ isOpen, onClose, link }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100]"
           />
           <motion.div
@@ -1179,7 +1174,6 @@ const InspectionRestrictedSheet = ({ isOpen, onClose }) => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={onClose}
             className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[200]"
           />
           <motion.div
