@@ -1,12 +1,40 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  .font-syne {
+    font-family: 'Syne', sans-serif;
+  }
+
+  .font-outfit {
+    font-family: 'Outfit', sans-serif;
+  }
+
+  .italic-editorial {
+    font-style: italic;
+    font-family: 'Syne', sans-serif;
+  }
+
+  .italic-center-balance {
+    @apply pl-[0.05em];
+  }
+}
+
 @layer base {
   body {
-    @apply bg-[#111114] text-zinc-50 font-sans antialiased min-h-screen selection:bg-[#0047FF] selection:text-white;
+    @apply bg-[#050505] text-zinc-50 font-outfit antialiased min-h-screen selection:bg-[#d4ff3f] selection:text-black;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-outfit font-black italic tracking-tight leading-[0.9] text-white;
+  }
+
+  h1, h2, h3 {
+    @apply uppercase;
   }
 }
 
@@ -14,11 +42,11 @@
   .mockup-panel {
     @apply bg-[#1c1c24] rounded-xl border border-white/[0.04];
   }
-  
+
   .mockup-input {
     @apply bg-[#15151a] border border-white/[0.05] focus:border-[#0047FF]/50 focus:ring-1 focus:ring-[#0047FF]/50 outline-none transition-all duration-200 placeholder:text-zinc-600 text-zinc-100 rounded-md py-3 px-4;
   }
-  
+
   .mockup-button-primary {
     @apply bg-[#0047FF] hover:bg-[#003FE0] transition-colors text-white font-medium rounded-lg text-sm;
   }
@@ -28,15 +56,19 @@
 ::-webkit-scrollbar {
   width: 8px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
   @apply bg-[#2a2a35] rounded-full;
 }
+
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-[#3f3f50];
 }
+
 /* Hide number input spinners */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {
@@ -46,4 +78,25 @@ input::-webkit-inner-spin-button {
 
 input[type=number] {
   -moz-appearance: textfield;
+}
+
+/* Autofill Premium Styling - Aggressive Override */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #0a0a0c inset !important;
+  -webkit-text-fill-color: white !important;
+  transition: background-color 999999s ease-in-out 0s !important;
+  caret-color: white !important;
+}
+
+/* Global Selection Styling */
+::selection {
+  background: #d4ff3f;
+  color: #000;
+}
+
+.admin-dashboard-root * {
+  @apply font-outfit;
 }

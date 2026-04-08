@@ -2,10 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { ArrowLeft, ArrowRight, Check, Clock, Smartphone, QrCode, Settings, ChevronLeft, Wallet, Download, ShieldCheck, FileText, Lock, HelpCircle, ExternalLink, Upload, Copy, Info, Building2, CreditCard, User, Eye, EyeOff, Image as ImageIcon, Landmark, AlertTriangle } from 'lucide-react';
-import { Toaster, toast } from 'sonner';
+import { useNotification } from '../context/NotificationContext';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from 'framer-motion';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 import arcbyteLogo from '../assets/arcbyte_logo_white_transparent.png';
 import razorpayPopupLogo from '../assets/arcbyte.co_white_logo.png';
@@ -23,7 +25,7 @@ const PAYEE_VPA = import.meta.env.VITE_PAYEE_VPA || 'aidan.rodrigues@superyes';
 const PAYEE_NAME = import.meta.env.VITE_PAYEE_NAME || 'Aidan Rodrigues';
 const SECURITY_SALT = 'ARC_SEC_2024_PROT'; // Internal integrity salt
 const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY || 'rzp_live_SanzAuU0NicySW';
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://secure.arcbyte.co";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 
 // Integrity Signer
 const signPayload = (data) => {
@@ -69,7 +71,7 @@ const PaymentMethodSelector = ({ method, onChange }) => {
         {method === 'upi' && (
           <motion.div
             layoutId="activeTab"
-            className="absolute inset-0 bg-[#75f2c6] rounded-full shadow-[0_0_20px_rgba(117,242,198,0.3)] z-0"
+            className="absolute inset-0 bg-[#d4ff3f] rounded-full shadow-[0_0_20px_rgba(117,242,198,0.3)] z-0"
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
           />
         )}
@@ -87,7 +89,7 @@ const PaymentMethodSelector = ({ method, onChange }) => {
         {method === 'bank' && (
           <motion.div
             layoutId="activeTab"
-            className="absolute inset-0 bg-[#75f2c6] rounded-full shadow-[0_0_20px_rgba(117,242,198,0.3)] z-0"
+            className="absolute inset-0 bg-[#d4ff3f] rounded-full shadow-[0_0_20px_rgba(117,242,198,0.3)] z-0"
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
           />
         )}
@@ -105,7 +107,7 @@ const PaymentMethodSelector = ({ method, onChange }) => {
         {method === 'razorpay' && (
           <motion.div
             layoutId="activeTab"
-            className="absolute inset-0 bg-[#75f2c6] rounded-full shadow-[0_0_20px_rgba(117,242,198,0.3)] z-0"
+            className="absolute inset-0 bg-[#d4ff3f] rounded-full shadow-[0_0_20px_rgba(117,242,198,0.3)] z-0"
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
           />
         )}
@@ -118,11 +120,14 @@ const PaymentMethodSelector = ({ method, onChange }) => {
 
 const BankDetailsCard = ({ details }) => {
   const [expanded, setExpanded] = useState(false);
+  const { showStatus } = useNotification();
 
   const handleCopy = (text, label) => {
     copyToClipboard(text);
-    toast.success(`${label} copied!`, {
-      className: "!bg-zinc-900 !border-zinc-800 !text-[#75f2c6]"
+    showStatus({ 
+      type: 'success', 
+      title: 'DATA CRYPTOGRAPHY', 
+      message: `${label} encoded and copied to secure clipboard.` 
     });
   };
 
@@ -137,7 +142,7 @@ const BankDetailsCard = ({ details }) => {
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-              <Wallet className="w-5 h-5 text-[#75f2c6]" />
+              <Wallet className="w-5 h-5 text-[#d4ff3f]" />
             </div>
             <div>
               <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-0.5">Settlement Method</p>
@@ -157,10 +162,10 @@ const BankDetailsCard = ({ details }) => {
             <div className="bg-[#0a0a0c] border border-white/5 p-4 py-5 rounded-2xl relative group/item">
               <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em] mb-3">Account Number</p>
               <div className="flex items-center justify-between gap-4">
-                <span className="text-[#75f2c6] text-xl font-black tracking-widest font-mono">{details.account}</span>
+                <span className="text-[#d4ff3f] text-xl font-black tracking-widest font-mono">{details.account}</span>
                 <button
                   onClick={() => handleCopy(details.account, "Account Number")}
-                  className="p-3 rounded-xl bg-white/5 hover:bg-[#75f2c6] text-white hover:text-black transition-all"
+                  className="p-3 rounded-xl bg-white/5 hover:bg-[#d4ff3f] text-white hover:text-black transition-all"
                 >
                   <Copy className="w-4 h-4" />
                 </button>
@@ -173,7 +178,7 @@ const BankDetailsCard = ({ details }) => {
                 <span className="text-white text-xl font-black tracking-widest font-mono">{details.ifsc}</span>
                 <button
                   onClick={() => handleCopy(details.ifsc, "IFSC Code")}
-                  className="p-3 rounded-xl bg-white/5 hover:bg-[#75f2c6] text-white hover:text-black transition-all"
+                  className="p-3 rounded-xl bg-white/5 hover:bg-[#d4ff3f] text-white hover:text-black transition-all"
                 >
                   <Copy className="w-4 h-4" />
                 </button>
@@ -258,12 +263,20 @@ const BankConfirmationSheet = ({
   };
 
   const handleAction = () => {
-    if (!localTxId) {
-      toast.error("Transaction ID is required");
+    if (!localTxId.trim()) {
+      showStatus({ 
+        type: 'error', 
+        title: 'PROTOCOL ERROR', 
+        message: "Transaction ID hash is required for verification." 
+      });
       return;
     }
     if (!localScreenshot) {
-      toast.error("Transfer screenshot is required");
+      showStatus({ 
+        type: 'error', 
+        title: 'INTEGRITY CHECK', 
+        message: "Visual proof of transfer is required to commit status." 
+      });
       return;
     }
     onConfirm(localTxId, localScreenshot);
@@ -289,20 +302,20 @@ const BankConfirmationSheet = ({
             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8 shrink-0" />
 
             <div className="flex items-center justify-center gap-2 sm:gap-2.5 mb-10">
-              < ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-[#75f2c6] drop-shadow-[0_0_10px_rgba(117,242,198,0.3)] stroke-[2.5]" />
+              < ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-[#d4ff3f] drop-shadow-[0_0_10px_rgba(117,242,198,0.3)] stroke-[2.5]" />
               <span className="text-lg sm:text-xl font-bold tracking-tight text-white">ArcPay</span>
               <div className="w-[1px] h-4 sm:h-5 bg-white/20 mx-2 sm:mx-3"></div>
               <img src={arcbyteLogo} alt="ArcByte" className="h-4 sm:h-5 w-auto object-contain opacity-80" />
             </div>
 
             <h3 className="text-3xl font-black text-white mb-8 text-center tracking-[-0.04em]">
-              Confirm <span className="text-[#75f2c6] relative inline-block">
+              Confirm <span className="text-[#d4ff3f] relative inline-block">
                 Transfer
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: "100%" }}
                   transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-                  className="absolute -bottom-1.5 left-0 h-1 bg-[#75f2c6] rounded-full"
+                  className="absolute -bottom-1.5 left-0 h-1 bg-[#d4ff3f] rounded-full"
                 />
               </span>
             </h3>
@@ -314,15 +327,15 @@ const BankConfirmationSheet = ({
                   <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Beneficiary Account</p>
                 </div>
                 <div className="flex items-center justify-between">
-                  <p className="text-[#75f2c6] text-2xl font-black tracking-widest font-mono drop-shadow-[0_0_15px_rgba(117,242,198,0.2)]">
+                  <p className="text-[#d4ff3f] text-2xl font-black tracking-widest font-mono drop-shadow-[0_0_15px_rgba(117,242,198,0.2)]">
                     {DEFAULT_BANK_DETAILS.account}
                   </p>
                   <button
                     onClick={() => {
                       copyToClipboard(DEFAULT_BANK_DETAILS.account);
-                      toast.success("Account Number Copied");
+                      showStatus({ type: 'success', title: 'COPY SUCCESS', message: 'Account number transferred to clipboard.' });
                     }}
-                    className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white transition-all border border-white/5 hover:border-[#75f2c6]/30 active:scale-95"
+                    className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white transition-all border border-white/5 hover:border-[#d4ff3f]/30 active:scale-95"
                   >
                     <Copy className="w-4 h-4" />
                   </button>
@@ -341,9 +354,9 @@ const BankConfirmationSheet = ({
                   <button
                     onClick={() => {
                       copyToClipboard(DEFAULT_BANK_DETAILS.ifsc);
-                      toast.success("IFSC Code Copied");
+                      showStatus({ type: 'success', title: 'COPY SUCCESS', message: 'IFSC protocol copied.' });
                     }}
-                    className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white transition-all border border-white/5 hover:border-[#75f2c6]/30 active:scale-95"
+                    className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white transition-all border border-white/5 hover:border-[#d4ff3f]/30 active:scale-95"
                   >
                     <Copy className="w-4 h-4" />
                   </button>
@@ -365,7 +378,7 @@ const BankConfirmationSheet = ({
                 >
                   <div className="flex items-center gap-3">
                     {showAllDetails ? (
-                      <EyeOff className="w-3.5 h-3.5 text-[#75f2c6] transition-all duration-500" />
+                      <EyeOff className="w-3.5 h-3.5 text-[#d4ff3f] transition-all duration-500" />
                     ) : (
                       <Eye className="w-3.5 h-3.5 text-zinc-500 group-hover/btn:text-white transition-all duration-500" />
                     )}
@@ -445,7 +458,7 @@ const BankConfirmationSheet = ({
                         value={localTxId}
                         onChange={(e) => setLocalTxId(e.target.value)}
                         placeholder="Enter UTR or reference number"
-                        className="w-full bg-transparent border-b border-white/5 focus:border-[#75f2c6]/50 py-2 outline-none text-white font-black text-lg tracking-widest font-mono placeholder:text-zinc-800 transition-all px-1"
+                        className="w-full bg-transparent border-b border-white/5 focus:border-[#d4ff3f]/50 py-2 outline-none text-white font-black text-lg tracking-widest font-mono placeholder:text-zinc-800 transition-all px-1"
                       />
                     </div>
                   </div>
@@ -466,7 +479,7 @@ const BankConfirmationSheet = ({
                         onChange={handleFileChange}
                       />
                       {localScreenshot ? (
-                        <div className="relative rounded-3xl overflow-hidden border border-white/10 group-hover/upload:border-[#75f2c6]/30 transition-all duration-500">
+                        <div className="relative rounded-3xl overflow-hidden border border-white/10 group-hover/upload:border-[#d4ff3f]/30 transition-all duration-500">
                           <img
                             src={localScreenshot}
                             alt="Receipt Preview"
@@ -484,11 +497,11 @@ const BankConfirmationSheet = ({
                       ) : (
                         <label
                           htmlFor="receipt-upload-confirmation"
-                          className="flex flex-col items-center justify-center py-16 rounded-3xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] hover:border-[#75f2c6]/20 transition-all duration-500 cursor-pointer group/label"
+                          className="flex flex-col items-center justify-center py-16 rounded-3xl border border-white/5 bg-white/[0.02] hover:bg-white/[0.04] hover:border-[#d4ff3f]/20 transition-all duration-500 cursor-pointer group/label"
                         >
-                          <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-zinc-500 group-hover/label:text-[#75f2c6] group-hover/label:bg-[#75f2c6]/10 transition-all duration-500 mb-6 border border-white/5">
+                          <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-zinc-500 group-hover/label:text-[#d4ff3f] group-hover/label:bg-[#d4ff3f]/10 transition-all duration-500 mb-6 border border-white/5">
                             {isUploading ? (
-                              <div className="w-5 h-5 border-2 border-[#75f2c6] border-t-transparent rounded-full animate-spin" />
+                              <div className="w-5 h-5 border-2 border-[#d4ff3f] border-t-transparent rounded-full animate-spin" />
                             ) : (
                               <Upload className="w-5 h-5" />
                             )}
@@ -519,85 +532,247 @@ const BankConfirmationSheet = ({
   );
 };
 
-const SuccessState = ({ amount, name, txId, method }) => {
+const InvoiceTemplate = ({ amount, name, txId, method, invoiceId, note, payerName, payerEmail, payerPhone }) => {
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
-      className="flex flex-col items-center justify-center py-20 px-8 text-center"
+    <div
+      id="arcpay-invoice-print"
+      className="w-[800px] bg-black text-white p-12 font-sans relative overflow-hidden flex flex-col min-h-[1100px]"
+      style={{ scale: '1' }}
     >
-      <div className="relative mb-12">
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          transition={{ type: "spring", damping: 12, stiffness: 200, delay: 0.2 }}
-          className="w-32 h-32 rounded-full bg-[#75f2c6] flex items-center justify-center shadow-[0_0_50px_rgba(117,242,198,0.4)]"
-        >
-          <Check className="w-16 h-16 text-black stroke-[4]" />
-        </motion.div>
-        <motion.div
-          animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.3, 0.1] }}
-          transition={{ duration: 3, repeat: Infinity }}
-          className="absolute inset-0 rounded-full bg-[#75f2c6]"
-        />
+      {/* Background Watermark/Aesthetic */}
+      <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-[#d4ff3f]/[0.03] rounded-full blur-[100px] -translate-y-1/2 translate-x-1/2" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-[#d4ff3f]/[0.02] rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" />
+
+      <div className="relative z-10 flex flex-col h-full">
+        {/* Header */}
+        <div className="flex justify-between items-start mb-20">
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="w-8 h-8 text-[#d4ff3f]" strokeWidth={2.5} />
+              <span className="text-3xl font-black tracking-tight">ArcPay</span>
+            </div>
+            <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.4em]">Payment Verified</p>
+          </div>
+          <div className="text-right">
+            <h1 className="text-zinc-600 text-[10px] font-black uppercase tracking-[0.3em] mb-2">Digital Receipt</h1>
+            <p className="text-xl font-black tracking-tight">{invoiceId || "ARC-INV-TEMP"}</p>
+            <p className="text-zinc-500 text-[9px] font-bold uppercase mt-1 tracking-widest">{new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+          </div>
+        </div>
+
+        {/* Amount Section */}
+        <div className="mb-20 py-16 border-y border-white/[0.05]">
+          <span className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.3em] block mb-4">Total Amount Settled</span>
+          <div className="flex items-baseline gap-4">
+            <span className="text-[#d4ff3f] text-3xl font-black">₹</span>
+            <span className="text-[#d4ff3f] text-8xl font-black tracking-tighter">
+              {new Intl.NumberFormat('en-IN').format(Number(amount))}
+            </span>
+            <span className="text-[#d4ff3f]/40 text-2xl font-black ml-2 uppercase tracking-widest">INR</span>
+          </div>
+        </div>
+
+        {/* Transaction Grid */}
+        <div className="grid grid-cols-2 gap-y-12 gap-x-20 mb-20">
+          <div>
+            <h4 className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.3em] mb-3">Recipient</h4>
+            <p className="text-xl font-black text-white">{name}</p>
+            <p className="text-[11px] text-zinc-500 font-bold uppercase mt-1 tracking-widest leading-loose">Technology Interface: ArcPay Ecology</p>
+          </div>
+          <div>
+            <h4 className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.3em] mb-3">Payer Details</h4>
+            <p className="text-xl font-black text-white">{payerName || "Anonymous Payer"}</p>
+            <div className="flex flex-col gap-1 mt-2">
+              {payerEmail && <p className="text-[10px] text-zinc-400 font-bold tracking-wider underline underline-offset-4 decoration-zinc-800">{payerEmail.toLowerCase()}</p>}
+              {payerPhone && <p className="text-[10px] text-zinc-500 font-bold tracking-widest mt-1">{payerPhone}</p>}
+            </div>
+          </div>
+          <div>
+            <h4 className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.3em] mb-3">Settlement Method</h4>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-[#d4ff3f] shadow-[0_0_8px_rgba(117,242,198,0.5)]" />
+              <p className="text-sm font-black uppercase tracking-[0.2em] text-[#d4ff3f]">
+                {method === 'bank' ? 'Bank Transfer' : method === 'razorpay' ? 'RazorPay Gateway' : 'UPI Payment'}
+              </p>
+            </div>
+          </div>
+          <div>
+            <h4 className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.3em] mb-3">Transaction ID / UTR</h4>
+            <p className="text-xs font-black font-mono tracking-widest text-[#d4ff3f] break-all max-w-[280px] leading-relaxed">
+              {txId}
+            </p>
+          </div>
+        </div>
+
+        {/* Notes */}
+        {note && (
+          <div className="mb-20 p-8 bg-zinc-900/40 border border-white/[0.03] rounded-3xl">
+            <h4 className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.3em] mb-4 text-center">Reference Note</h4>
+            <p className="text-zinc-300 text-center font-medium leading-relaxed italic italic pr-4 pl-4 font-sans text-lg">
+              "{note}"
+            </p>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className="mt-auto border-t border-white/[0.05] pt-12 flex justify-between items-end">
+          <div className="max-w-[300px]">
+            <p className="text-[8px] leading-relaxed font-bold uppercase tracking-widest text-zinc-600 mb-2">Security Verified</p>
+            <p className="text-[9px] leading-relaxed text-zinc-500 font-medium">
+              This document is a system-generated payment receipt. ArcPay is a payment tool and does not directly manage or hold user funds. Security is verified by the ArcPay System.
+            </p>
+          </div>
+          <div className="flex flex-col items-end gap-2">
+            <img src={arcbyteLogo} alt="ArcByte" className="h-4 opacity-100 object-contain brightness-200 grayscale contrast-150 mb-2" />
+            <div className="bg-[#d4ff3f] text-black text-[7px] font-black px-3 py-1 rounded-full tracking-[0.2em] uppercase">
+              Authenticated Receipt
+            </div>
+          </div>
+        </div>
       </div>
+    </div>
+  );
+};
 
-      <h3 className="text-4xl sm:text-5xl font-black text-white mb-4 tracking-[-0.04em] leading-tight">
-        Payment <span className="text-[#75f2c6]">Received</span>
-      </h3>
-      <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px] mb-12 px-8 max-w-sm mx-auto leading-relaxed">
-        {method === 'razorpay' 
-          ? "Your transaction has been captured and settled instantly via Razorpay. Status: Finalized."
-          : "Our team will take 8-12 hours to review your manual payment. We will update you via mail."}
-      </p>
+const SuccessState = ({ amount, name, txId, method, invoiceId, note, payerName, payerEmail, payerPhone }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { showStatus } = useNotification();
 
-      <div className="w-full max-w-sm space-y-0.5">
-        <div className="py-5 border-b border-white/[0.03] flex justify-between items-center group">
-          <div className="flex items-center gap-2">
-            <Wallet className="w-3 h-3 text-zinc-600" />
-            <span className="text-zinc-500 font-black uppercase tracking-[0.2em] text-[9px]">Amount Paid</span>
-          </div>
-          <span className="text-white font-black text-lg">₹{new Intl.NumberFormat('en-IN').format(Number(amount))}</span>
+  const handleDownloadInvoice = async () => {
+    setIsDownloading(true);
+    const loadingToast = showStatus({ 
+      type: 'loading', 
+      title: 'GENERATING', 
+      message: "Generating high-fidelity invoice..." 
+    });
+
+    try {
+      // Small delay to ensure the template is rendered if we just added it to DOM
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const element = document.getElementById('arcpay-invoice-print');
+      if (!element) throw new Error("Template not found");
+
+      const canvas = await html2canvas(element, {
+        scale: 2, // High DPI
+        backgroundColor: '#000000',
+        logging: false,
+        useCORS: true
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [800, 1100] // Match template dimensions
+      });
+
+      pdf.addImage(imgData, 'PNG', 0, 0, 800, 1100);
+      pdf.save(`ArcPay_Invoice_${invoiceId || 'RC'}.pdf`);
+
+      showStatus({ type: 'success', title: 'DOWNLOAD SUCCESS', message: 'Invoice downloaded successfully!' });
+    } catch (err) {
+      console.error('Invoice Generation Error:', err);
+      showStatus({ type: 'error', title: 'GENERATION FAILURE', message: 'Failed to generate digital invoice.' });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex flex-col items-center justify-center py-20 px-8 text-center"
+      >
+        <div className="relative mb-12">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", damping: 12, stiffness: 200, delay: 0.2 }}
+            className="w-32 h-32 rounded-full bg-[#d4ff3f] flex items-center justify-center shadow-[0_0_50px_rgba(117,242,198,0.4)]"
+          >
+            <Check className="w-16 h-16 text-black stroke-[4]" />
+          </motion.div>
+          <motion.div
+            animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.3, 0.1] }}
+            transition={{ duration: 3, repeat: Infinity }}
+            className="absolute inset-0 rounded-full bg-[#d4ff3f]"
+          />
         </div>
 
-        <div className="py-5 border-b border-white/[0.03] flex justify-between items-center group">
-          <div className="flex items-center gap-2">
-            <User className="w-3 h-3 text-zinc-600" />
-            <span className="text-zinc-500 font-black uppercase tracking-[0.2em] text-[9px]">Receiver</span>
+        <h3 className="text-4xl sm:text-5xl font-black text-white mb-4 tracking-[-0.04em] leading-tight">
+          Payment <span className="text-[#d4ff3f]">Received</span>
+        </h3>
+        <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px] mb-12 px-8 max-w-sm mx-auto leading-relaxed">
+          {method === 'razorpay'
+            ? "Your transaction has been captured and settled instantly via Razorpay. Status: Finalized."
+            : "Our team will take 8-12 hours to review your manual payment. We will update you via mail."}
+        </p>
+
+        <div className="w-full max-w-sm space-y-0.5 mb-12">
+          <div className="py-5 border-b border-white/[0.03] flex justify-between items-center group">
+            <div className="flex items-center gap-2">
+              <Wallet className="w-3 h-3 text-zinc-600" />
+              <span className="text-zinc-500 font-black uppercase tracking-[0.2em] text-[9px]">Amount Paid</span>
+            </div>
+            <span className="text-white font-black text-lg">₹{new Intl.NumberFormat('en-IN').format(Number(amount))}</span>
           </div>
-          <span className="text-white font-black text-lg">{name}</span>
+
+          <div className="py-5 border-b border-white/[0.03] flex justify-between items-center group">
+            <div className="flex items-center gap-2">
+              <User className="w-3 h-3 text-zinc-600" />
+              <span className="text-zinc-500 font-black uppercase tracking-[0.2em] text-[9px]">Receiver</span>
+            </div>
+            <span className="text-white font-black text-lg">{name}</span>
+          </div>
+
+          <div className="py-5 border-b border-white/[0.03] flex justify-between items-center group">
+            <div className="flex items-center gap-2">
+              <Smartphone className="w-3 h-3 text-zinc-600" />
+              <span className="text-zinc-500 font-black uppercase tracking-[0.2em] text-[10px]">Method</span>
+            </div>
+            <span className="text-[#d4ff3f] font-black tracking-widest text-[10px]">
+              {method === 'bank' ? 'Bank Transfer' : method === 'razorpay' ? 'RazorPay Gateway' : 'UPI Payment'}
+            </span>
+          </div>
+
+          <div className="py-8 text-center">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <FileText className="w-3 h-3 text-zinc-600" />
+              <span className="text-zinc-500 font-black uppercase tracking-[0.2em] text-[9px]">Transaction / UTR ID</span>
+            </div>
+            <p className="text-white font-black text-2xl sm:text-3xl font-mono tracking-widest drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
+              {txId}
+            </p>
+          </div>
         </div>
 
-        <div className="py-5 border-b border-white/[0.03] flex justify-between items-center group">
-          <div className="flex items-center gap-2">
-            <Smartphone className="w-3 h-3 text-zinc-600" />
-            <span className="text-zinc-500 font-black uppercase tracking-[0.2em] text-[9px]">Method</span>
-          </div>
-          <span className="text-[#75f2c6] font-black tracking-widest text-[10px]">
-            {method === 'bank' ? 'Bank Transfer' : method === 'razorpay' ? 'RazorPay Gateway' : 'UPI Payment'}
-          </span>
-        </div>
+        <div className="w-full max-w-sm flex flex-col gap-4">
+          <button
+            onClick={handleDownloadInvoice}
+            disabled={isDownloading}
+            className="w-full py-4 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-3 group"
+          >
+            {isDownloading ? (
+              <div className="w-4 h-4 border-2 border-[#d4ff3f] border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <Download className="w-4 h-4 text-[#d4ff3f] group-hover:-translate-y-1 transition-transform" />
+            )}
+            <span className="text-[11px] font-black text-zinc-300 uppercase tracking-[0.1em]">Download Digital Invoice</span>
+          </button>
 
-        <div className="py-8 text-center">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <FileText className="w-3 h-3 text-zinc-600" />
-            <span className="text-zinc-500 font-black uppercase tracking-[0.2em] text-[9px]">Transaction / UTR ID</span>
-          </div>
-          <p className="text-white font-black text-2xl sm:text-3xl font-mono tracking-widest drop-shadow-[0_0_15px_rgba(255,255,255,0.1)]">
-            {txId}
-          </p>
+          <SlideToPay
+            text="SLIDE TO DISMISS"
+            onComplete={() => {
+              window.location.href = '/';
+            }}
+          />
         </div>
-      </div>
+      </motion.div>
 
-      <div className="w-full max-w-sm mt-4">
-        <SlideToPay
-          text="SLIDE TO DISMISS"
-          onComplete={() => {
-            window.location.href = '/';
-          }}
-        />
-      </div>
-    </motion.div>
+    </div>
   );
 };
 const copyToClipboard = async (text) => {
@@ -768,11 +943,11 @@ const AppChooser = ({ isOpen, onClose, upiParams }) => {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                 >
-                  <h3 className="text-3xl font-black text-white mb-10 text-center tracking-[-0.04em]">
-                    Select <span className="text-[#75f2c6] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
+                  <h3 className="text-2xl sm:text-3xl text-white mb-10 text-center font-bold tracking-tight">
+                    Select <span className="text-[#d4ff3f] relative inline-block drop-shadow-[0_0_15px_rgba(212,255,63,0.3)]">
                       Payment
-                      <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#75f2c6] rounded-full" />
-                      <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-[#75f2c6]/20 rounded-full blur-[2px]" />
+                      <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#d4ff3f] rounded-full" />
+                      <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-[#d4ff3f]/20 rounded-full blur-[2px]" />
                     </span> App
                   </h3>
 
@@ -811,24 +986,11 @@ const AppChooser = ({ isOpen, onClose, upiParams }) => {
                       className="group flex flex-col items-center gap-2"
                     >
                       <div className="flex items-center gap-2 mb-1 py-3 px-6 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 transition-all">
-                        <QrCode className="w-3.5 h-3.5 text-[#75f2c6]" />
-                        <span className="text-[10px] font-black text-zinc-500 group-hover:text-[#75f2c6] tracking-[0.2em] uppercase transition-colors">
+                        <QrCode className="w-3.5 h-3.5 text-[#d4ff3f]" />
+                        <span className="text-[10px] font-black text-zinc-500 group-hover:text-[#d4ff3f] tracking-[0.2em] uppercase transition-colors">
                           Pay via QR Code
                         </span>
                       </div>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        copyToClipboard(PAYEE_VPA);
-                        toast.success("UPI ID Copied! Use it for manual payment.");
-                      }}
-                      className="group flex items-center gap-2.5 py-3 px-8 rounded-full bg-[#75f2c6]/10 border border-[#75f2c6]/20 hover:bg-[#75f2c6]/20 transition-all"
-                    >
-                      <Copy className="w-3.5 h-3.5 text-[#75f2c6]" />
-                      <span className="text-[11px] font-black text-[#75f2c6] tracking-[0.1em] uppercase">
-                        Copy UPI ID (Manual Fallback)
-                      </span>
                     </button>
                   </div>
                 </motion.div>
@@ -840,14 +1002,14 @@ const AppChooser = ({ isOpen, onClose, upiParams }) => {
                   exit={{ opacity: 0, x: -20 }}
                   className="flex flex-col items-center"
                 >
-                  <h3 className="text-3xl font-black text-white mb-10 text-center tracking-[-0.04em]">
-                    Scan <span className="text-[#75f2c6] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
+                  <h3 className="text-3xl text-white mb-10 text-center">
+                    Scan <span className="text-[#d4ff3f] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
                       QR Code
-                      <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#75f2c6] rounded-full" />
+                      <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#d4ff3f] rounded-full" />
                     </span>
                   </h3>
 
-                  <div className="relative group/qr p-6 rounded-[40px] bg-[#f8fcfb] border border-white/20 shadow-[0_30px_60px_rgba(117,242,198,0.15)] mb-10">
+                  <div className="relative group/qr p-6 rounded-[40px] bg-[#f8fcfb] border border-white/20 shadow-[0_30px_60px_rgba(212,255,63,0.15)] mb-10">
                     <QRCodeSVG
                       value={upiURI}
                       size={200}
@@ -878,7 +1040,7 @@ const AppChooser = ({ isOpen, onClose, upiParams }) => {
             <div className="flex items-center justify-center gap-3 mt-8 opacity-40 group">
               <img src={arcbyteLogo} alt="ArcByte" className="h-2.5 object-contain grayscale brightness-200" />
               <p className="text-[9px] text-white/80 leading-relaxed font-medium tracking-tight">
-                PROTOCOL NOTICE: Money will be debited from your linked bank account after proceeding with your selected application. ArcPay is a technology interface.
+                SYSTEM NOTICE: Money will be debited from your linked bank account after proceeding with your selected application. ArcPay is a payment tool.
               </p>
             </div>
           </motion.div>
@@ -915,11 +1077,11 @@ const ComingSoonSheet = ({ isOpen, onClose }) => {
               <img src={arcbyteLogo} alt="ArcByte" className="h-4 sm:h-5 opacity-90 object-contain" />
             </div>
 
-            <h3 className="text-3xl font-black text-white mb-6 text-center tracking-[-0.04em]">
-              Support <span className="text-[#75f2c6] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
+            <h3 className="text-3xl text-white mb-6 text-center">
+              Support <span className="text-[#d4ff3f] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
                 Coming Soon
-                <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#75f2c6] rounded-full" />
-                <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-[#75f2c6]/20 rounded-full blur-[2px]" />
+                <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#d4ff3f] rounded-full" />
+                <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-[#d4ff3f]/20 rounded-full blur-[2px]" />
               </span>
             </h3>
 
@@ -935,16 +1097,58 @@ const ComingSoonSheet = ({ isOpen, onClose }) => {
   );
 };
 
-const SecurityAlertSheet = ({ isOpen, onClose, type = 'tampered' }) => {
+const SecurityAlertSheet = ({
+  isOpen, onClose, type = 'tampered',
+  amount, name, txId, method, invoiceId, note, payerName, payerEmail, payerPhone
+}) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const { showStatus } = useNotification();
+
+  const handleDownloadInvoice = async () => {
+    setIsDownloading(true);
+    const loadingToast = showStatus({ 
+      type: 'loading', 
+      title: 'GENERATING', 
+      message: "Generating digital invoice..." 
+    });
+
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      const element = document.getElementById('arcpay-invoice-print');
+      if (!element) throw new Error("Capture template not initialized");
+
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        backgroundColor: '#000000',
+        useCORS: true
+      });
+
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'px',
+        format: [800, 1100]
+      });
+
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, 800, 1100);
+      pdf.save(`ArcPay_Invoice_${invoiceId || 'Settled'}.pdf`);
+      showStatus({ type: 'success', title: 'DOWNLOAD SUCCESS', message: 'Invoice downloaded!' });
+    } catch (err) {
+      console.error(err);
+      showStatus({ type: 'error', title: 'DOWNLOAD FAILURE', message: 'Download failed.' });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const config = {
     settled: {
-      color: 'text-[#75f2c6]',
-      bg: 'bg-[#75f2c6]',
-      border: 'border-[#75f2c6]/20',
+      color: 'text-[#d4ff3f]',
+      bg: 'bg-[#d4ff3f]',
+      border: 'border-[#d4ff3f]/20',
       shadow: 'shadow-[0_-40px_80px_rgba(117,242,198,0.2)]',
-      icon: <ShieldCheck className="w-6 h-6 text-[#75f2c6] drop-shadow-[0_0_10px_rgba(117,242,198,0.3)] stroke-[2.5]" />,
+      icon: <ShieldCheck className="w-6 h-6 text-[#d4ff3f] drop-shadow-[0_0_10px_rgba(117,242,198,0.3)] stroke-[2.5]" />,
       title: "Payment Settled",
-      description: "This payment specification has already been processed and settled. Link is officially expired to prevent duplicate transactions.",
+      description: "This payment has already been processed. Link is expired to prevent duplicate payments.",
       btnText: "SETTLED - DISMISS LINK"
     },
     missing: {
@@ -954,7 +1158,7 @@ const SecurityAlertSheet = ({ isOpen, onClose, type = 'tampered' }) => {
       shadow: 'shadow-[0_-40px_80px_rgba(245,158,11,0.2)]',
       icon: <AlertTriangle className="w-6 h-6 text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.3)] stroke-[2.5]" />,
       title: "Information Required",
-      description: "Detailed contact info (Email & Phone) is mandatory for Razorpay settlement. Please provide them to initiate the secure gateway.",
+      description: "Contact info (Email & Phone) is needed for payment. Please provide them to continue.",
       btnText: "I UNDERSTAND - PROVIDE INFO"
     },
     tampered: {
@@ -964,8 +1168,18 @@ const SecurityAlertSheet = ({ isOpen, onClose, type = 'tampered' }) => {
       shadow: 'shadow-[0_-40px_80px_rgba(153,27,27,0.3)]',
       icon: <ShieldCheck className="w-6 h-6 text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.3)] stroke-[2.5]" />,
       title: "Security Alert",
-      description: "An invalid or tampered payment link was detected. Our protocol has restricted access to protect your account integrity.",
+      description: "An invalid payment link was detected. Access is restricted to protect your account.",
       btnText: "SECURITY THREAT - CANCEL"
+    },
+    verifying: {
+      color: 'text-amber-400',
+      bg: 'bg-amber-400',
+      border: 'border-amber-400/20',
+      shadow: 'shadow-[0_-40px_80px_rgba(245,158,11,0.2)]',
+      icon: <Clock className="w-6 h-6 text-amber-400 drop-shadow-[0_0_10px_rgba(245,158,11,0.3)] animate-pulse" />,
+      title: "Audit Pending",
+      description: "Payment detected. We are currently checking this payment. Your funds are safe.",
+      btnText: "AUDIT IN PROGRESS - BACK"
     }
   };
 
@@ -1000,7 +1214,7 @@ const SecurityAlertSheet = ({ isOpen, onClose, type = 'tampered' }) => {
               <img src={arcbyteLogo} alt="ArcByte" className="h-4 sm:h-5 opacity-90 object-contain grayscale brightness-200" />
             </div>
 
-            <h3 className="text-3xl font-black text-white mb-6 text-center tracking-[-0.04em] leading-tight">
+            <h3 className="text-3xl font-black text-white mb-6 text-center tracking-[-0.04em] leading-tight italic-center-balance">
               {active.title.split(' ')[0]}{" "}
               <span className={cn(active.color, "relative inline-block")}>
                 {active.title.split(' ')[1]}
@@ -1012,10 +1226,27 @@ const SecurityAlertSheet = ({ isOpen, onClose, type = 'tampered' }) => {
               {active.description}
             </p>
 
-            <SlideToCancel 
-              onComplete={onClose} 
-              text={active.btnText} 
-            />
+            <div className="flex flex-col gap-4">
+              {type === 'settled' && (
+                <button
+                  onClick={handleDownloadInvoice}
+                  disabled={isDownloading}
+                  className="w-full py-4 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all flex items-center justify-center gap-3 group"
+                >
+                  {isDownloading ? (
+                    <div className="w-4 h-4 border-2 border-[#d4ff3f] border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4 text-[#d4ff3f] group-hover:-translate-y-1 transition-transform" />
+                  )}
+                  <span className="text-[11px] font-black text-zinc-300 uppercase tracking-[0.11em]">Download Record Invoice</span>
+                </button>
+              )}
+
+              <SlideToCancel
+                onComplete={onClose}
+                text={active.btnText}
+              />
+            </div>
           </motion.div>
         </>
       )}
@@ -1037,7 +1268,7 @@ const SlideToPay = ({ onComplete, text = "SLIDE TO PAY SECURELY", disabled = fal
     >
       {/* Track text */}
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <span className="text-zinc-500 font-black tracking-[0.2em] text-[10px] uppercase">
+        <span className="text-zinc-500 font-black tracking-[0.15em] text-[9px] uppercase">
           <CharacterFade text={text} x={x} disabled={disabled} />
         </span>
       </div>
@@ -1085,7 +1316,7 @@ const SlideToGenerate = ({ onComplete, disabled }) => {
     <div
       ref={containerRef}
       className={cn(
-        "relative w-full h-[64px] bg-[#75f2c6] rounded-full overflow-hidden flex items-center shadow-[0_0_30px_rgba(117,242,198,0.3)] mt-8 transition-all",
+        "relative w-full h-[64px] bg-[#d4ff3f] rounded-full overflow-hidden flex items-center shadow-[0_0_30px_rgba(117,242,198,0.3)] mt-8 transition-all",
         disabled && "opacity-50 grayscale cursor-not-allowed"
       )}
     >
@@ -1126,7 +1357,7 @@ const SlideToGenerate = ({ onComplete, disabled }) => {
           disabled ? "cursor-not-allowed opacity-50" : "cursor-grab active:cursor-grabbing shadow-[0_0_15px_rgba(10,10,12,0.5)]"
         )}
       >
-        <ArrowRight className="w-5 h-5 text-[#75f2c6] stroke-[3px]" />
+        <ArrowRight className="w-5 h-5 text-[#d4ff3f] stroke-[3px]" />
       </motion.div>
     </div>
   );
@@ -1141,7 +1372,7 @@ const SlideToCopy = ({ onComplete }) => {
     <div
       ref={containerRef}
       className={cn(
-        "relative w-full h-[64px] bg-[#75f2c6] rounded-full overflow-hidden flex items-center shadow-[0_0_30px_rgba(117,242,198,0.3)] mt-8"
+        "relative w-full h-[64px] bg-[#d4ff3f] rounded-full overflow-hidden flex items-center shadow-[0_0_30px_rgba(117,242,198,0.3)] mt-8"
       )}
     >
       <div className="absolute inset-0 flex flex-col items-center justify-center pl-8 pointer-events-none select-none">
@@ -1174,19 +1405,28 @@ const SlideToCopy = ({ onComplete }) => {
         }}
         className="absolute left-2 top-2 bottom-2 w-[48px] bg-[#0a0a0c] rounded-full flex items-center justify-center z-10 cursor-grab active:cursor-grabbing shadow-[0_0_15px_rgba(10,10,12,0.5)]"
       >
-        <ArrowRight className="w-5 h-5 text-[#75f2c6] stroke-[3px]" />
+        <ArrowRight className="w-5 h-5 text-[#d4ff3f] stroke-[3px]" />
       </motion.div>
     </div>
   );
 };
 
 const LinkGeneratedSheet = ({ isOpen, onClose, link }) => {
+  const { showStatus } = useNotification();
   const handleCopy = async () => {
     const success = await copyToClipboard(link);
     if (success) {
-      toast.success('Link copied to clipboard!');
+      showStatus({ 
+        type: 'success', 
+        title: 'LINK SECURED', 
+        message: 'Unique payment link has been synced to your clipboard.' 
+      });
     } else {
-      toast.error('Failed to copy. Please copy manually.');
+      showStatus({ 
+        type: 'error', 
+        title: 'ERROR', 
+        message: 'Unable to copy. Please manually select the secure string.' 
+      });
     }
 
     // Auto-close after a small delay for feedback
@@ -1221,18 +1461,18 @@ const LinkGeneratedSheet = ({ isOpen, onClose, link }) => {
               <img src={arcbyteLogo} alt="ArcByte" className="h-4 sm:h-5 opacity-90 object-contain" />
             </div>
 
-            <h3 className="text-3xl font-black text-white mb-6 text-center tracking-[-0.04em]">
-              Link <span className="text-[#75f2c6] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
+            <h3 className="text-3xl text-white mb-6 text-center">
+              Link <span className="text-[#d4ff3f] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
                 Generated
-                <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#75f2c6] rounded-full" />
-                <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-[#75f2c6]/20 rounded-full blur-[2px]" />
+                <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#d4ff3f] rounded-full" />
+                <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-[#d4ff3f]/20 rounded-full blur-[2px]" />
               </span>
             </h3>
 
             <div className="w-full bg-[#151518] border border-white/5 rounded-2xl p-4 mb-8 flex items-center justify-between overflow-hidden">
               <p className="text-zinc-400 text-sm truncate font-medium flex-1 mr-4">{link}</p>
               <div className="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center border border-white/10">
-                <QrCode className="w-4 h-4 text-[#75f2c6]" />
+                <QrCode className="w-4 h-4 text-[#d4ff3f]" />
               </div>
             </div>
 
@@ -1273,7 +1513,7 @@ const InspectionRestrictedSheet = ({ isOpen, onClose }) => {
               <img src={arcbyteLogo} alt="ArcByte" className="h-5 opacity-40 grayscale brightness-200" />
             </div>
 
-            <h3 className="text-3xl font-black text-white mb-6 text-center tracking-[-0.04em] leading-tight">
+            <h3 className="text-3xl text-white mb-6 text-center">
               Action <span className="text-red-500 relative inline-block">
                 Restricted
                 <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-red-500/30 rounded-full blur-[2px]" />
@@ -1281,7 +1521,7 @@ const InspectionRestrictedSheet = ({ isOpen, onClose }) => {
             </h3>
 
             <p className="text-zinc-500 text-center font-bold uppercase tracking-[0.15em] text-[8px] leading-relaxed max-w-xs mx-auto mb-10">
-              Security Protocol Active. Core inspection and source visualization are restricted to protect interface integrity and transaction metadata.
+              Security Settings Active. Right-click and viewing source are disabled to keep your payment safe.
             </p>
 
             <SlideToCancel onComplete={onClose} />
@@ -1300,13 +1540,14 @@ const CreatorView = ({
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start pt-10">
       <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6 }} className="flex flex-col">
-        <h1 className="text-5xl sm:text-6xl font-black leading-[1.05] tracking-[-0.03em] mb-6 drop-shadow-sm text-white">
-          Configure Payment<br />
-          <span className="text-[#75f2c6]">Specifications</span><br />
-        </h1>
-        <p className="text-zinc-400 text-lg max-w-[420px] mb-12 font-medium leading-relaxed">
-          Specify exact transaction parameters to facilitate a professional and highly-verified settlement process.
-        </p>
+        <div className="space-y-2 mb-12">
+            <h1 className="text-4xl font-black italic uppercase tracking-tighter text-white">
+              Set Payment <span className="text-[#d4ff3f] drop-shadow-[0_0_15px_rgba(212,255,63,0.3)]">Details</span>
+            </h1>
+            <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] max-w-md leading-relaxed">
+              Enter the payment details below for a professional and safe checkout process.
+            </p>
+          </div>
 
         <div className="space-y-6 max-w-md">
           <PaymentMethodSelector method={paymentMethod} onChange={setPaymentMethod} />
@@ -1315,10 +1556,10 @@ const CreatorView = ({
           <div className="pt-4 pb-10 border-b border-white/[0.03] space-y-4">
             <div className="flex items-center gap-2 mb-2 px-1">
               <Wallet className="w-3.5 h-3.5 text-zinc-600" />
-              <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Amount Specification (INR)</p>
+                <label className="text-[9px] font-black uppercase tracking-[0.3em] text-[#d4ff3f]">Payment Amount (INR)</label>
             </div>
             <div className="flex items-center gap-4 px-1">
-              <span className="text-[#75f2c6] text-4xl font-black drop-shadow-[0_0_15px_rgba(117,242,198,0.2)]">₹</span>
+              <span className="text-[#d4ff3f] text-4xl font-black drop-shadow-[0_0_15px_rgba(117,242,198,0.2)]">₹</span>
               <input
                 type="text"
                 inputMode="numeric"
@@ -1344,14 +1585,14 @@ const CreatorView = ({
               </div>
               <div className="relative group">
                 <div className="absolute left-1 top-1/2 -translate-y-1/2">
-                  <ShieldCheck className="w-5 h-5 text-[#75f2c6] drop-shadow-[0_0_10px_rgba(117,242,198,0.4)]" />
+                  <ShieldCheck className="w-5 h-5 text-[#d4ff3f] drop-shadow-[0_0_10px_rgba(117,242,198,0.4)]" />
                 </div>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => handleNameChange(e.target.value)}
                   placeholder="Merchant branding name"
-                  className="w-full bg-transparent border-b border-white/5 focus:border-[#75f2c6]/50 py-2 pl-8 outline-none text-white font-black text-lg tracking-tight placeholder:text-zinc-800 transition-all font-sans"
+                  className="w-full bg-transparent border-b border-white/5 focus:border-[#d4ff3f]/50 py-2 pl-8 outline-none text-white font-black text-lg tracking-tight placeholder:text-zinc-800 transition-all font-sans"
                 />
               </div>
             </div>
@@ -1366,7 +1607,7 @@ const CreatorView = ({
                 value={payerName}
                 onChange={(e) => handlePayerNameChange(e.target.value)}
                 placeholder="Enter payer's full name"
-                className="w-full bg-transparent border-b border-white/5 focus:border-[#75f2c6]/50 py-2 outline-none text-white font-black text-lg tracking-tight placeholder:text-zinc-800 transition-all font-sans"
+                className="w-full bg-transparent border-b border-white/5 focus:border-[#d4ff3f]/50 py-2 outline-none text-white font-black text-lg tracking-tight placeholder:text-zinc-800 transition-all font-sans"
               />
             </div>
 
@@ -1380,7 +1621,7 @@ const CreatorView = ({
                 value={note}
                 onChange={(e) => handleNoteChange(e.target.value)}
                 placeholder="Payment details (e.g. Invoice #123)"
-                className="w-full bg-transparent border-b border-white/5 focus:border-[#75f2c6]/50 py-2 outline-none text-white font-black text-lg tracking-tight placeholder:text-zinc-800 transition-all font-sans"
+                className="w-full bg-transparent border-b border-white/5 focus:border-[#d4ff3f]/50 py-2 outline-none text-white font-black text-lg tracking-tight placeholder:text-zinc-800 transition-all font-sans"
               />
             </div>
           </div>
@@ -1403,26 +1644,26 @@ const CreatorView = ({
               <div className="w-[1px] h-3.5 shadow-[0.5px_0_0_rgba(255,255,255,0.3)] mx-1"></div>
               <img src={arcbyteLogo} alt="ArcByte" className="h-3.5 opacity-100 object-contain" />
             </div>
-            <Wallet className="w-5 h-5 text-[#75f2c6]/60" />
+            <Wallet className="w-5 h-5 text-[#d4ff3f]/60" />
           </div>
 
           <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">To Receiver</div>
           <div className="text-white font-bold text-2xl tracking-tight mb-8 leading-tight">{name || "Anonymous Client"}</div>
 
           <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">From Payer</div>
-          <div className="text-[#75f2c6] font-bold text-2xl tracking-tight mb-8 leading-tight">{payerName || "Valued Payer"}</div>
+          <div className="text-[#d4ff3f] font-bold text-2xl tracking-tight mb-8 leading-tight">{payerName || "Valued Payer"}</div>
 
           <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider mb-2">Requesting</div>
-          <div className="text-[#75f2c6] font-black text-5xl tracking-tighter mb-10 drop-shadow-[0_0_15px_rgba(117,242,198,0.2)] leading-none">
-            <span className="text-[#75f2c6]/60 text-3xl mr-1 self-center">₹</span>
+          <div className="text-[#d4ff3f] font-black text-5xl tracking-tighter mb-10 drop-shadow-[0_0_15px_rgba(117,242,198,0.2)] leading-none">
+            <span className="text-[#d4ff3f]/60 text-3xl mr-1 self-center">₹</span>
             {amount ? new Intl.NumberFormat('en-IN').format(Number(amount)) + '\u00A0/-' : "0.00\u00A0/-"}
           </div>
 
           <div className="mt-auto pt-6 border-t border-white/10 flex justify-between items-center">
             <div>
               <div className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider mb-1">Status</div>
-              <div className="flex items-center gap-2 text-[#75f2c6] font-semibold text-sm">
-                <div className="w-2 h-2 rounded-full bg-[#75f2c6] animate-pulse"></div> Active
+              <div className="flex items-center gap-2 text-[#d4ff3f] font-semibold text-sm">
+                <div className="w-2 h-2 rounded-full bg-[#d4ff3f] animate-pulse"></div> Active
               </div>
             </div>
 
@@ -1454,29 +1695,29 @@ const PayerView = ({
   return (
     <div className="flex flex-col lg:flex-row items-start justify-center gap-20">
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.8 }} className="flex flex-col z-10 w-full lg:w-1/2">
-        <h2 className="text-5xl font-black text-white tracking-[-0.04em] leading-[1.1] mb-6">
+        <h2 className="text-4xl sm:text-5xl text-white mb-6">
           Complete your<br />
-          <span className="text-[#75f2c6]">Payment</span><br />
+          <span className="text-[#d4ff3f]">Payment</span><br />
           Securely
         </h2>
-        <p className="text-zinc-400 text-sm font-medium leading-relaxed max-w-[280px] mb-8">
-          Verify the transaction parameters below. Utilize the verification cipher or select standard authorization to initiate settlement via your service provider's native interface.
-        </p>
+        <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] max-w-md leading-relaxed mb-12">
+              Check the payment details below. Use the security code or choose a payment app to finish your payment.
+            </p>
         <div className="mb-10 sm:mb-12 relative group/settlement">
-          <p className="text-[10px] font-black uppercase tracking-[0.25em] text-zinc-500 mb-4 ml-1">Settlement Mode</p>
+            <div className="text-[9px] font-black uppercase tracking-[0.3em] text-[#d4ff3f] mb-4">Payment Method</div>
           <div className="flex items-center gap-4 bg-white/[0.02] border border-white/[0.05] rounded-2xl p-4 pr-6 backdrop-blur-sm transition-all duration-500 hover:bg-white/[0.04] hover:border-white/[0.1] shadow-2xl relative overflow-hidden">
             {/* Background Glow */}
-            <div className="absolute -top-10 -left-10 w-20 h-20 bg-[#75f2c6]/5 blur-3xl rounded-full" />
+            <div className="absolute -top-10 -left-10 w-20 h-20 bg-[#d4ff3f]/5 blur-3xl rounded-full" />
 
             {paymentMethod === 'upi' ? (
               <>
                 <div className="relative">
                   <img src={upiLogo} alt="UPI" className="h-5 w-auto relative z-10" />
-                  <div className="absolute inset-0 bg-[#75f2c6]/20 blur-lg rounded-full opacity-0 group-hover/settlement:opacity-100 transition-opacity duration-500" />
+                  <div className="absolute inset-0 bg-[#d4ff3f]/20 blur-lg rounded-full opacity-0 group-hover/settlement:opacity-100 transition-opacity duration-500" />
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-black text-white tracking-tight uppercase leading-none">UPI</h3>
+                    <h3 className="text-xl text-white uppercase">UPI</h3>
                   </div>
                   <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Unified Payments Interface</p>
                 </div>
@@ -1488,7 +1729,7 @@ const PayerView = ({
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-black text-white tracking-tight leading-none">RazorPay</h3>
+                    <h3 className="text-xl text-white">RazorPay</h3>
                   </div>
                   <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Secure Card/Netbanking</p>
                 </div>
@@ -1498,13 +1739,13 @@ const PayerView = ({
                 <Landmark className="w-5 h-5 text-amber-500/80 mr-3 shrink-0" />
                 <div className="flex flex-col gap-0.5">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-xl font-black text-white tracking-tight leading-none">Bank Transfer</h3>
+                    <h3 className="text-xl text-white">Bank Transfer</h3>
                   </div>
                   <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">IMPS/NEFT/RTGS</p>
                 </div>
               </>
             )}
-            <ShieldCheck className="w-6 h-6 text-[#75f2c6] animate-pulse ml-auto opacity-90 drop-shadow-[0_0_12px_rgba(117,242,198,0.4)]" />
+            <ShieldCheck className="w-6 h-6 text-[#d4ff3f] animate-pulse ml-auto opacity-90 drop-shadow-[0_0_12px_rgba(117,242,198,0.4)]" />
           </div>
         </div>
 
@@ -1522,11 +1763,11 @@ const PayerView = ({
             </div>
 
             <div className="flex items-center gap-5">
-              <ShieldCheck className="w-6 h-6 text-[#75f2c6]" />
+              <ShieldCheck className="w-6 h-6 text-[#d4ff3f]" />
               <div>
                 <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">Payer Name</p>
                 <div className="flex items-baseline gap-2">
-                  <p className="text-[#75f2c6] text-lg font-black tracking-tight">{payerName || "Valued Payer"}</p>
+                  <p className="text-[#d4ff3f] text-lg font-black tracking-tight">{payerName || "Valued Payer"}</p>
                   <span className="text-white/20 text-[10px] font-mono tracking-widest">{invoiceId || "#AP-XXXX"}</span>
                 </div>
               </div>
@@ -1542,19 +1783,19 @@ const PayerView = ({
 
         {/* RazorPay Specific Data Collection */}
         {paymentMethod === 'razorpay' && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="space-y-6 mb-12 max-w-sm"
           >
             <div className="h-px w-full bg-white/[0.03] mb-8" />
-            
+
             <div className="space-y-2">
               <div className="px-1">
                 <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Payer Contact Details</p>
                 <div className="space-y-1">
                   <div className="relative group py-4 border-b border-white/[0.03]">
-                    <div className="absolute left-1 top-1/2 -translate-y-1/2 text-zinc-600 transition-colors group-focus-within:text-[#75f2c6]">
+                    <div className="absolute left-1 top-1/2 -translate-y-1/2 text-zinc-600 transition-colors group-focus-within:text-[#d4ff3f]">
                       <span className="text-sm font-black">@</span>
                     </div>
                     <input
@@ -1566,7 +1807,7 @@ const PayerView = ({
                     />
                   </div>
                   <div className="relative group py-4 border-b border-white/[0.03]">
-                    <div className="absolute left-1 top-1/2 -translate-y-1/2 text-zinc-600 transition-colors group-focus-within:text-[#75f2c6]">
+                    <div className="absolute left-1 top-1/2 -translate-y-1/2 text-zinc-600 transition-colors group-focus-within:text-[#d4ff3f]">
                       <Smartphone className="w-4 h-4" />
                     </div>
                     <input
@@ -1596,17 +1837,17 @@ const PayerView = ({
                 </span>
               </div>
               <div className="flex items-baseline gap-2 mt-2 mb-10">
-                <span className="text-[#75f2c6]/60 text-4xl">₹</span>
+                <span className="text-[#d4ff3f]/60 text-4xl">₹</span>
                 <span className="text-white font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.1)]">
                   {amount ? new Intl.NumberFormat('en-IN').format(Number(amount)) + '\u00A0/-' : "0.00\u00A0/-"}
                 </span>
               </div>
 
               <div className="flex items-start gap-3 pt-8 border-t border-white/[0.04] mt-auto">
-                <ShieldCheck className="w-3.5 h-3.5 text-[#75f2c6] mt-0.5 shrink-0" />
-                <p className="text-[8px] text-zinc-500 leading-relaxed font-bold uppercase tracking-[0.15em]">
-                  <span className="text-zinc-400">SECURITY DISCLAIMER:</span> This is a verified settlement interface. ArcPay facilitates high-fidelity peer-to-peer technology.
-                </p>
+                <ShieldCheck className="w-3.5 h-3.5 text-[#d4ff3f] mt-0.5 shrink-0" />
+                <p className="text-[9px] leading-relaxed font-bold uppercase tracking-widest text-zinc-600">
+              SECURITY NOTICE: This is a safe payment page. ArcPay helps you make direct payments easily.
+            </p>
               </div>
             </div>
           </div>
@@ -1654,8 +1895,8 @@ const PayerView = ({
                 </span>
               </div>
               <div className="flex items-baseline gap-2 mt-2 mb-8">
-                <span className="text-[#75f2c6]/60 text-4xl">₹</span>
-                <span className="text-[#75f2c6] font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
+                <span className="text-[#d4ff3f]/60 text-4xl">₹</span>
+                <span className="text-[#d4ff3f] font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
                   {amount ? new Intl.NumberFormat('en-IN').format(Number(amount)) + '\u00A0/-' : "0.00\u00A0/-"}
                 </span>
               </div>
@@ -1663,7 +1904,7 @@ const PayerView = ({
               <div className="flex items-start gap-2.5 pt-6 border-t border-white/[0.05] mt-auto">
                 <ShieldCheck className="w-3 h-3 text-zinc-500 mt-0.5 shrink-0" />
                 <p className="text-[9px] text-zinc-500 leading-relaxed font-bold uppercase tracking-wider">
-                  <span className="text-zinc-400">SECURITY DISCLAIMER:</span> This is a verified settlement interface. ArcPay is a technology interface.
+                  <span className="text-zinc-400">SECURITY NOTICE:</span> This is a safe payment page. ArcPay helps you make direct payments easily.
                 </p>
               </div>
             </div>
@@ -1711,8 +1952,8 @@ const PayerView = ({
                       Paying Amount
                     </span>
                     <div className="flex items-baseline gap-2 mt-2 mb-10">
-                      <span className="text-[#75f2c6]/60 text-4xl">₹</span>
-                      <span className="text-[#75f2c6] font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
+                      <span className="text-[#d4ff3f]/60 text-4xl">₹</span>
+                      <span className="text-[#d4ff3f] font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
                         {amount ? new Intl.NumberFormat('en-IN').format(Number(amount)) + '\u00A0/-' : "0.00\u00A0/-"}
                       </span>
                     </div>
@@ -1720,7 +1961,7 @@ const PayerView = ({
                     <div className="flex items-start gap-2.5 pt-6 border-t border-white/[0.05] mt-auto">
                       <ShieldCheck className="w-3 h-3 text-zinc-500 mt-0.5 shrink-0" />
                       <p className="text-[9px] leading-relaxed font-bold uppercase tracking-wider text-zinc-500">
-                        <span className="text-zinc-400">SECURITY DISCLAIMER:</span> This is a verified settlement interface. ArcPay is a technology interface.
+                        <span className="text-zinc-400">SECURITY NOTICE:</span> This is a safe payment page. ArcPay helps you make direct payments easily.
                       </p>
                     </div>
                   </div>
@@ -1755,18 +1996,18 @@ const PayerView = ({
                     <motion.div
                       animate={{ top: ['10%', '90%', '10%'] }}
                       transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                      className="absolute left-6 right-6 h-[1px] bg-gradient-to-r from-transparent via-[#75f2c6] to-transparent z-20 opacity-40 shadow-[0_0_8px_rgba(117,242,198,0.5)]"
+                      className="absolute left-6 right-6 h-[1px] bg-gradient-to-r from-transparent via-[#d4ff3f] to-transparent z-20 opacity-40 shadow-[0_0_8px_rgba(117,242,198,0.5)]"
                     />
 
                     {/* Corner Accents */}
-                    <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#75f2c6]/20 rounded-tl-[40px]" />
-                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#75f2c6]/20 rounded-br-[40px]" />
+                    <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#d4ff3f]/20 rounded-tl-[40px]" />
+                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#d4ff3f]/20 rounded-br-[40px]" />
                   </div>
 
                   <div className="flex flex-col items-center gap-3 opacity-40 px-4">
-                    <ShieldCheck className="w-3.5 h-3.5 text-[#75f2c6] shrink-0" />
+                    <ShieldCheck className="w-3.5 h-3.5 text-[#d4ff3f] shrink-0" />
                     <p className="text-[9px] leading-relaxed font-bold uppercase tracking-[0.15em] text-zinc-500 text-center">
-                      <span className="text-zinc-400">SECURITY PROTOCOL:</span> ARCPAY IS A TECHNOLOGY INTERFACE FACILITATING HIGH-FIDELITY P2P SETTLEMENTS.
+                      <span className="text-zinc-400">SECURITY NOTICE:</span> ARCPAY IS A TECHNOLOGY TOOL FACILITATING DIRECT PAYMENTS.
                     </p>
                   </div>
                 </>
@@ -1776,9 +2017,9 @@ const PayerView = ({
                     <div className="w-24 h-24 rounded-[32px] bg-[#0c0c0e] border border-white/[0.05] flex items-center justify-center mb-8 shadow-[0_20px_40px_rgba(0,0,0,0.3)]">
                       <img src={razorpayLogo} alt="RazorPay" className="w-12 h-auto object-contain" />
                     </div>
-                    <h4 className="text-2xl font-black text-white mb-4 tracking-tight">RazorPay Gateway</h4>
+                    <h4 className="text-2xl text-white mb-4">RazorPay Gateway</h4>
                     <p className="text-zinc-500 text-[10px] font-bold text-center max-w-[220px] leading-relaxed tracking-wider">
-                      Instant settlement via Secure Card, Netbanking or UPI through RazorPay.
+                      Instant payment via Secure Card, Netbanking or UPI through RazorPay.
                     </p>
                   </div>
                   <div className="w-full mt-auto">
@@ -1797,39 +2038,39 @@ const PayerView = ({
           className="flex flex-col w-full max-w-[380px] pl-4"
         >
           <div className="flex items-center gap-3 mb-8">
-            <div className="w-8 h-[1px] bg-[#75f2c6]/30"></div>
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#75f2c6]/80">
-              Payment Protocols & Terms
+            <div className="w-8 h-[1px] bg-[#d4ff3f]/30"></div>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#d4ff3f]/80">
+              Payment Rules
             </span>
           </div>
 
           <div className="space-y-10">
             <div className="flex items-start gap-6 group/term">
-              <ShieldCheck className="w-5 h-5 text-[#75f2c6] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
-              <p className="text-[10px] leading-[1.8] font-bold text-zinc-500 uppercase tracking-widest">
-                <span className="text-zinc-400">P2P SETTLEMENT:</span> TRANSACTIONS ARE DIRECT PEER-TO-PEER SETTLEMENTS. ONCE LOGGED, PARAMETERS ARE IMMUTABLE FOR INTEGRITY.
-              </p>
+              <ShieldCheck className="w-5 h-5 text-[#d4ff3f] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
+                <div className="col-span-8 text-white font-mono text-[10px] tracking-widest uppercase">
+                  DIRECT PAYMENT: PAYMENTS ARE MADE DIRECTLY TO THE RECEIVER. ONCE LOGGED, DETAILS CANNOT BE CHANGED FOR SECURITY.
+                </div>
             </div>
 
             <div className="flex items-start gap-6 group/term">
-              <Clock className="w-5 h-5 text-[#75f2c6] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
-              <p className="text-[10px] leading-[1.8] font-bold text-zinc-500 uppercase tracking-widest">
-                <span className="text-zinc-400">VERIFICATION WINDOW:</span> HIGH-FIDELITY VERIFICATION IS CONDUCTED WITHIN AN 8-12 HOUR OPERATIONAL WINDOW.
-              </p>
+              <Clock className="w-5 h-5 text-[#d4ff3f] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
+                <div className="col-span-8 text-white font-mono text-[10px] tracking-widest uppercase">
+                  VERIFICATION TIME: PAYMENTS ARE CHECKED AND VERIFIED WITHIN AN 8-12 HOUR TIME FRAME.
+                </div>
             </div>
 
             <div className="flex items-start gap-6 group/term">
-              <User className="w-5 h-5 text-[#75f2c6] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
-              <p className="text-[10px] leading-[1.8] font-bold text-zinc-500 uppercase tracking-widest">
-                <span className="text-zinc-400">IDENTIFIER INTEGRITY:</span> ENSURE THE PAYOR NAME MATCHES BANK RECORDS TO FACILITATE AUTOMATED RECONCILIATION.
-              </p>
+              <User className="w-5 h-5 text-[#d4ff3f] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
+                <div className="col-span-8 text-white font-mono text-[10px] tracking-widest uppercase">
+                  NAME MATCH: MAKE SURE THE SENDER NAME MATCHES BANK RECORDS FOR QUICK SETUP AND SECURITY.
+                </div>
             </div>
 
             <div className="flex items-start gap-6 group/term">
-              <Info className="w-5 h-5 text-[#75f2c6] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
-              <p className="text-[10px] leading-[1.8] font-bold text-zinc-500 uppercase tracking-widest">
-                <span className="text-zinc-400">TECHNOLOGY NOTICE:</span> ARCPAY IS A TECHNOLOGY INTERFACE AND DOES NOT HOLD, ESCROW, OR MANAGE USER FUNDS DIRECTLY.
-              </p>
+              <Info className="w-5 h-5 text-[#d4ff3f] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
+                <div className="col-span-8 text-white font-mono text-[10px] tracking-widest uppercase">
+                  SYSTEM NOTICE: ARCPAY IS A TECHNOLOGY TOOL AND DOES NOT HOLD OR MANAGE YOUR MONEY DIRECTLY.
+                </div>
             </div>
           </div>
         </motion.div>
@@ -1842,6 +2083,33 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const [amount, setAmount] = useState('');
+  const { showStatus } = useNotification();
+
+  // Global Access Block Enforcer: Mount-time security check
+  useEffect(() => {
+    const checkSecurityStatus = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/public/settings`);
+        const data = await response.json();
+        
+        if (data.isArcPayBlocked) {
+          showStatus({
+            type: 'error',
+            title: 'ACCESS BLOCKED',
+            message: 'Access to ArcPay has been Blocked'
+          });
+          // Small delay to ensure the status sheet is seen before redirect
+          setTimeout(() => {
+            navigate('/', { replace: true });
+          }, 100);
+        }
+      } catch (err) {
+        console.error("Security sync failed");
+      }
+    };
+    
+    checkSecurityStatus();
+  }, [navigate, showStatus]);
 
   // Security Layer: Protect merchant configuration terminal
   useEffect(() => {
@@ -1876,20 +2144,32 @@ export default function Dashboard() {
   const [payerPhone, setPayerPhone] = useState('');
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
-  const handleBankConfirm = (id, img) => {
+  const handleBankConfirm = async (id, img) => {
     // Mark link as spent for security
     const settledInvoices = JSON.parse(localStorage.getItem('arcpay_settled_invoices') || '[]');
     if (invoiceId && !settledInvoices.includes(invoiceId)) {
       localStorage.setItem('arcpay_settled_invoices', JSON.stringify([...settledInvoices, invoiceId]));
     }
 
+    // Update persistence status
+    const searchParams = new URLSearchParams(window.location.search);
+    const payId = searchParams.get('pay_id');
+    if (payId) {
+      const decoded = verifyPayload(payId);
+      const targetId = decoded?.lid || payId; // Use LID if available, fallback to payId for older structures
+      
+      await fetch(`${BACKEND_URL}/api/links/settle/${targetId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ txId: id })
+      }).catch(err => console.error("Settlement sync failed", err));
+    }
+
     setTxId(id);
     setScreenshot(img);
     setShowBankSheet(false);
     setIsSubmitted(true);
-    toast.success("Transaction Logged Successfully", {
-      className: "!bg-zinc-900 !border-zinc-800 !text-[#75f2c6]"
-    });
+    showStatus({ type: 'success', title: 'LOG SUCCESS', message: 'Transaction Logged Successfully' });
   };
 
   // Security Checks
@@ -1923,7 +2203,7 @@ export default function Dashboard() {
       if (start && Date.now() - parseInt(start) > 30 * 60 * 1000) { // 30 mins
         sessionStorage.clear();
         navigate('/', { replace: true });
-        toast.error('Session Expired for Security');
+        showStatus({ type: 'error', title: 'SESSION EXPIRED', message: 'Session Expired for Security' });
       }
     }, 60000); // Check every minute
 
@@ -1979,8 +2259,28 @@ export default function Dashboard() {
         if (decoded.iid && settledInvoices.includes(decoded.iid)) {
           setAlertType('settled');
           setShowSecurityAlert(true);
-          setTimeout(() => navigate('/', { replace: true }), 10000);
           return;
+        }
+
+        // Check database for real-time status (Invalidation support)
+        if (decoded.lid) {
+          fetch(`${BACKEND_URL}/api/links/${decoded.lid}/verify`)
+            .then(res => res.json())
+            .then(data => {
+              if (data.status === 'INVALID') {
+                setAlertType('tampered');
+                setShowSecurityAlert(true);
+              } else if (data.status === 'SETTLED') {
+                setAlertType('settled');
+                setShowSecurityAlert(true);
+              } else if (data.status === 'SUBMITTED') {
+                setAlertType('verifying');
+                setShowSecurityAlert(true);
+              } else {
+                setShowSecurityAlert(false); // SAFETY: Explicitly hide alert if revalidated
+              }
+            })
+            .catch(err => console.error("Persistence check failed", err));
         }
 
         if (decoded.a) setAmount(decoded.a);
@@ -2018,13 +2318,19 @@ export default function Dashboard() {
 
   const handleRazorpayPayment = async () => {
     if (!window.Razorpay) {
-      toast.error("Razorpay SDK not loaded. Please check your connection.");
+      showStatus({ 
+        type: 'error', 
+        title: 'GATEWAY OFFLINE', 
+        message: "Razorpay secure verification failed. Check your network." 
+      });
       return;
     }
 
     setIsCreatingOrder(true);
-    const loadingToast = toast.loading("Securing Order with Razorpay Gateway...", {
-      className: "!bg-zinc-900 !border-white/5 !text-white font-bold"
+    showStatus({ 
+      type: 'loading', 
+      title: 'ORDER INITIATION', 
+      message: "Securing transaction with encrypted gateway..." 
     });
 
     try {
@@ -2054,29 +2360,41 @@ export default function Dashboard() {
       }
 
       const orderData = await orderResponse.json();
-      
+
       if (!orderData.success || !orderData.order_id) {
         throw new Error('Invalid order response from gateway');
       }
 
-      toast.dismiss(loadingToast);
-
       const options = {
         key: RAZORPAY_KEY,
-        amount: orderData.amount, 
+        amount: orderData.amount,
         currency: orderData.currency,
         order_id: orderData.order_id, // CRITICAL: This enables instant capture
         name: name || "ArcPay",
         description: note || "Professional Payment Settlement",
         image: razorpayPopupLogo,
-        handler: function (response) {
+        handler: async function (response) {
           // Mark link as spent for security
           const settledInvoices = JSON.parse(localStorage.getItem('arcpay_settled_invoices') || '[]');
           if (invoiceId && !settledInvoices.includes(invoiceId)) {
             localStorage.setItem('arcpay_settled_invoices', JSON.stringify([...settledInvoices, invoiceId]));
           }
 
+          const searchParams = new URLSearchParams(window.location.search);
+          const payId = searchParams.get('pay_id');
+          const decoded = payId ? verifyPayload(payId) : null;
+          const targetId = decoded?.lid || payId;
+
           setTxId(response.razorpay_payment_id || response.razorpay_order_id);
+          // Update persistence status
+          if (targetId) {
+            await fetch(`${BACKEND_URL}/api/links/settle/${targetId}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ txId: response.razorpay_payment_id })
+            });
+          }
+
           setIsSubmitted(true);
         },
         prefill: {
@@ -2097,16 +2415,19 @@ export default function Dashboard() {
 
       const rzp1 = new window.Razorpay(options);
       rzp1.on('payment.failed', function (response) {
-        toast.error(`Payment Failed: ${response.error.description}`, {
-          className: "!bg-zinc-900 !border-red-900 !text-red-400"
+        showStatus({ 
+          type: 'error', 
+          title: 'PAYMENT FAILURE', 
+          message: response.error.description 
         });
       });
       rzp1.open();
     } catch (err) {
       console.error('Order Creation Error:', err);
-      toast.error(err.message || "Failed to secure transaction", {
-        id: loadingToast,
-        className: "!bg-zinc-900 !border-red-900 !text-red-400"
+      showStatus({ 
+        type: 'error', 
+        title: 'SECURITY VIOLATION', 
+        message: err.message || "Failed to secure transaction" 
       });
     } finally {
       setIsCreatingOrder(false);
@@ -2132,26 +2453,40 @@ export default function Dashboard() {
       }
     } else {
       const newInvoiceId = `AP-${Math.random().toString(36).substring(2, 6).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
+      const newLinkId = Math.random().toString(36).substring(2, 15);
       setInvoiceId(newInvoiceId);
 
-      const payload = signPayload({ a: amount, n: note, nm: name, p: payerName, iid: newInvoiceId, m: paymentMethod });
+      const payload = signPayload({ a: amount, n: note, nm: name, p: payerName, iid: newInvoiceId, m: paymentMethod, lid: newLinkId });
       const baseUrl = window.location.origin + window.location.pathname;
       const shareableUrl = `${baseUrl}?pay_id=${payload}`;
 
       setGeneratedLink(shareableUrl);
       copyToClipboard(shareableUrl);
 
+      // Register link for Dashboard tracking
+      fetch(`${BACKEND_URL}/api/links/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          linkId: newLinkId,
+          amount: Number(amount),
+          name: name,
+          payerName: payerName,
+          note: note,
+          invoiceId: newInvoiceId,
+          paymentMethod: paymentMethod,
+          fullUrl: shareableUrl // Send the signed payload URL for storage
+        })
+      }).catch(err => console.error("Link tracking failed", err));
+
       // Mobile Success Sheet vs Desktop Toast
       if (window.innerWidth < 1024) {
         setShowSuccessSheet(true);
       } else {
-        toast('Your unique payment link is copied!', {
-          icon: (
-            <div className="w-[22px] h-[22px] bg-[white] rounded-full flex items-center justify-center shrink-0">
-              <Check className="w-3.5 h-3.5 text-black" strokeWidth={3.5} />
-            </div>
-          ),
-          className: "!bg-[#050505] !border !border-white/[0.08] !text-white font-bold text-[14px] !rounded-[12px] !shadow-[0_10px_40px_rgba(0,0,0,0.8)] !gap-3 !p-4"
+        showStatus({ 
+          type: 'success', 
+          title: 'LINK GENERATED', 
+          message: "Secure payment terminal hash copied to your clipboard." 
         });
       }
     }
@@ -2187,16 +2522,19 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-black p-0 sm:p-4 md:p-6 lg:p-8 font-sans antialiased text-white selection:bg-[#75f2c6]/30">
+    <div className="min-h-screen bg-black p-0 sm:p-4 md:p-6 lg:p-8 font-sans antialiased text-white selection:bg-[#d4ff3f]/30">
       <SEO
         title={isLocked ? `Pay ₹${new Intl.NumberFormat('en-IN').format(Number(amount))} to ${name || PAYEE_NAME}` : "Create Professional Payment Link"}
         description={isLocked ? `Securely complete your payment of ₹${new Intl.NumberFormat('en-IN').format(Number(amount))} to ${name || PAYEE_NAME} via ArcPay instant settlement.` : undefined}
       />
-      <Toaster theme="dark" position="top-center" />
       <div className="max-w-[1400px] mx-auto rounded-none sm:rounded-[40px] overflow-hidden shadow-2xl relative min-h-screen sm:min-h-[90vh] bg-[#0a0a0c] px-4 sm:px-8 pt-6 pb-10">
         {isSubmitted ? (
           <div className="max-w-[1240px] mx-auto min-h-[80vh] flex items-center justify-center">
-            <SuccessState amount={amount} name={name || PAYEE_NAME} txId={txId} method={paymentMethod} />
+            <SuccessState
+              amount={amount} name={name || PAYEE_NAME} txId={txId}
+              method={paymentMethod} invoiceId={invoiceId} note={note}
+              payerName={payerName} payerEmail={payerEmail} payerPhone={payerPhone}
+            />
           </div>
         ) : (
           <>
@@ -2288,7 +2626,7 @@ export default function Dashboard() {
                     <a
                       key={item}
                       href="https://arcbyte.co"
-                      className="text-zinc-500 text-[8.5px] sm:text-[10px] font-bold uppercase tracking-[0.05em] sm:tracking-widest hover:text-[#75f2c6] transition-colors whitespace-nowrap"
+                      className="text-zinc-500 text-[8.5px] sm:text-[10px] font-bold uppercase tracking-[0.05em] sm:tracking-widest hover:text-[#d4ff3f] transition-colors whitespace-nowrap"
                     >
                       {item}
                     </a>
@@ -2331,11 +2669,34 @@ export default function Dashboard() {
           note={note}
           setNote={setNote}
         />
-        <SecurityAlertSheet 
-          isOpen={showSecurityAlert} 
-          onClose={() => setShowSecurityAlert(false)} 
+        <SecurityAlertSheet
+          isOpen={showSecurityAlert}
+          onClose={() => {
+            setShowSecurityAlert(false);
+            if (alertType !== 'missing') {
+              navigate('/', { replace: true });
+            }
+          }}
           type={alertType}
+          amount={amount}
+          name={name || PAYEE_NAME}
+          txId={txId}
+          method={paymentMethod}
+          invoiceId={invoiceId}
+          note={note}
+          payerName={payerName}
+          payerEmail={payerEmail}
+          payerPhone={payerPhone}
         />
+
+        {/* Global Hidden Invoice Template for Capture */}
+        <div className="fixed -left-[1000px] top-0 opacity-0 pointer-events-none">
+          <InvoiceTemplate
+            amount={amount} name={name || PAYEE_NAME} txId={txId}
+            method={paymentMethod} invoiceId={invoiceId} note={note}
+            payerName={payerName} payerEmail={payerEmail} payerPhone={payerPhone}
+          />
+        </div>
       </div>
     </div>
   );

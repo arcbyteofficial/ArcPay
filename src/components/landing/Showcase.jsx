@@ -20,9 +20,9 @@ export default function Showcase() {
           
           {/* Left Block */}
           <div className="flex flex-col z-10 text-center lg:text-left items-center lg:items-start">
-            <h2 className="text-4xl sm:text-5xl font-black text-white tracking-[-0.04em] leading-[1.1] mb-6">
+            <h2 className="text-4xl sm:text-5xl text-white mb-6">
               Find the<br className="hidden sm:block" />
-              <span className="sm:hidden"> </span><span className="text-[#75f2c6]">Perfect</span><br className="hidden sm:block" />
+              <span className="sm:hidden"> </span><span className="text-[#d4ff3f]">Perfect</span><br className="hidden sm:block" />
               <span className="sm:hidden"> </span>Payment Link
             </h2>
             <p className="text-zinc-400 text-sm font-medium leading-relaxed max-w-[280px] mb-12">
@@ -31,7 +31,7 @@ export default function Showcase() {
             
             <div className="mb-12 drop-shadow-[0_0_15px_rgba(117,242,198,0.2)]">
               {/* Teal Asterisk */}
-              <svg width="64" height="64" viewBox="0 0 100 100" className="text-[#75f2c6]">
+              <svg width="64" height="64" viewBox="0 0 100 100" className="text-[#d4ff3f]">
                 <path fill="currentColor" d="M43.08 6.54c3.48-6.17 12.36-6.17 15.84 0l8.7 15.4c1.8 3.2 5.39 4.8 9.04 4.04l16.89-3.52c6.76-1.41 12.04 4.67 10.15 11.23l-4.73 16.4c-1 3.47.16 7.21 2.92 9.42l13.72 10.98c5.49 4.39 3.52 13.3-3.4 15.5l-17.37 5.53c-3.59 1.14-6.07 4.36-6.25 8.12l-.46 18.04c-.18 7.22-8.54 10.66-14.44 6.13l-14.8-11.4c-3.06-2.35-7.3-2.35-10.36 0l-14.8 11.4c-5.9 4.53-14.26 1.09-14.44-6.13l-.46-18.04c-.18-3.76-2.66-6.98-6.25-8.12L4.03 82.1C-2.89 79.9-4.86 70.99.63 66.6l13.72-10.98c2.76-2.21 3.92-5.95 2.92-9.42l-4.73-16.4c-1.89-6.56 3.39-12.64 10.15-11.23l16.89 3.52c3.65.76 7.24-.84 9.04-4.04l8.46-15.01z" opacity="0.9" />
               </svg>
             </div>
@@ -108,13 +108,13 @@ export default function Showcase() {
 
           {/* Right Block */}
           <div className="flex flex-col justify-center items-center lg:items-start z-10 pl-0 lg:pl-10 text-center lg:text-left mt-10 lg:mt-0">
-            <h2 className="text-3xl sm:text-4xl font-black text-white tracking-[-0.04em] leading-[1.1] mb-8 sm:mb-10">
+            <h2 className="text-3xl sm:text-4xl text-white mb-8 sm:mb-10">
               Easy Way to<br className="hidden sm:block" />
-              <span className="sm:hidden"> </span><span className="text-[#75f2c6]">Manage your</span><br className="hidden sm:block" />
+              <span className="sm:hidden"> </span><span className="text-[#d4ff3f]">Manage your</span><br className="hidden sm:block" />
               <span className="sm:hidden"> </span>Finance
             </h2>
             
-            <button className="flex items-center gap-4 bg-[#75f2c6] hover:bg-[#5cdba6] transition-colors rounded-full pl-6 pr-2 py-2 group shadow-[0_0_30px_rgba(117,242,198,0.3)]">
+            <button className="flex items-center gap-4 bg-[#d4ff3f] hover:bg-[#5cdba6] transition-colors rounded-full pl-6 pr-2 py-2 group shadow-[0_0_30px_rgba(117,242,198,0.3)]">
               <span className="font-black text-[#111] tracking-wide text-sm">Create New</span>
               <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center transform group-hover:translate-x-1 transition-transform">
                 <ArrowRight className="w-5 h-5 text-black" />
@@ -127,14 +127,14 @@ export default function Showcase() {
 
       {/* Light Mobile Screens Spread Section */}
       <div className="bg-[#f8f9fc] px-4 md:px-8 py-20 lg:py-32 overflow-hidden flex flex-col items-center">
-        <h2 className="text-2xl sm:text-3xl md:text-[40px] font-medium text-[#111] italic mb-16 lg:mb-20 text-center tracking-tight leading-snug">
+        <h2 className="text-2xl sm:text-3xl md:text-[40px] text-[#111] mb-16 lg:mb-20 text-center">
           Easy to use mobile app that support on<br className="hidden sm:block" /> android and ios.
         </h2>
 
         <div className="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-6 max-w-[1200px] w-full">
           {/* Mock Screen 1 */}
           <div className="w-full max-w-[320px] h-[450px] sm:h-[500px] bg-[#0066ff] rounded-[32px] p-6 relative overflow-hidden shadow-xl transform lg:-rotate-3 hover:rotate-0 transition-transform duration-500">
-             <h3 className="text-3xl font-bold text-white tracking-tight mb-2">Visa<br/>Support</h3>
+             <h3 className="text-3xl text-white mb-2">Visa<br/>Support</h3>
              <div className="absolute top-8 right-8 text-white">
                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" className="w-6 h-6"><path d="M12 2v20M17 5l-10 14M22 12H2M19 17L5 7"/></svg>
              </div>
@@ -156,16 +156,15 @@ export default function Showcase() {
                <div className="absolute bottom-4 right-6 text-white font-black text-2xl">VISA</div>
                <div className="absolute top-8 left-6 font-mono text-white tracking-widest transform rotate-180">5432 3521</div>
              </motion.div>
-             <h3 className="absolute bottom-10 inset-x-0 text-center text-3xl font-black text-[#111] tracking-tighter">
-               Always there
-             </h3>
+              Always there
+            </h3>
           </div>
 
           {/* Mock Screen 3 */}
           <div className="w-full max-w-[320px] h-[450px] sm:h-[500px] bg-[#111] rounded-[32px] p-8 relative overflow-hidden shadow-xl transform lg:rotate-3 hover:rotate-0 transition-transform duration-500 text-white">
-             <h3 className="text-[28px] sm:text-[34px] font-medium tracking-tight leading-none mb-1">
+             <h3 className="text-[28px] sm:text-[34px] mb-1">
                Design your<br className="hidden sm:block" />
-               <span className="sm:hidden"> </span><span className="text-[#75f2c6] font-bold">Personalized</span><br className="hidden sm:block" />
+               <span className="sm:hidden"> </span><span className="text-[#d4ff3f] font-bold">Personalized</span><br className="hidden sm:block" />
                <span className="sm:hidden"> </span><span className="text-zinc-500/50 mix-blend-screen text-4xl">Card</span>
              </h3>
              <motion.div 

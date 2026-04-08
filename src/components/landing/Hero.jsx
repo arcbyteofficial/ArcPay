@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { ArrowRight, Wallet, ShieldCheck, Percent, Zap, ArrowLeft, Smartphone, Check, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import { useNotification } from '../../context/NotificationContext';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import arcbyteLogo from '../../assets/arcbyte_logo_white_transparent.png';
@@ -71,6 +71,7 @@ const SlideToClose = ({ onComplete }) => {
 // Sheet for 6-digit access code verification
 const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
   const [code, setCode] = useState(['', '', '', '', '', '']);
+  const { showStatus } = useNotification();
   const inputs = useRef([]);
   const [error, setError] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -107,38 +108,55 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
     // Check if code is complete
     if (newCode.every(digit => digit !== '')) {
       const fullCode = newCode.join('');
-      // Obfuscated check for 151903 (e.g., product of digits or simple check)
-      if (fullCode === '151903') {
-        localStorage.removeItem(L_KEY);
-        localStorage.removeItem(T_KEY);
-        setSuccess(true);
-        setTimeout(() => {
-          sessionStorage.setItem('merchant_verified', 'true');
-          onVerified();
-        }, 3500);
-      } else {
-        const strikes = parseInt(localStorage.getItem(L_KEY) || '0') + 1;
-        localStorage.setItem(L_KEY, strikes.toString());
+      
+      const verifyCode = async () => {
+        try {
+          const res = await fetch(`${import.meta.env.VITE_BACKEND_URL || "http://localhost:3000"}/api/public/verify-passcode`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ passcode: fullCode })
+          });
+          const data = await res.json();
 
-        if (strikes >= 3) {
-          const until = Date.now() + 10 * 60 * 1000; // 10 mins
-          localStorage.setItem(T_KEY, until.toString());
-          toast.error('Security Alert: Brute Force Attempt Detected. Terminal Locked for 5 Minutes.', {
-            duration: 5000,
-            className: "!bg-red-950 !border-red-500/50 !text-red-200 font-bold"
-          });
-        } else {
-          setError(true);
-          toast.error(`Invalid Access Code. ${3 - strikes} attempts remaining.`, {
-            className: "!bg-red-950 !border-red-500/50 !text-red-200"
-          });
-          setTimeout(() => {
-            setError(false);
-            setCode(['', '', '', '', '', '']);
-            inputs.current[0].focus();
-          }, 600);
+          if (data.success) {
+            localStorage.removeItem(L_KEY);
+            localStorage.removeItem(T_KEY);
+            setSuccess(true);
+            setTimeout(() => {
+              sessionStorage.setItem('merchant_verified', 'true');
+              onVerified();
+            }, 3500);
+          } else {
+            throw new Error(data.error || "Invalid Access Code");
+          }
+        } catch (err) {
+          const strikes = parseInt(localStorage.getItem(L_KEY) || '0') + 1;
+          localStorage.setItem(L_KEY, strikes.toString());
+
+          if (strikes >= 3) {
+            localStorage.setItem(T_KEY, (Date.now() + 10 * 60 * 1000).toString());
+            showStatus({ 
+              type: 'error', 
+              title: 'SECURITY ENFORCED', 
+              message: 'Brute Force Attempt Detected. Terminal Locked for 5 Minutes.' 
+            });
+          } else {
+            setError(true);
+            showStatus({ 
+              type: 'error', 
+              title: 'ACCESS DENIED', 
+              message: err.message || `Invalid Access Code. ${3 - strikes} attempts remaining.` 
+            });
+            setTimeout(() => {
+              setError(false);
+              setCode(['', '', '', '', '', '']);
+              inputs.current[0].focus();
+            }, 600);
+          }
         }
-      }
+      };
+
+      verifyCode();
     }
   };
 
@@ -174,10 +192,10 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
               <img src={arcbyteLogo} alt="ArcByte" className="h-4 sm:h-5 opacity-90 object-contain" />
             </div>
 
-            <h3 className="text-3xl font-black text-white mb-6 text-center tracking-[-0.04em] leading-tight">
+            <h3 className="text-3xl text-white mb-6 text-center">
               Security <span className={cn(
                 "relative inline-block transition-colors duration-500",
-                lockoutTime > 0 ? "text-red-500" : "text-[#75f2c6]"
+                lockoutTime > 0 ? "text-red-500" : "text-[#d4ff3f]"
               )}>
                 {lockoutTime > 0 ? 'Alert' : 'Verification'}
                 <motion.div
@@ -186,12 +204,12 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
                   transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
                   className={cn(
                     "absolute -bottom-1.5 left-0 h-1 transition-colors duration-500 rounded-full",
-                    lockoutTime > 0 ? "bg-red-500" : "bg-[#75f2c6]"
+                    lockoutTime > 0 ? "bg-red-500" : "bg-[#d4ff3f]"
                   )}
                 />
                 <div className={cn(
                   "absolute -bottom-1.5 left-0 w-full h-1 blur-[3px] rounded-full transition-colors duration-500",
-                  lockoutTime > 0 ? "bg-red-500/40" : "bg-[#75f2c6]/20"
+                  lockoutTime > 0 ? "bg-red-500/40" : "bg-[#d4ff3f]/20"
                 )} />
               </span>
             </h3>
@@ -275,7 +293,7 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
                           value={digit}
                           onChange={e => handleChange(i, e.target.value)}
                           onKeyDown={e => handleKeyDown(i, e)}
-                          className="w-12 h-14 bg-[#151518] border border-white/10 rounded-full text-center text-2xl font-black text-[#75f2c6] outline-none focus:border-[#75f2c6] transition-all duration-300 shadow-[inset_0_4px_10px_rgba(0,0,0,0.4)] focus:shadow-[0_0_20px_rgba(117,242,198,0.2)]"
+                          className="w-12 h-14 bg-[#151518] border border-white/10 rounded-full text-center text-2xl font-black text-[#d4ff3f] outline-none focus:border-[#d4ff3f] transition-all duration-300 shadow-[inset_0_4px_10px_rgba(0,0,0,0.4)] focus:shadow-[0_0_20px_rgba(117,242,198,0.2)]"
                         />
                       ))
                     )}
@@ -321,10 +339,10 @@ const ComingSoonSheet = ({ isOpen, onClose }) => {
             </div>
 
             <h3 className="text-3xl font-black text-white mb-6 text-center tracking-[-0.04em]">
-              Portal <span className="text-[#75f2c6] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
+              Portal <span className="text-[#d4ff3f] relative inline-block drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
                 Coming Soon
-                <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#75f2c6] rounded-full" />
-                <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-[#75f2c6]/20 rounded-full blur-[2px]" />
+                <motion.div initial={{ width: 0 }} animate={{ width: "100%" }} transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} className="absolute -bottom-1.5 left-0 h-1 bg-[#d4ff3f] rounded-full" />
+                <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-[#d4ff3f]/20 rounded-full blur-[2px]" />
               </span>
             </h3>
 
@@ -342,8 +360,30 @@ const ComingSoonSheet = ({ isOpen, onClose }) => {
 
 export default function Hero() {
   const navigate = useNavigate();
+  const { showStatus } = useNotification();
   const [showComingSoon, setShowComingSoon] = useState(false);
   const [showAccessCode, setShowAccessCode] = useState(false);
+  const [requirePasscode, setRequirePasscode] = useState(false);
+  const [isArcPayBlocked, setIsArcPayBlocked] = useState(false);
+  const [BACKEND_URL] = useState(import.meta.env.VITE_BACKEND_URL || "http://localhost:3000");
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/public/settings`);
+        const data = await res.json();
+        if (data.requirePasscode !== undefined) {
+          setRequirePasscode(data.requirePasscode);
+        }
+        if (data.isArcPayBlocked !== undefined) {
+          setIsArcPayBlocked(data.isArcPayBlocked);
+        }
+      } catch (err) {
+        console.error("Failed to fetch security protocol");
+      }
+    };
+    fetchSettings();
+  }, [BACKEND_URL]);
 
   // Global UI Lockdown & Integrity Monitor (Landing)
   useEffect(() => {
@@ -412,13 +452,13 @@ export default function Hero() {
 
         {/* Left Typography Block */}
         <div className="pt-10">
-          <h1 className="text-5xl sm:text-7xl lg:text-[80px] font-bold leading-[1.05] tracking-[-0.03em] mb-6 drop-shadow-sm">
+          <h1 className="text-4xl sm:text-7xl lg:text-[80px] mb-6 drop-shadow-sm italic-center-balance">
             Seamless<br />
-            <span className="text-[#75f2c6]">payments</span> for<br />
+            <span className="text-[#d4ff3f]">payments</span> for<br />
             ArcByte
             <span className="inline-block ml-2 sm:ml-4 align-middle pb-1 sm:pb-2 w-8 h-8 sm:w-12 sm:h-12">
               {/* Pristine 4-point Sparkle SVG */}
-              <svg viewBox="0 0 24 24" className="w-full h-full text-[#75f2c6] animate-pulse">
+              <svg viewBox="0 0 24 24" className="w-full h-full text-[#d4ff3f] animate-pulse">
                 <path fill="currentColor" d="M12 0C12 6.627 17.373 12 24 12C17.373 12 12 17.373 12 24C12 17.373 6.627 12 0 12C6.627 12 12 6.627 12 0Z" />
               </svg>
             </span>
@@ -429,12 +469,60 @@ export default function Hero() {
           </p>
 
           <button
-            onClick={() => setShowAccessCode(true)}
-            className="flex items-center gap-3 bg-[#75f2c6] text-black hover:bg-[#64e4b6] transition-all duration-300 rounded-full pl-8 pr-2 py-2 mb-20 shadow-[0_0_30px_rgba(117,242,198,0.3)] hover:shadow-[0_0_40px_rgba(117,242,198,0.5)] group"
+            onClick={async () => {
+              if (showAccessCode) return; // Prevent double trigger
+              
+              let currentlyBlocked = false;
+              let currentPasscodeRequired = requirePasscode;
+
+              // Proactively check block status on click to ensure it's never stale
+              try {
+                const res = await fetch(`${BACKEND_URL}/api/public/settings`);
+                const data = await res.json();
+                
+                currentlyBlocked = !!data.isArcPayBlocked;
+                currentPasscodeRequired = data.requirePasscode ?? requirePasscode;
+                
+                // Update local state for consistency
+                setIsArcPayBlocked(currentlyBlocked);
+                setRequirePasscode(currentPasscodeRequired);
+
+                if (currentlyBlocked) {
+                  showStatus({
+                    type: 'error',
+                    title: 'ACCESS BLOCKED',
+                    message: 'Access to ArcPay has been Blocked'
+                  });
+                  return;
+                }
+              } catch (err) {
+                console.error("Security check failed");
+                // If we can't verify security, we assume the worst for safety
+                showStatus({
+                  type: 'error',
+                  title: 'CONNECTION ERROR',
+                  message: 'Unable to verify project security. Please try again later.'
+                });
+                return;
+              }
+
+              const isVerified = sessionStorage.getItem('merchant_verified') === 'true';
+              
+              if (!currentPasscodeRequired || isVerified) {
+                // Grant protocol bypass if firewall is off to satisfy Dashboard guard
+                if (!currentPasscodeRequired) {
+                  sessionStorage.setItem('merchant_verified', 'true');
+                }
+                navigate('/app');
+              } else {
+                setShowAccessCode(true);
+              }
+            }}
+            className="flex items-center gap-3 bg-[#d4ff3f] text-black hover:bg-[#c4ed3a] transition-all duration-300 rounded-full pl-8 pr-2 py-2 mb-20 shadow-[0_0_30px_rgba(212,255,63,0.3)] hover:shadow-[0_0_40px_rgba(212,255,63,0.5)] group"
           >
-            <span className="font-bold tracking-wide">Access ArcPay</span>
+            <span className="font-black italic-center-balance tracking-tight">Access ArcPay</span>
             <div className="w-10 h-10 bg-[#0a0a0c] rounded-full flex items-center justify-center transform group-hover:translate-x-1 transition-transform">
-              <ArrowRight className="w-5 h-5 text-[#75f2c6]" />
+              <ArrowRight className="w-5 h-5 text-[#d4ff3f]" />
             </div>
           </button>
 
@@ -476,7 +564,7 @@ export default function Hero() {
                 ease: "easeInOut"
               }
             }}
-            className="relative z-10 w-full max-w-[550px] drop-shadow-[0_20px_50px_rgba(117,242,198,0.15)]"
+            className="relative z-10 w-full max-w-[550px] drop-shadow-[0_20px_50px_rgba(212,255,63,0.15)]"
           >
             <img
               src={heroImg}
@@ -485,7 +573,7 @@ export default function Hero() {
             />
 
             {/* Absolute decorative accents */}
-            <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#75f2c6]/10 rounded-full blur-[80px] -z-10" />
+            <div className="absolute -top-10 -right-10 w-40 h-40 bg-[#d4ff3f]/10 rounded-full blur-[80px] -z-10" />
             <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-blue-500/10 rounded-full blur-[80px] -z-10" />
           </motion.div>
         </div>
@@ -497,7 +585,7 @@ export default function Hero() {
 
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-1.5 sm:gap-3 mb-2">
-            <Percent className="w-4 h-4 sm:w-5 sm:h-5 text-[#75f2c6]" />
+            <Percent className="w-4 h-4 sm:w-5 sm:h-5 text-[#d4ff3f]" />
             <p className="text-[1.1rem] sm:text-3xl font-bold text-white">0%</p>
           </div>
           <p className="text-[10px] sm:text-xs text-zinc-500 font-medium whitespace-nowrap">Platform Fees</p>
@@ -505,7 +593,7 @@ export default function Hero() {
 
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-1.5 sm:gap-3 mb-2">
-            <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#75f2c6]" />
+            <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-[#d4ff3f]" />
             <p className="text-[1.1rem] sm:text-3xl font-bold text-white">100%</p>
           </div>
           <p className="text-[10px] sm:text-xs text-zinc-500 font-medium whitespace-nowrap">Secure Delivery</p>
@@ -513,7 +601,7 @@ export default function Hero() {
 
         <div className="flex flex-col items-center">
           <div className="flex items-center gap-1.5 sm:gap-3 mb-2">
-            <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#75f2c6]" />
+            <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-[#d4ff3f]" />
             <p className="text-[1.1rem] sm:text-3xl font-bold text-white">Instant</p>
           </div>
           <p className="text-[10px] sm:text-xs text-zinc-500 font-medium whitespace-nowrap">Instant Routing</p>
