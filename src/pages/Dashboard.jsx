@@ -19,10 +19,11 @@ function cn(...inputs) {
 }
 import SEO from '../components/common/SEO';
 
-const PAYEE_VPA = 'aidan.rodrigues@superyes';
-const PAYEE_NAME = 'Aidan Rodrigues';
+const PAYEE_VPA = import.meta.env.VITE_PAYEE_VPA || 'aidan.rodrigues@superyes';
+const PAYEE_NAME = import.meta.env.VITE_PAYEE_NAME || 'Aidan Rodrigues';
 const SECURITY_SALT = 'ARC_SEC_2024_PROT'; // Internal integrity salt
-const RAZORPAY_KEY = 'rzp_live_SanzAuU0NicySW';
+const RAZORPAY_KEY = import.meta.env.VITE_RAZORPAY_KEY || 'rzp_live_SanzAuU0NicySW';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "https://secure.arcbyte.co";
 
 // Integrity Signer
 const signPayload = (data) => {
@@ -1855,7 +1856,7 @@ export default function Dashboard() {
   }, [location.search, navigate]);
 
   const [note, setNote] = useState('');
-  const [name, setName] = useState('Aidan Rodrigues');
+  const [name, setName] = useState(PAYEE_NAME);
   const [payerName, setPayerName] = useState('');
   const [invoiceId, setInvoiceId] = useState('');
   const [isLocked, setIsLocked] = useState(false);
@@ -1874,8 +1875,6 @@ export default function Dashboard() {
   const [payerEmail, setPayerEmail] = useState('');
   const [payerPhone, setPayerPhone] = useState('');
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-
-  const BACKEND_URL = "https://secure.arcbyte.co";
 
   const handleBankConfirm = (id, img) => {
     // Mark link as spent for security
