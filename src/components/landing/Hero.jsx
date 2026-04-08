@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import arcbyteLogo from '../../assets/arcbyte.co Logo_white_transparent.png';
+import arcbyteLogo from '../../assets/arcbyte_logo_white_transparent.png';
 import heroImg from '../../assets/hero.png';
 
 function cn(...inputs) {
@@ -119,7 +119,7 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
       } else {
         const strikes = parseInt(localStorage.getItem(L_KEY) || '0') + 1;
         localStorage.setItem(L_KEY, strikes.toString());
-        
+
         if (strikes >= 3) {
           const until = Date.now() + 10 * 60 * 1000; // 10 mins
           localStorage.setItem(T_KEY, until.toString());
@@ -180,14 +180,14 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
                 lockoutTime > 0 ? "text-red-500" : "text-[#75f2c6]"
               )}>
                 {lockoutTime > 0 ? 'Alert' : 'Verification'}
-                <motion.div 
-                  initial={{ width: 0 }} 
-                  animate={{ width: "100%" }} 
-                  transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }} 
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
                   className={cn(
                     "absolute -bottom-1.5 left-0 h-1 transition-colors duration-500 rounded-full",
                     lockoutTime > 0 ? "bg-red-500" : "bg-[#75f2c6]"
-                  )} 
+                  )}
                 />
                 <div className={cn(
                   "absolute -bottom-1.5 left-0 w-full h-1 blur-[3px] rounded-full transition-colors duration-500",
@@ -197,7 +197,7 @@ const AccessCodeSheet = ({ isOpen, onClose, onVerified }) => {
             </h3>
 
             <p className="text-zinc-400 text-center font-medium leading-relaxed max-w-xs mx-auto mb-10">
-              {lockoutTime > 0 
+              {lockoutTime > 0
                 ? 'ArcPay disabled due to multiple verification failures.'
                 : 'Enter the 6-digit secure access code to access ArcPay'}
             </p>
@@ -354,8 +354,8 @@ export default function Hero() {
 
     const handleKeydown = (e) => {
       if (
-        e.keyCode === 123 || 
-        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) || 
+        e.keyCode === 123 ||
+        (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) ||
         (e.ctrlKey && e.keyCode === 85)
       ) {
         preventAction(e);
@@ -364,7 +364,7 @@ export default function Hero() {
 
     window.addEventListener('contextmenu', preventAction);
     window.addEventListener('keydown', handleKeydown);
-    
+
     return () => {
       window.removeEventListener('contextmenu', preventAction);
       window.removeEventListener('keydown', handleKeydown);

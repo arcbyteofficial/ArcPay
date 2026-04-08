@@ -1,16 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
-import { ArrowLeft, ArrowRight, Check, Clock, Smartphone, QrCode, Settings, ChevronLeft, Wallet, Download, ShieldCheck, FileText, Lock, HelpCircle, ExternalLink, Upload, Copy, Info, Building2, CreditCard, User, Eye, EyeOff, Image as ImageIcon, Landmark } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Clock, Smartphone, QrCode, Settings, ChevronLeft, Wallet, Download, ShieldCheck, FileText, Lock, HelpCircle, ExternalLink, Upload, Copy, Info, Building2, CreditCard, User, Eye, EyeOff, Image as ImageIcon, Landmark, AlertTriangle } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 
-import arcbyteLogo from '../assets/arcbyte.co Logo_white_transparent.png';
+import arcbyteLogo from '../assets/arcbyte_logo_white_transparent.png';
+import razorpayPopupLogo from '../assets/arcbyte.co_white_logo.png';
 import paytmLogo from '../assets/paytm.png';
 import upiLogo from '../assets/upi.png';
 import federalBankLogo from '../assets/Federal_bank_India.svg.png';
+import razorpayLogo from '../assets/razorpay_logo.png';
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -20,6 +22,7 @@ import SEO from '../components/common/SEO';
 const PAYEE_VPA = 'aidan.rodrigues@superyes';
 const PAYEE_NAME = 'Aidan Rodrigues';
 const SECURITY_SALT = 'ARC_SEC_2024_PROT'; // Internal integrity salt
+const RAZORPAY_KEY = 'rzp_live_SanzAuU0NicySW';
 
 // Integrity Signer
 const signPayload = (data) => {
@@ -58,8 +61,8 @@ const PaymentMethodSelector = ({ method, onChange }) => {
       <button
         onClick={() => onChange('upi')}
         className={cn(
-          "relative flex-1 flex items-center justify-center gap-2.5 py-2.5 rounded-full z-10 transition-colors duration-500",
-          method === 'upi' ? "text-black" : "text-zinc-500 hover:text-zinc-300"
+          "relative flex-[1.2] flex items-center justify-center gap-2 py-2.5 rounded-full z-10 transition-colors duration-500",
+          method === 'upi' ? "text-black font-black" : "text-zinc-500 hover:text-zinc-300 font-bold"
         )}
       >
         {method === 'upi' && (
@@ -69,15 +72,15 @@ const PaymentMethodSelector = ({ method, onChange }) => {
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
           />
         )}
-        <QrCode className={cn("relative z-10 w-4 h-4 transition-transform duration-500", method === 'upi' && "scale-110")} />
-        <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.2em]">UPI Payment</span>
+        <QrCode className={cn("relative z-10 w-3.5 h-3.5 transition-transform duration-500", method === 'upi' && "scale-110")} />
+        <span className="relative z-10 text-[9px] uppercase tracking-[0.15em]">UPI</span>
       </button>
 
       <button
         onClick={() => onChange('bank')}
         className={cn(
-          "relative flex-1 flex items-center justify-center gap-2.5 py-2.5 rounded-full z-10 transition-colors duration-500",
-          method === 'bank' ? "text-black" : "text-zinc-500 hover:text-zinc-300"
+          "relative flex-[1.2] flex items-center justify-center gap-2 py-2.5 rounded-full z-10 transition-colors duration-500",
+          method === 'bank' ? "text-black font-black" : "text-zinc-500 hover:text-zinc-300 font-bold"
         )}
       >
         {method === 'bank' && (
@@ -87,8 +90,26 @@ const PaymentMethodSelector = ({ method, onChange }) => {
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
           />
         )}
-        <Building2 className={cn("relative z-10 w-4 h-4 transition-transform duration-500", method === 'bank' && "scale-110")} />
-        <span className="relative z-10 text-[10px] font-black uppercase tracking-[0.2em]">Bank Transfer</span>
+        <Building2 className={cn("relative z-10 w-3.5 h-3.5 transition-transform duration-500", method === 'bank' && "scale-110")} />
+        <span className="relative z-10 text-[9px] uppercase tracking-[0.15em]">Bank</span>
+      </button>
+
+      <button
+        onClick={() => onChange('razorpay')}
+        className={cn(
+          "relative flex-[1.5] flex items-center justify-center gap-2 py-2.5 rounded-full z-10 transition-colors duration-500",
+          method === 'razorpay' ? "text-black font-black" : "text-zinc-500 hover:text-zinc-300 font-bold"
+        )}
+      >
+        {method === 'razorpay' && (
+          <motion.div
+            layoutId="activeTab"
+            className="absolute inset-0 bg-[#75f2c6] rounded-full shadow-[0_0_20px_rgba(117,242,198,0.3)] z-0"
+            transition={{ type: "spring", stiffness: 400, damping: 30 }}
+          />
+        )}
+        <img src={razorpayLogo} alt="RazorPay" className={cn("relative z-10 w-3.5 h-auto object-contain transition-transform duration-500", method === 'razorpay' && "scale-110 filter brightness-100 invert-0", method !== 'razorpay' && "opacity-50 grayscale")} />
+        <span className="relative z-10 text-[9px] uppercase tracking-[0.15em]">RazorPay</span>
       </button>
     </div>
   );
@@ -520,11 +541,13 @@ const SuccessState = ({ amount, name, txId, method }) => {
         />
       </div>
 
-      <h3 className="text-3xl sm:text-4xl font-black text-white mb-4 tracking-tight leading-none whitespace-nowrap">
+      <h3 className="text-4xl sm:text-5xl font-black text-white mb-4 tracking-[-0.04em] leading-tight">
         Payment <span className="text-[#75f2c6]">Received</span>
       </h3>
-      <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-[9px] mb-10 px-8 max-w-sm mx-auto leading-relaxed">
-        Our team will take 8-12 hours to review your payment. We will update you via mail.
+      <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px] mb-12 px-8 max-w-sm mx-auto leading-relaxed">
+        {method === 'razorpay' 
+          ? "Your transaction has been captured and settled instantly via Razorpay. Status: Finalized."
+          : "Our team will take 8-12 hours to review your manual payment. We will update you via mail."}
       </p>
 
       <div className="w-full max-w-sm space-y-0.5">
@@ -549,7 +572,9 @@ const SuccessState = ({ amount, name, txId, method }) => {
             <Smartphone className="w-3 h-3 text-zinc-600" />
             <span className="text-zinc-500 font-black uppercase tracking-[0.2em] text-[9px]">Method</span>
           </div>
-          <span className="text-[#75f2c6] font-black tracking-widest text-[10px] uppercase">{method === 'bank' ? 'Bank Transfer' : 'UPI Payment'}</span>
+          <span className="text-[#75f2c6] font-black tracking-widest text-[10px]">
+            {method === 'bank' ? 'Bank Transfer' : method === 'razorpay' ? 'RazorPay Gateway' : 'UPI Payment'}
+          </span>
         </div>
 
         <div className="py-8 text-center">
@@ -779,17 +804,30 @@ const AppChooser = ({ isOpen, onClose, upiParams }) => {
                     ))}
                   </div>
 
-                  <div className="flex justify-center mb-8">
+                  <div className="flex flex-col items-center gap-4 mb-8">
                     <button
                       onClick={() => setShowQR(true)}
                       className="group flex flex-col items-center gap-2"
                     >
-                      <div className="flex items-center gap-2 mb-1 py-2 px-4 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 transition-all">
+                      <div className="flex items-center gap-2 mb-1 py-3 px-6 rounded-full bg-white/5 border border-white/5 hover:bg-white/10 transition-all">
                         <QrCode className="w-3.5 h-3.5 text-[#75f2c6]" />
                         <span className="text-[10px] font-black text-zinc-500 group-hover:text-[#75f2c6] tracking-[0.2em] uppercase transition-colors">
                           Pay via QR Code
                         </span>
                       </div>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        copyToClipboard(PAYEE_VPA);
+                        toast.success("UPI ID Copied! Use it for manual payment.");
+                      }}
+                      className="group flex items-center gap-2.5 py-3 px-8 rounded-full bg-[#75f2c6]/10 border border-[#75f2c6]/20 hover:bg-[#75f2c6]/20 transition-all"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-[#75f2c6]" />
+                      <span className="text-[11px] font-black text-[#75f2c6] tracking-[0.1em] uppercase">
+                        Copy UPI ID (Manual Fallback)
+                      </span>
                     </button>
                   </div>
                 </motion.div>
@@ -896,7 +934,42 @@ const ComingSoonSheet = ({ isOpen, onClose }) => {
   );
 };
 
-const SecurityAlertSheet = ({ isOpen, onClose }) => {
+const SecurityAlertSheet = ({ isOpen, onClose, type = 'tampered' }) => {
+  const config = {
+    settled: {
+      color: 'text-[#75f2c6]',
+      bg: 'bg-[#75f2c6]',
+      border: 'border-[#75f2c6]/20',
+      shadow: 'shadow-[0_-40px_80px_rgba(117,242,198,0.2)]',
+      icon: <ShieldCheck className="w-6 h-6 text-[#75f2c6] drop-shadow-[0_0_10px_rgba(117,242,198,0.3)] stroke-[2.5]" />,
+      title: "Payment Settled",
+      description: "This payment specification has already been processed and settled. Link is officially expired to prevent duplicate transactions.",
+      btnText: "SETTLED - DISMISS LINK"
+    },
+    missing: {
+      color: 'text-amber-500',
+      bg: 'bg-amber-500',
+      border: 'border-amber-500/20',
+      shadow: 'shadow-[0_-40px_80px_rgba(245,158,11,0.2)]',
+      icon: <AlertTriangle className="w-6 h-6 text-amber-500 drop-shadow-[0_0_10px_rgba(245,158,11,0.3)] stroke-[2.5]" />,
+      title: "Information Required",
+      description: "Detailed contact info (Email & Phone) is mandatory for Razorpay settlement. Please provide them to initiate the secure gateway.",
+      btnText: "I UNDERSTAND - PROVIDE INFO"
+    },
+    tampered: {
+      color: 'text-red-500',
+      bg: 'bg-red-500',
+      border: 'border-red-500/20',
+      shadow: 'shadow-[0_-40px_80px_rgba(153,27,27,0.3)]',
+      icon: <ShieldCheck className="w-6 h-6 text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.3)] stroke-[2.5]" />,
+      title: "Security Alert",
+      description: "An invalid or tampered payment link was detected. Our protocol has restricted access to protect your account integrity.",
+      btnText: "SECURITY THREAT - CANCEL"
+    }
+  };
+
+  const active = config[type] || config.tampered;
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -912,29 +985,36 @@ const SecurityAlertSheet = ({ isOpen, onClose }) => {
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed bottom-0 left-0 right-0 bg-[#0a0a0c] rounded-t-[40px] border-t border-red-500/20 z-[110] p-8 pb-12 shadow-[0_-40px_80px_rgba(153,27,27,0.3)] max-w-lg mx-auto"
+            className={cn(
+              "fixed bottom-0 left-0 right-0 bg-[#0a0a0c] rounded-t-[40px] border-t z-[110] p-8 pb-12 max-w-lg mx-auto",
+              active.border, active.shadow
+            )}
           >
-            <div className="w-12 h-1.5 bg-red-500/20 rounded-full mx-auto mb-8" />
+            <div className={cn("w-12 h-1.5 rounded-full mx-auto mb-8 opacity-20", active.bg)} />
 
             <div className="flex items-center justify-center gap-2 sm:gap-2.5 mb-10">
-              <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-red-500 drop-shadow-[0_0_10px_rgba(239,68,68,0.3)] stroke-[2.5]" />
+              {active.icon}
               <span className="text-lg sm:text-xl font-bold tracking-tight text-white">ArcPay</span>
               <div className="w-[1px] h-4 sm:h-5 bg-white/20 mx-2 sm:mx-3"></div>
               <img src={arcbyteLogo} alt="ArcByte" className="h-4 sm:h-5 opacity-90 object-contain grayscale brightness-200" />
             </div>
 
             <h3 className="text-3xl font-black text-white mb-6 text-center tracking-[-0.04em] leading-tight">
-              Security <span className="text-red-500 relative inline-block">
-                Alert
-                <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-red-500 rounded-full" />
+              {active.title.split(' ')[0]}{" "}
+              <span className={cn(active.color, "relative inline-block")}>
+                {active.title.split(' ')[1]}
+                <div className={cn("absolute -bottom-1.5 left-0 w-full h-1 rounded-full", active.bg)} />
               </span>
             </h3>
 
             <p className="text-zinc-400 text-center font-medium leading-relaxed max-w-xs mx-auto mb-10">
-              An invalid or tampered payment link was detected. Our protocol has restricted access to protect your account integrity.
+              {active.description}
             </p>
 
-            <SlideToCancel onComplete={onClose} />
+            <SlideToCancel 
+              onComplete={onClose} 
+              text={active.btnText} 
+            />
           </motion.div>
         </>
       )}
@@ -1367,7 +1447,8 @@ const CreatorView = ({
 
 const PayerView = ({
   amount, note, name, payerName, invoiceId, paymentMethod, upiURI,
-  handlePrimaryAction, PAYEE_NAME, DEFAULT_BANK_DETAILS, arcbyteLogo
+  handlePrimaryAction, PAYEE_NAME, DEFAULT_BANK_DETAILS, arcbyteLogo,
+  payerEmail, setPayerEmail, payerPhone, setPayerPhone
 }) => {
   return (
     <div className="flex flex-col lg:flex-row items-start justify-center gap-20">
@@ -1398,7 +1479,18 @@ const PayerView = ({
                   </div>
                   <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Unified Payments Interface</p>
                 </div>
-                <ShieldCheck className="w-6 h-6 text-[#75f2c6] animate-pulse ml-auto opacity-90 drop-shadow-[0_0_12px_rgba(117,242,198,0.4)]" />
+              </>
+            ) : paymentMethod === 'razorpay' ? (
+              <>
+                <div className="w-5 h-5 flex items-center justify-center mr-0.5">
+                  <img src={razorpayLogo} alt="RazorPay" className="h-4 w-auto object-contain" />
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-xl font-black text-white tracking-tight leading-none">RazorPay</h3>
+                  </div>
+                  <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">Secure Card/Netbanking</p>
+                </div>
               </>
             ) : (
               <>
@@ -1409,9 +1501,9 @@ const PayerView = ({
                   </div>
                   <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-widest">IMPS/NEFT/RTGS</p>
                 </div>
-                <ShieldCheck className="w-6 h-6 text-[#75f2c6] animate-pulse ml-auto opacity-90 drop-shadow-[0_0_12px_rgba(117,242,198,0.4)]" />
               </>
             )}
+            <ShieldCheck className="w-6 h-6 text-[#75f2c6] animate-pulse ml-auto opacity-90 drop-shadow-[0_0_12px_rgba(117,242,198,0.4)]" />
           </div>
         </div>
 
@@ -1442,9 +1534,52 @@ const PayerView = ({
         )}
 
         {note && (
-          <div className="mt-4 mb-10 p-4 px-6 rounded-full bg-[#151518] border border-white/10 max-w-sm">
+          <div className="mt-4 mb-8 p-4 px-6 rounded-full bg-[#151518] border border-white/10 max-w-sm">
             <p className="text-zinc-400 text-sm italic">"{note}"</p>
           </div>
+        )}
+
+        {/* RazorPay Specific Data Collection */}
+        {paymentMethod === 'razorpay' && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-6 mb-12 max-w-sm"
+          >
+            <div className="h-px w-full bg-white/[0.03] mb-8" />
+            
+            <div className="space-y-2">
+              <div className="px-1">
+                <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em] mb-4">Payer Contact Details</p>
+                <div className="space-y-1">
+                  <div className="relative group py-4 border-b border-white/[0.03]">
+                    <div className="absolute left-1 top-1/2 -translate-y-1/2 text-zinc-600 transition-colors group-focus-within:text-[#75f2c6]">
+                      <span className="text-sm font-black">@</span>
+                    </div>
+                    <input
+                      type="email"
+                      value={payerEmail}
+                      onChange={(e) => setPayerEmail(e.target.value)}
+                      placeholder="Email Address"
+                      className="w-full bg-transparent pl-8 outline-none text-white font-black text-lg tracking-tight placeholder:text-zinc-900 transition-all font-sans"
+                    />
+                  </div>
+                  <div className="relative group py-4 border-b border-white/[0.03]">
+                    <div className="absolute left-1 top-1/2 -translate-y-1/2 text-zinc-600 transition-colors group-focus-within:text-[#75f2c6]">
+                      <Smartphone className="w-4 h-4" />
+                    </div>
+                    <input
+                      type="tel"
+                      value={payerPhone}
+                      onChange={(e) => setPayerPhone(e.target.value)}
+                      placeholder="Phone Number"
+                      className="w-full bg-transparent pl-8 outline-none text-white font-black text-lg tracking-tight placeholder:text-zinc-900 transition-all font-sans"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         )}
 
         {/* Desktop Amount Display - Editorial Flow */}
@@ -1501,14 +1636,22 @@ const PayerView = ({
                     <img src={upiLogo} alt="UPI" className="h-3.5 opacity-100 object-contain mx-1" />
                   </>
                 )}
+                {paymentMethod === 'razorpay' && (
+                  <>
+                    <div className="w-[1px] h-3 bg-white/20 mx-1"></div>
+                    <div className="w-5 h-5 flex items-center justify-center mx-1">
+                      <img src={razorpayLogo} alt="RazorPay" className="h-3 w-auto object-contain" />
+                    </div>
+                  </>
+                )}
               </div>
 
-                <div className="flex items-center gap-2 mb-1">
-                  <QrCode className="w-3 h-3 text-zinc-500" />
-                  <span className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">
-                    Paying Amount
-                  </span>
-                </div>
+              <div className="flex items-center gap-2 mb-1">
+                <QrCode className="w-3 h-3 text-zinc-500" />
+                <span className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">
+                  Paying Amount
+                </span>
+              </div>
               <div className="flex items-baseline gap-2 mt-2 mb-8">
                 <span className="text-[#75f2c6]/60 text-4xl">₹</span>
                 <span className="text-[#75f2c6] font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
@@ -1587,7 +1730,7 @@ const PayerView = ({
                 <div className="w-full mt-auto">
                   <SlideToPay onComplete={handlePrimaryAction} />
                 </div>
-              ) : (
+              ) : paymentMethod === 'upi' ? (
                 <>
                   <div className="flex items-center justify-center gap-2 mb-6">
                     <QrCode className="w-3 h-3 text-zinc-500" />
@@ -1625,13 +1768,23 @@ const PayerView = ({
                       <span className="text-zinc-400">SECURITY PROTOCOL:</span> ARCPAY IS A TECHNOLOGY INTERFACE FACILITATING HIGH-FIDELITY P2P SETTLEMENTS.
                     </p>
                   </div>
-                  {paymentMethod !== 'upi' && (
-                    <div className="w-full mt-auto">
-                      <SlideToPay onComplete={handlePrimaryAction} />
-                    </div>
-                  )}
                 </>
-              )}
+              ) : paymentMethod === 'razorpay' ? (
+                <>
+                  <div className="flex flex-col items-center justify-center flex-1 py-12">
+                    <div className="w-24 h-24 rounded-[32px] bg-[#0c0c0e] border border-white/[0.05] flex items-center justify-center mb-8 shadow-[0_20px_40px_rgba(0,0,0,0.3)]">
+                      <img src={razorpayLogo} alt="RazorPay" className="w-12 h-auto object-contain" />
+                    </div>
+                    <h4 className="text-2xl font-black text-white mb-4 tracking-tight">RazorPay Gateway</h4>
+                    <p className="text-zinc-500 text-[10px] font-bold text-center max-w-[220px] leading-relaxed tracking-wider">
+                      Instant settlement via Secure Card, Netbanking or UPI through RazorPay.
+                    </p>
+                  </div>
+                  <div className="w-full mt-auto">
+                    <SlideToPay onComplete={handlePrimaryAction} />
+                  </div>
+                </>
+              ) : null}
             </motion.div>
           </div>
         </motion.div>
@@ -1715,10 +1868,22 @@ export default function Dashboard() {
   const [screenshot, setScreenshot] = useState(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showBankSheet, setShowBankSheet] = useState(false);
+  const [alertType, setAlertType] = useState('tampered');
   const [isInspectionAlertOpen, setIsInspectionAlertOpen] = useState(false);
   const [generatedLink, setGeneratedLink] = useState('');
+  const [payerEmail, setPayerEmail] = useState('');
+  const [payerPhone, setPayerPhone] = useState('');
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
+
+  const BACKEND_URL = "https://secure.arcbyte.co";
 
   const handleBankConfirm = (id, img) => {
+    // Mark link as spent for security
+    const settledInvoices = JSON.parse(localStorage.getItem('arcpay_settled_invoices') || '[]');
+    if (invoiceId && !settledInvoices.includes(invoiceId)) {
+      localStorage.setItem('arcpay_settled_invoices', JSON.stringify([...settledInvoices, invoiceId]));
+    }
+
     setTxId(id);
     setScreenshot(img);
     setShowBankSheet(false);
@@ -1766,6 +1931,13 @@ export default function Dashboard() {
     return () => clearInterval(checkExpiry);
   }, [sessionVerified, navigate]);
 
+  // UX Optimization: Scroll to top when payment is success to show full success screen
+  useEffect(() => {
+    if (isSubmitted) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  }, [isSubmitted]);
+
   if (!hasPayId && !sessionVerified) {
     return null;
   }
@@ -1803,6 +1975,15 @@ export default function Dashboard() {
     if (payId) {
       const decoded = verifyPayload(payId);
       if (decoded) {
+        // Check if this specific link/invoice has already been settled
+        const settledInvoices = JSON.parse(localStorage.getItem('arcpay_settled_invoices') || '[]');
+        if (decoded.iid && settledInvoices.includes(decoded.iid)) {
+          setAlertType('settled');
+          setShowSecurityAlert(true);
+          setTimeout(() => navigate('/', { replace: true }), 10000);
+          return;
+        }
+
         if (decoded.a) setAmount(decoded.a);
         if (decoded.n) setNote(decoded.n);
         if (decoded.nm) setName(decoded.nm);
@@ -1818,18 +1999,13 @@ export default function Dashboard() {
   }, [navigate]);
 
   const generateUPIParams = () => {
-    // Sanitize note: Remove problematic characters that trigger bank filters
-    const sanitizedNote = note.trim().replace(/[&?=#%]/g, '');
-    const finalNote = name.trim() ? `${name.trim()} - ${sanitizedNote}` : sanitizedNote;
-    const encodedNote = encodeURIComponent(finalNote);
     const validAmount = amount && !isNaN(Number(amount)) && Number(amount) > 0 ? Number(amount).toFixed(2) : '';
-
     if (!validAmount) return '';
 
-    // Advanced Intent Parameters:
-    // mode=02 (Secure App-to-App Intent)
-    // mc=0000 (Generic P2P/Merchant code to avoid strict P2M blocks on personal IDs)
-    return `pa=${PAYEE_VPA}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${validAmount}&cu=INR${encodedNote ? `&tn=${encodedNote}` : ''}&mc=0000&mode=02`;
+    // Barebones Intent: 
+    // Stripped all non-essential tags (mode, mc, tn) to mimic manual VPA entry as closely as possible.
+    // This bypasses many 'Intent' specific limits that banks apply to commercial-looking links.
+    return `pa=${PAYEE_VPA}&pn=${encodeURIComponent(PAYEE_NAME)}&am=${validAmount}&cu=INR`;
   };
 
   const generateUPIURI = () => {
@@ -1839,7 +2015,104 @@ export default function Dashboard() {
 
   const upiURI = generateUPIURI();
   const upiParams = generateUPIParams();
-  const isValid = Boolean(upiURI) && note.trim() !== '' && name.trim() !== '' && payerName.trim() !== '';
+  const isValid = (paymentMethod === 'razorpay' ? Number(amount) > 0 : Boolean(upiURI)) && note.trim() !== '' && name.trim() !== '' && payerName.trim() !== '';
+
+  const handleRazorpayPayment = async () => {
+    if (!window.Razorpay) {
+      toast.error("Razorpay SDK not loaded. Please check your connection.");
+      return;
+    }
+
+    setIsCreatingOrder(true);
+    const loadingToast = toast.loading("Securing Order with Razorpay Gateway...", {
+      className: "!bg-zinc-900 !border-white/5 !text-white font-bold"
+    });
+
+    try {
+      // Step 1: Create Secure Order via Railway Backend
+      const orderResponse = await fetch(`${BACKEND_URL}/api/create-order`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: Number(amount),
+          currency: "INR",
+          receipt: invoiceId,
+          notes: {
+            app_name: "ArcPay",
+            invoice_id: invoiceId,
+            sender_name: payerName,
+            payer_email: payerEmail,
+            payer_phone: payerPhone,
+            payment_note: note
+          }
+        }),
+      });
+
+      if (!orderResponse.ok) {
+        throw new Error('Could not initialize secure gateway order');
+      }
+
+      const orderData = await orderResponse.json();
+      
+      if (!orderData.success || !orderData.order_id) {
+        throw new Error('Invalid order response from gateway');
+      }
+
+      toast.dismiss(loadingToast);
+
+      const options = {
+        key: RAZORPAY_KEY,
+        amount: orderData.amount, 
+        currency: orderData.currency,
+        order_id: orderData.order_id, // CRITICAL: This enables instant capture
+        name: name || "ArcPay",
+        description: note || "Professional Payment Settlement",
+        image: razorpayPopupLogo,
+        handler: function (response) {
+          // Mark link as spent for security
+          const settledInvoices = JSON.parse(localStorage.getItem('arcpay_settled_invoices') || '[]');
+          if (invoiceId && !settledInvoices.includes(invoiceId)) {
+            localStorage.setItem('arcpay_settled_invoices', JSON.stringify([...settledInvoices, invoiceId]));
+          }
+
+          setTxId(response.razorpay_payment_id || response.razorpay_order_id);
+          setIsSubmitted(true);
+        },
+        prefill: {
+          name: payerName,
+          email: payerEmail,
+          contact: payerPhone,
+        },
+        notes: {
+          invoice_id: invoiceId,
+          payment_note: note,
+          sender_name: payerName,
+          app_name: "ArcPay"
+        },
+        theme: {
+          color: "#000000",
+        },
+      };
+
+      const rzp1 = new window.Razorpay(options);
+      rzp1.on('payment.failed', function (response) {
+        toast.error(`Payment Failed: ${response.error.description}`, {
+          className: "!bg-zinc-900 !border-red-900 !text-red-400"
+        });
+      });
+      rzp1.open();
+    } catch (err) {
+      console.error('Order Creation Error:', err);
+      toast.error(err.message || "Failed to secure transaction", {
+        id: loadingToast,
+        className: "!bg-zinc-900 !border-red-900 !text-red-400"
+      });
+    } finally {
+      setIsCreatingOrder(false);
+    }
+  };
 
   const handlePrimaryAction = () => {
     if (!isValid) return;
@@ -1847,6 +2120,14 @@ export default function Dashboard() {
     if (isLocked) {
       if (paymentMethod === 'bank') {
         setShowBankSheet(true);
+      } else if (paymentMethod === 'razorpay') {
+        // Mandatory validation for Razorpay
+        if (!payerEmail || !payerPhone) {
+          setAlertType('missing');
+          setShowSecurityAlert(true);
+          return;
+        }
+        handleRazorpayPayment();
       } else {
         setShowAppChooser(true);
       }
@@ -1914,78 +2195,110 @@ export default function Dashboard() {
       />
       <Toaster theme="dark" position="top-center" />
       <div className="max-w-[1400px] mx-auto rounded-none sm:rounded-[40px] overflow-hidden shadow-2xl relative min-h-screen sm:min-h-[90vh] bg-[#0a0a0c] px-4 sm:px-8 pt-6 pb-10">
-        {/* Navigation - Identical to Hero.jsx */}
-        <nav className="flex items-center justify-between mb-16 max-w-[1200px] mx-auto z-50 relative">
-          <div className="flex items-center gap-2 sm:gap-2.5">
-            <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] stroke-[2.5]" />
-            <span className="text-lg sm:text-xl font-bold tracking-tight text-white">ArcPay</span>
-            <div className="w-[1px] h-4 sm:h-5 bg-white/20 mx-0.5 sm:mx-1"></div>
-            <img src={arcbyteLogo} alt="ArcByte" className="h-5 sm:h-6 opacity-90 object-contain" />
-          </div>
-
-
-          <div className="flex items-center gap-4">
-            {isLocked ? (
-              <button
-                onClick={() => setShowHelp(true)}
-                className="px-6 py-2.5 rounded-full border border-zinc-600 hover:bg-white/5 transition-colors text-sm font-semibold flex items-center gap-2"
-              >
-                <HelpCircle className="w-4 h-4" /> Help
-              </button>
-            ) : (
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => {
-                    sessionStorage.removeItem('merchant_verified');
-                    window.location.href = '/';
-                  }}
-                  className="px-4 py-2.5 rounded-full border border-zinc-600 hover:bg-white/5 transition-colors text-sm font-semibold flex items-center gap-2"
-                  title="Lock Terminal"
-                >
-                  <Lock className="w-4 h-4 text-white" />
-                  <span className="hidden sm:inline">Lock</span>
-                </button>
-                <button
-                  onClick={() => {
-                    window.location.href = '/';
-                  }}
-                  className="px-6 py-2.5 rounded-full border border-zinc-600 hover:bg-white/5 transition-colors text-sm font-semibold flex items-center gap-2"
-                >
-                  <ArrowLeft className="w-4 h-4" /> Home
-                </button>
-              </div>
-            )}
-          </div>
-        </nav>
-
-        {/* Abstract Top squiggly right */}
-        <div className="absolute top-20 right-20 opacity-30 pointer-events-none">
-          <svg width="150" height="150" viewBox="0 0 120 80" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5" strokeLinecap="round">
-            <path d="M10 70 C 20 20, 60 100, 80 40 C 90 10, 110 30, 115 20 M 80 40 C 90 80, 50 10, 30 50" />
-          </svg>
-        </div>
-        <div className="max-w-[1200px] mx-auto relative z-10">
-          {isSubmitted ? (
+        {isSubmitted ? (
+          <div className="max-w-[1240px] mx-auto min-h-[80vh] flex items-center justify-center">
             <SuccessState amount={amount} name={name || PAYEE_NAME} txId={txId} method={paymentMethod} />
-          ) : isLocked ? (
-            <PayerView
-              amount={amount} note={note} name={name} payerName={payerName}
-              invoiceId={invoiceId} paymentMethod={paymentMethod} upiURI={upiURI}
-              handlePrimaryAction={handlePrimaryAction} PAYEE_NAME={PAYEE_NAME}
-              DEFAULT_BANK_DETAILS={DEFAULT_BANK_DETAILS} arcbyteLogo={arcbyteLogo}
-            />
-          ) : (
-            <CreatorView
-              paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod}
-              amount={amount} setAmount={setAmount}
-              name={name} handleNameChange={handleNameChange}
-              payerName={payerName} handlePayerNameChange={handlePayerNameChange}
-              note={note} handleNoteChange={handleNoteChange}
-              isValid={isValid} handlePrimaryAction={handlePrimaryAction}
-              handleDownloadQR={handleDownloadQR} arcbyteLogo={arcbyteLogo}
-            />
-          )}
-        </div>
+          </div>
+        ) : (
+          <>
+            {/* Navigation - Identical to Hero.jsx */}
+            <nav className="flex items-center justify-between mb-16 max-w-[1200px] mx-auto z-50 relative">
+              <div className="flex items-center gap-2 sm:gap-2.5">
+                <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)] stroke-[2.5]" />
+                <span className="text-lg sm:text-xl font-bold tracking-tight text-white">ArcPay</span>
+                <div className="w-[1px] h-4 sm:h-5 bg-white/20 mx-0.5 sm:mx-1"></div>
+                <img src={arcbyteLogo} alt="ArcByte" className="h-5 sm:h-6 opacity-90 object-contain" />
+              </div>
+
+              <div className="flex items-center gap-4">
+                {isLocked ? (
+                  <button
+                    onClick={() => setShowHelp(true)}
+                    className="px-6 py-2.5 rounded-full border border-zinc-600 hover:bg-white/5 transition-colors text-sm font-semibold flex items-center gap-2"
+                  >
+                    <HelpCircle className="w-4 h-4" /> Help
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        sessionStorage.removeItem('merchant_verified');
+                        window.location.href = '/';
+                      }}
+                      className="px-4 py-2.5 rounded-full border border-zinc-600 hover:bg-white/5 transition-colors text-sm font-semibold flex items-center gap-2"
+                      title="Lock Terminal"
+                    >
+                      <Lock className="w-4 h-4 text-white" />
+                      <span className="hidden sm:inline">Lock</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        window.location.href = '/';
+                      }}
+                      className="px-6 py-2.5 rounded-full border border-zinc-600 hover:bg-white/5 transition-colors text-sm font-semibold flex items-center gap-2"
+                    >
+                      <ArrowLeft className="w-4 h-4" /> Home
+                    </button>
+                  </div>
+                )}
+              </div>
+            </nav>
+
+            {/* Abstract Top squiggly right */}
+            <div className="absolute top-20 right-20 opacity-30 pointer-events-none">
+              <svg width="150" height="150" viewBox="0 0 120 80" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M10 70 C 20 20, 60 100, 80 40 C 90 10, 110 30, 115 20 M 80 40 C 90 80, 50 10, 30 50" />
+              </svg>
+            </div>
+
+            <div className="max-w-[1240px] mx-auto relative z-10">
+              {isLocked ? (
+                <PayerView
+                  amount={amount} note={note} name={name} payerName={payerName}
+                  invoiceId={invoiceId} paymentMethod={paymentMethod} upiURI={upiURI}
+                  handlePrimaryAction={handlePrimaryAction} PAYEE_NAME={PAYEE_NAME}
+                  DEFAULT_BANK_DETAILS={DEFAULT_BANK_DETAILS} arcbyteLogo={arcbyteLogo}
+                  payerEmail={payerEmail} setPayerEmail={setPayerEmail}
+                  payerPhone={payerPhone} setPayerPhone={setPayerPhone}
+                />
+              ) : (
+                <CreatorView
+                  paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod}
+                  amount={amount} setAmount={setAmount}
+                  name={name} handleNameChange={handleNameChange}
+                  payerName={payerName} handlePayerNameChange={handlePayerNameChange}
+                  note={note} handleNoteChange={handleNoteChange}
+                  isValid={isValid} handlePrimaryAction={handlePrimaryAction}
+                  handleDownloadQR={handleDownloadQR} arcbyteLogo={arcbyteLogo}
+                />
+              )}
+            </div>
+
+            {/* Footer */}
+            <footer className="mt-20 pt-16 pb-0 border-t border-white/[0.03] max-w-[1240px] mx-auto w-full">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-y-10 gap-x-8 mb-12">
+                <div className="flex items-center justify-center md:justify-start gap-2.5 opacity-60 hover:opacity-100 transition-opacity">
+                  <ShieldCheck className="w-5 h-5 text-zinc-400 stroke-[2.5]" />
+                  <span className="text-lg font-bold tracking-tight text-white">ArcPay</span>
+                  <div className="w-[1px] h-4 bg-white/10 mx-1"></div>
+                  <img src={arcbyteLogo} alt="ArcByte" className="h-5 opacity-90 object-contain" />
+                </div>
+
+                <div className="flex flex-nowrap items-center justify-center md:justify-end gap-x-3.5 sm:gap-x-8">
+                  {['Investors', 'Security', 'Features', 'Documentation'].map((item) => (
+                    <a
+                      key={item}
+                      href="https://arcbyte.co"
+                      className="text-zinc-500 text-[8.5px] sm:text-[10px] font-bold uppercase tracking-[0.05em] sm:tracking-widest hover:text-[#75f2c6] transition-colors whitespace-nowrap"
+                    >
+                      {item}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </footer>
+          </>
+        )}
 
         <AppChooser isOpen={showAppChooser} onClose={() => setShowAppChooser(false)} upiParams={upiParams} />
         <LinkGeneratedSheet isOpen={showSuccessSheet} onClose={() => setShowSuccessSheet(false)} link={generatedLink} />
@@ -2003,31 +2316,27 @@ export default function Dashboard() {
           note={note}
           setNote={setNote}
         />
-        <SecurityAlertSheet isOpen={showSecurityAlert} onClose={() => setShowSecurityAlert(false)} />
-
-        {/* Footer */}
-        <footer className="mt-20 pt-16 pb-0 border-t border-white/[0.03] max-w-[1240px] mx-auto w-full">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-y-10 gap-x-8 mb-12">
-            <div className="flex items-center justify-center md:justify-start gap-2.5 opacity-60 hover:opacity-100 transition-opacity">
-              <ShieldCheck className="w-5 h-5 text-zinc-400 stroke-[2.5]" />
-              <span className="text-lg font-bold tracking-tight text-white">ArcPay</span>
-              <div className="w-[1px] h-4 bg-white/10 mx-1"></div>
-              <img src={arcbyteLogo} alt="ArcByte" className="h-5 opacity-90 object-contain" />
-            </div>
-
-            <div className="flex flex-nowrap items-center justify-center md:justify-end gap-x-3.5 sm:gap-x-8">
-              {['Investors', 'Security', 'Features', 'Documentation'].map((item) => (
-                <a
-                  key={item}
-                  href="https://arcbyte.co"
-                  className="text-zinc-500 text-[8.5px] sm:text-[10px] font-bold uppercase tracking-[0.05em] sm:tracking-widest hover:text-[#75f2c6] transition-colors whitespace-nowrap"
-                >
-                  {item}
-                </a>
-              ))}
-            </div>
-          </div>
-        </footer>
+        <AppChooser isOpen={showAppChooser} onClose={() => setShowAppChooser(false)} upiParams={upiParams} />
+        <LinkGeneratedSheet isOpen={showSuccessSheet} onClose={() => setShowSuccessSheet(false)} link={generatedLink} />
+        <ComingSoonSheet isOpen={showHelp} onClose={() => setShowHelp(false)} />
+        <InspectionRestrictedSheet isOpen={isInspectionAlertOpen} onClose={() => setIsInspectionAlertOpen(false)} />
+        <BankConfirmationSheet
+          isOpen={showBankSheet}
+          onClose={() => setShowBankSheet(false)}
+          onConfirm={handleBankConfirm}
+          amount={amount}
+          setAmount={setAmount}
+          name={name}
+          payerName={payerName}
+          setPayerName={setPayerName}
+          note={note}
+          setNote={setNote}
+        />
+        <SecurityAlertSheet 
+          isOpen={showSecurityAlert} 
+          onClose={() => setShowSecurityAlert(false)} 
+          type={alertType}
+        />
       </div>
     </div>
   );
