@@ -114,12 +114,12 @@ const StatLine = ({ color, dashed = false, data = [], selectedDate = null }) => 
 export default function AdminDashboard() {
   const [links, setLinks] = useState([]);
   const [selectedDate, setSelectedDate] = useState(null);
-  const [stats, setStats] = useState({ 
-    totalLinks: 0, 
-    totalRevenue: 0, 
-    pendingCount: 0, 
+  const [stats, setStats] = useState({
+    totalLinks: 0,
+    totalRevenue: 0,
+    pendingCount: 0,
     settledCount: 0,
-    dailyStats: [] 
+    dailyStats: []
   });
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -135,7 +135,7 @@ export default function AdminDashboard() {
     maintenanceMessage: '',
     isArcPayBlocked: false,
     requirePasscode: true,
-    passcode: '' 
+    passcode: ''
   });
 
   const fetchDashboardData = async () => {
@@ -164,10 +164,10 @@ export default function AdminDashboard() {
       setLinks(linksData);
     } catch (err) {
       console.error('Failed to fetch stats:', err);
-      showStatus({ 
-        type: 'error', 
-        title: 'SYSTEM ERROR', 
-        message: "Unable to connect to the secure server. Please check your internet connection." 
+      showStatus({
+        type: 'error',
+        title: 'SYSTEM ERROR',
+        message: "Unable to connect to the secure server. Please check your internet connection."
       });
     } finally {
       setIsLoading(false);
@@ -207,28 +207,28 @@ export default function AdminDashboard() {
       if (response.ok) {
         setStats(prev => ({
           ...prev,
-          dailyStats: prev.dailyStats.map(d => 
+          dailyStats: prev.dailyStats.map(d =>
             d.date === selectedDate ? { ...d, count: d.count + (newStatus === 'SETTLED' ? 0.0000001 : 0) } : d // Force chart refresh if needed
           )
         }));
-        showStatus({ 
-          type: 'success', 
-          title: 'PAYMENT UPDATED', 
-          message: `Transaction verified. Status set to ${newStatus.toLowerCase()}.` 
+        showStatus({
+          type: 'success',
+          title: 'PAYMENT UPDATED',
+          message: `Transaction verified. Status set to ${newStatus.toLowerCase()}.`
         });
         fetchDashboardData();
       } else {
-        showStatus({ 
-          type: 'error', 
-          title: 'ERROR', 
-          message: "The update could not be completed at this time." 
+        showStatus({
+          type: 'error',
+          title: 'ERROR',
+          message: "The update could not be completed at this time."
         });
       }
     } catch (err) {
-      showStatus({ 
-        type: 'error', 
-        title: 'CONNECTION ERROR', 
-        message: "The server is currently unreachable." 
+      showStatus({
+        type: 'error',
+        title: 'CONNECTION ERROR',
+        message: "The server is currently unreachable."
       });
     }
   };
@@ -239,16 +239,16 @@ export default function AdminDashboard() {
   };
 
   const filteredLinks = links.filter(link => {
-    const matchesSearch = 
+    const matchesSearch =
       link.linkId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       link.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (link.payerName && link.payerName.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+
     const matchesStatus = statusFilter === 'ALL' || link.status === statusFilter;
     const matchesMethod = methodFilter === 'ALL' || link.paymentMethod === methodFilter;
-    
+
     if (!selectedDate) return matchesSearch && matchesStatus && matchesMethod;
-    
+
     const linkDate = new Date(link.createdAt).toISOString().split('T')[0];
     return matchesSearch && matchesStatus && matchesMethod && linkDate === selectedDate;
   });
@@ -269,8 +269,8 @@ export default function AdminDashboard() {
 
   return (
     <div className="admin-dashboard-root flex h-screen bg-[#050505] text-[#e0e0e0] font-sans selection:bg-[#d4ff3f]/30 overflow-hidden">
-      {/* NIXIO SIDEBAR (Desktop) */}
-      <aside className="hidden lg:flex w-[100px] flex-col items-center py-10 border-r border-[#ffffff0a] bg-[#0a0a0c] z-50">
+      {/* NIXIO SIDEBAR */}
+      <aside className="w-[100px] flex flex-col items-center py-10 border-r border-[#ffffff0a] bg-[#0a0a0c] z-50">
         <div className="mb-16">
           <ShieldCheck className="w-8 h-8 text-[#d4ff3f]" strokeWidth={2.5} />
         </div>
@@ -311,79 +311,48 @@ export default function AdminDashboard() {
         </div>
       </aside>
 
-      {/* MOBILE BOTTOM NAVIGATION */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 h-[80px] bg-[#0a0a0c]/80 backdrop-blur-xl border-t border-[#ffffff0a] flex items-center justify-around px-2 z-[100] safe-area-bottom">
-        {[
-          { id: 'home', icon: Home },
-          { id: 'links', icon: LinkIcon },
-          { id: 'payments', icon: Wallet },
-          { id: 'security', icon: ShieldCheck },
-        ].map((item) => (
-          <button
-            key={item.id}
-            onClick={() => setActiveTab(item.id)}
-            className={cn(
-              "relative flex flex-col items-center justify-center gap-1.5 px-3 py-2 transition-all",
-              activeTab === item.id ? "text-[#d4ff3f]" : "text-zinc-600"
-            )}
-          >
-            <item.icon className="w-6 h-6" />
-            <span className="text-[8px] font-black uppercase tracking-widest">{item.id}</span>
-            {activeTab === item.id && (
-              <motion.div layoutId="mobile-active-pill" className="absolute -top-[1.5px] left-1/2 -translate-x-1/2 w-8 h-[3px] bg-[#d4ff3f] rounded-full shadow-[0_0_10px_#d4ff3f]" />
-            )}
-          </button>
-        ))}
-        <button onClick={handleLogout} className="flex flex-col items-center justify-center gap-1.5 px-3 py-2 text-zinc-600">
-          <LogOut className="w-5 h-5 shadow-sm" />
-          <span className="text-[8px] font-black uppercase tracking-widest">Quit</span>
-        </button>
-      </nav>
-
       {/* MAIN PANEL */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
         {/* NIXIO TOPBAR */}
-        <header className="h-auto min-h-[100px] lg:h-[100px] flex flex-col lg:flex-row lg:items-center justify-between px-6 lg:px-10 border-b border-[#ffffff0a] py-6 lg:py-0 gap-6 lg:gap-0">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center gap-6 lg:gap-10">
+        <header className="h-[100px] flex items-center justify-between px-10 border-b border-[#ffffff0a]">
+          <div className="flex items-center gap-10">
             <div className="flex items-center gap-3">
               <span className="text-3xl font-black tracking-tighter text-white">ArcPay</span>
               <div className="w-[1px] h-6 bg-white/10" />
               <img src={arcbyteLogo} alt="ArcByte" className="h-6 opacity-80" />
             </div>
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto">
-              <div className="relative group w-full sm:w-auto">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-[#d4ff3f] transition-colors" />
-                <input
-                  type="text"
-                  placeholder="Find payments..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="bg-[#16161a] h-12 rounded-2xl pl-12 pr-6 text-sm font-bold w-full sm:w-[260px] outline-none border border-transparent focus:border-[#d4ff3f]/30 transition-all placeholder:text-zinc-700"
-                />
-              </div>
+            <div className="relative group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-[#d4ff3f] transition-colors" />
+              <input
+                type="text"
+                placeholder="Find payments..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="bg-[#16161a] h-12 rounded-2xl pl-12 pr-6 text-sm font-bold w-[260px] outline-none border border-transparent focus:border-[#d4ff3f]/30 transition-all placeholder:text-zinc-700"
+              />
+            </div>
 
-              <div className="flex items-center gap-2 bg-[#16161a] p-1.5 rounded-2xl border border-white/5 w-full sm:w-auto overflow-x-auto no-scrollbar">
-                {['ALL', 'PENDING', 'SETTLED', 'INVALID'].map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setStatusFilter(s === 'INVALID' ? 'INVALIDATED' : s)}
-                    className={cn(
-                      "px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shrink-0",
-                      (statusFilter === s || (s === 'INVALID' && statusFilter === 'INVALIDATED')) 
-                        ? "bg-[#d4ff3f] text-black shadow-[0_0_15px_#d4ff3f50]" 
-                        : "text-zinc-600 hover:text-zinc-400"
-                    )}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
+            <div className="flex items-center gap-2 bg-[#16161a] p-1.5 rounded-2xl border border-white/5">
+              {['ALL', 'PENDING', 'SETTLED', 'INVALID'].map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setStatusFilter(s === 'INVALID' ? 'INVALIDATED' : s)}
+                  className={cn(
+                    "px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                    (statusFilter === s || (s === 'INVALID' && statusFilter === 'INVALIDATED'))
+                      ? "bg-[#d4ff3f] text-black shadow-[0_0_15px_#d4ff3f50]"
+                      : "text-zinc-600 hover:text-zinc-400"
+                  )}
+                >
+                  {s}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="flex items-center justify-between lg:justify-end gap-6 lg:gap-10 border-t lg:border-t-0 border-white/5 pt-6 lg:pt-0">
-            <div className="hidden sm:flex -space-x-4 group/avatars">
+          <div className="flex items-center gap-10">
+            <div className="flex -space-x-4 group/avatars">
               {[1, 2, 3].map(i => (
                 <div key={i} className={`w-10 h-10 rounded-full border-2 border-[#050505] bg-zinc-900 flex items-center justify-center relative transition-all duration-500 hover:z-10 hover:-translate-y-1 cursor-default ${i === 3 ? 'shadow-[0_0_20px_rgba(212,255,63,0.1)]' : ''}`}>
                   <span className="text-[10px] font-black text-zinc-600 group-hover/avatars:text-white transition-colors">+9</span>
@@ -402,16 +371,16 @@ export default function AdminDashboard() {
                   <span className="text-[8px] font-black text-[#d4ff3f] uppercase tracking-[0.3em] mt-1">Settled</span>
                 </div>
               </div>
-              
+
               <div className="w-[1px] h-6 bg-white/5" />
-              
+
               <div className="flex flex-col">
                 <span className="text-sm font-black text-zinc-200 leading-none">{stats.pendingCount.toString().padStart(2, '0')}</span>
                 <span className="text-[8px] font-black text-zinc-500 uppercase tracking-[0.3em] mt-1">Unsettled</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-5 ml-0 lg:ml-4 pl-0 lg:pl-10 border-l-0 lg:border-l border-white/5">
+            <div className="flex items-center gap-5 ml-4 pl-10 border-l border-white/5">
               <div className="text-right flex flex-col items-end">
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="text-[11px] font-black text-white uppercase tracking-wider">{merchantName}</span>
@@ -422,7 +391,7 @@ export default function AdminDashboard() {
                   <p className="text-[9px] font-black text-[#d4ff3f] uppercase tracking-[0.4em] opacity-80">Admin Console</p>
                 </div>
               </div>
-              <div className="relative group/user hidden sm:block">
+              <div className="relative group/user">
                 <div className="absolute inset-0 bg-[#d4ff3f]/10 blur-xl rounded-full opacity-0 group-hover/user:opacity-100 transition-opacity" />
                 <div className="w-11 h-11 bg-zinc-900 rounded-2xl flex items-center justify-center border border-white/5 relative z-10 hover:border-[#d4ff3f]/30 transition-all cursor-pointer">
                   <Users className="w-5 h-5 text-zinc-500 group-hover/user:text-[#d4ff3f] transition-colors" />
@@ -439,47 +408,47 @@ export default function AdminDashboard() {
         )}>
           {activeTab === 'chats' && (
             <div className="absolute inset-0 w-full h-full bg-[#050505] z-10 animate-in fade-in duration-700">
-               {/* Editorial Loading State */}
-               <div className="absolute inset-0 flex items-center justify-center -z-10 bg-[#050505]">
-                  <div className="flex flex-col items-center gap-6">
-                    <div className="w-12 h-12 rounded-full border-b-2 border-[#d4ff3f] animate-spin" />
-                    <p className="text-[#d4ff3f] text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Initialising secure mail...</p>
-                  </div>
-               </div>
-               <iframe 
-                src="https://mail.arcbyte.co" 
+              {/* Editorial Loading State */}
+              <div className="absolute inset-0 flex items-center justify-center -z-10 bg-[#050505]">
+                <div className="flex flex-col items-center gap-6">
+                  <div className="w-12 h-12 rounded-full border-b-2 border-[#d4ff3f] animate-spin" />
+                  <p className="text-[#d4ff3f] text-[10px] font-black uppercase tracking-[0.4em] animate-pulse">Initialising secure mail...</p>
+                </div>
+              </div>
+              <iframe
+                src="https://mail.arcbyte.co"
                 className="w-full h-full border-none opacity-0 transition-opacity duration-1000"
                 onLoad={(e) => e.target.style.opacity = '1'}
                 title="ArcMail Console"
-               />
+              />
             </div>
           )}
           {activeTab === 'home' && (
-            <div className="flex flex-col xl:flex-row gap-10">
+            <div className="flex gap-10">
               {/* LEFT COLUMN: STATS & LIST */}
               <div className="flex-1 space-y-12">
                 {/* STATISTICS SECTION */}
                 <div className="space-y-8">
-                  <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-0">
+                  <div className="flex items-end justify-between">
                     <div>
                       <div className="flex items-center gap-3 mb-3">
                         <div className="w-8 h-[1px] bg-[#d4ff3f]/40" />
                         <span className="text-[10px] font-black text-[#d4ff3f] uppercase tracking-[0.4em]">Integrated Security Firewall</span>
                       </div>
-                      <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white">
+                      <h2 className="text-5xl font-black italic uppercase tracking-tighter text-white">
                         Security <span className="text-zinc-600">Settings</span>
                       </h2>
                     </div>
-                    <div className="flex gap-6 text-[10px] font-black uppercase tracking-widest pb-2 overflow-x-auto no-scrollbar">
+                    <div className="flex gap-6 text-[10px] font-black uppercase tracking-widest pb-2">
                       {['Days', 'Weeks', 'Months'].map(t => (
-                        <button key={t} className={t === 'Days' ? 'text-white border-b-2 border-[#d4ff3f] shrink-0' : 'text-zinc-600 hover:text-white transition-colors shrink-0'}>{t}</button>
+                        <button key={t} className={t === 'Days' ? 'text-white border-b-2 border-[#d4ff3f]' : 'text-zinc-600 hover:text-white transition-colors'}>{t}</button>
                       ))}
                     </div>
                   </div>
 
-                  <div className="bg-[#0a0a0c] rounded-[32px] border border-[#ffffff08] p-6 md:p-10 relative overflow-hidden h-auto min-h-[400px]">
+                  <div className="bg-[#0a0a0c] rounded-[32px] border border-[#ffffff08] p-10 relative overflow-hidden h-[400px]">
                     {/* Date Scroller */}
-                    <div className="flex gap-4 overflow-x-auto no-scrollbar mb-10 pb-4 pr-10">
+                    <div className="flex gap-4 overflow-x-auto no-scrollbar mb-10 pb-4">
                       {dynamicDays.map((d, i) => {
                         const dayStats = stats.dailyStats?.find(s => s.date === d.dateStr);
                         const isSelected = selectedDate === d.dateStr;
@@ -487,10 +456,10 @@ export default function AdminDashboard() {
                           <div
                             key={i}
                             onClick={() => setSelectedDate(isSelected ? null : d.dateStr)}
-                            className={`flex flex-col items-center justify-center min-w-[64px] md:min-w-[72px] h-[80px] md:h-[90px] rounded-2xl border transition-all duration-500 cursor-pointer ${isSelected ? 'bg-[#d4ff3f] border-[#d4ff3f] text-black shadow-[0_0_25px_rgba(212,255,63,0.2)]' : 'bg-[#16161a] border-white/5 text-zinc-500 hover:border-white/10'}`}
+                            className={`flex flex-col items-center justify-center min-w-[72px] h-[90px] rounded-2xl border transition-all duration-500 cursor-pointer ${isSelected ? 'bg-[#d4ff3f] border-[#d4ff3f] text-black shadow-[0_0_25px_rgba(212,255,63,0.2)]' : 'bg-[#16161a] border-white/5 text-zinc-500 hover:border-white/10'}`}
                           >
-                            <span className="text-[10px] md:text-[11px] font-black uppercase mb-1">{d.num}</span>
-                            <span className="text-[8px] md:text-[9px] font-bold opacity-60 uppercase tracking-widest">{d.day}</span>
+                            <span className="text-[11px] font-black uppercase mb-1">{d.num}</span>
+                            <span className="text-[9px] font-bold opacity-60 uppercase tracking-widest">{d.day}</span>
                             {dayStats?.revenue > 0 && (
                               <div className={`mt-2 w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-black/20' : 'bg-[#d4ff3f]'}`} />
                             )}
@@ -500,14 +469,14 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Dynamic Chart Visual */}
-                    <div className="relative h-40 md:h-48 w-full mt-10">
+                    <div className="relative h-48 w-full">
                       <StatLine color="#d4ff3f" data={stats.dailyStats} selectedDate={selectedDate} />
                       <StatLine color="#ffffff" dashed={true} data={stats.dailyStats?.map(d => ({ ...d, revenue: d.revenue * 0.8 }))} selectedDate={selectedDate} />
 
                       {/* Time markers */}
-                      <div className="absolute bottom-0 left-0 right-0 flex justify-between px-2 overflow-hidden">
-                        {['7 am', '10 am', '1 pm', '4 pm', '7 pm'].map(t => (
-                          <span key={t} className="text-[7px] md:text-[8px] font-black text-zinc-700 uppercase">{t}</span>
+                      <div className="absolute bottom-0 left-0 right-0 flex justify-between px-2">
+                        {['7 am', '8 am', '9 am', '10 am', '11 am', '12 am', '1 pm', '2 pm', '3 pm', '4 pm'].map(t => (
+                          <span key={t} className="text-[8px] font-black text-zinc-700 uppercase">{t}</span>
                         ))}
                       </div>
                     </div>
@@ -516,19 +485,19 @@ export default function AdminDashboard() {
 
                 {/* ONGOING PAYMENTS SCROLLER */}
                 <div className="space-y-8">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 md:gap-0">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-6">
                       <div>
                         <div className="flex items-center gap-3 mb-3">
                           <div className="w-8 h-[1px] bg-[#d4ff3f]/40" />
                           <span className="text-[10px] font-black text-[#d4ff3f] uppercase tracking-[0.4em]">Settlement Feed</span>
                         </div>
-                        <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white">
+                        <h2 className="text-5xl font-black italic uppercase tracking-tighter text-white">
                           Recent <span className="text-zinc-600">Payments</span>
                         </h2>
                       </div>
                       {selectedDate && (
-                        <div className="flex items-center gap-2 self-start px-3 py-1 bg-[#d4ff3f]/10 border border-[#d4ff3f]/20 rounded-full">
+                        <div className="flex items-center gap-2 px-3 py-1 bg-[#d4ff3f]/10 border border-[#d4ff3f]/20 rounded-full">
                           <span className="text-[10px] font-black text-[#d4ff3f] uppercase tracking-widest">
                             {new Date(selectedDate).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
                           </span>
@@ -538,9 +507,9 @@ export default function AdminDashboard() {
                         </div>
                       )}
                     </div>
-                    <div className="flex items-center gap-3 self-end md:self-auto">
+                    <div className="flex items-center gap-3">
                       {selectedDate && (
-                        <button 
+                        <button
                           onClick={() => setSelectedDate(null)}
                           className="text-[10px] font-black text-zinc-500 uppercase tracking-widest hover:text-white transition-colors"
                         >
@@ -553,78 +522,101 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-2 pb-20">
+                  <div className="flex flex-col gap-1 pb-20">
                     {filteredLinks.slice(0, 8).map((link, i) => (
                       <motion.div
                         key={link._id}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
-                        className="group relative flex flex-col md:flex-row md:items-center justify-between py-6 md:py-10 px-6 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all duration-500 rounded-[24px] gap-6 md:gap-0"
+                        className="group relative flex items-center justify-between py-10 px-6 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all duration-500 rounded-[24px] cursor-default"
                       >
                         {/* Left: Identity & Primary Info */}
-                        <div className="flex items-center gap-6 md:gap-10 w-full md:w-[45%]">
+                        <div className="flex items-center gap-10 w-[45%] min-w-[400px]">
                           <div className="relative shrink-0">
-                            <div className="w-12 h-12 md:w-16 md:h-16 bg-zinc-900 rounded-full flex items-center justify-center border border-white/5 text-lg md:text-xl font-black text-[#d4ff3f] shadow-2xl transition-transform group-hover:scale-110 duration-500">
+                            <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center border border-white/5 text-xl font-black text-[#d4ff3f] shadow-2xl transition-transform group-hover:scale-110 duration-500">
                               {(link.payerName || link.name || "AC").charAt(0)}
                             </div>
-                            <div className={`absolute -bottom-1 -right-1 w-4 h-4 md:w-5 md:h-5 rounded-full border-2 md:border-4 border-black ${
-                              link.status === 'SETTLED' ? 'bg-[#d4ff3f]' : 
-                              link.status === 'SUBMITTED' ? 'bg-[#d4ff3f] animate-pulse' : 
-                              'bg-zinc-800'
-                            }`} />
+                            <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-4 border-black ${link.status === 'SETTLED' ? 'bg-[#d4ff3f]' :
+                                link.status === 'SUBMITTED' ? 'bg-[#d4ff3f] animate-pulse' :
+                                  'bg-zinc-800'
+                              }`} />
                           </div>
 
-                          <div className="flex flex-col gap-1 md:gap-2 min-w-0">
-                            <h3 className="text-xl md:text-2xl text-white group-hover:text-[#d4ff3f] transition-colors duration-500 truncate flex items-center gap-2 tracking-tight">
+                          <div className="flex flex-col gap-2 min-w-0">
+                            <h3 className="text-2xl text-white group-hover:text-[#d4ff3f] transition-colors duration-500 truncate flex items-center gap-2">
                               {link.payerName || link.name || "Anonymous Customer"}
-                              {link.status === 'SETTLED' && <Check className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#d4ff3f] shrink-0" />}
+                              {link.status === 'SETTLED' && <Check className="w-4 h-4 text-[#d4ff3f] shrink-0" />}
                             </h3>
-                            <div className="flex flex-wrap items-center gap-3 md:gap-4 text-zinc-500 font-bold uppercase tracking-[0.2em] text-[9px] md:text-[10px]">
+                            <div className="flex items-center gap-4 text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px]">
                               <span className={link.status === 'SETTLED' ? 'text-[#d4ff3f]/80' : 'text-zinc-600'}>
-                                {link.status === 'SETTLED' ? 'Verified' : link.status === 'SUBMITTED' ? 'Processing' : 'Awaiting'}
+                                {link.status === 'SETTLED' ? 'Payment Verified' : link.status === 'SUBMITTED' ? 'Processing' : 'Awaiting Payment'}
                               </span>
                               <div className="w-1 h-1 rounded-full bg-zinc-800" />
                               <span>{new Date(link.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                              <div className="w-1 h-1 rounded-full bg-zinc-800 hidden sm:block" />
-                              <span className="font-mono opacity-50 hidden sm:block"># {link.linkId.slice(-6).toUpperCase()}</span>
+                              <div className="w-1 h-1 rounded-full bg-zinc-800" />
+                              <span className="font-mono opacity-50"># {link.linkId.slice(-6).toUpperCase()}</span>
                             </div>
                           </div>
                         </div>
 
-                        {/* Middle: Metadata Column for Mobile/Desktop */}
-                        <div className="flex items-center justify-between md:justify-end flex-1 gap-6 md:gap-16">
-                          <div className="flex flex-col items-start md:items-end gap-1.5 shrink-0">
-                            <span className="text-[8px] md:text-[10px] font-black text-zinc-600 uppercase tracking-widest">Amount</span>
-                            <span className="text-xl md:text-3xl font-black text-white tracking-tighter">
+                        {/* Middle: Metadata Columns */}
+                        <div className="flex items-center flex-1 justify-end gap-16">
+                          <div className="flex flex-col items-end gap-1.5 w-[200px] shrink-0">
+                            <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Payment Note / Ref</span>
+                            <span className="text-xs font-black text-zinc-400 truncate w-full text-right">{link.note || "No Reference"}</span>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-1.5 w-[80px] shrink-0">
+                            <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Method</span>
+                            <div className="flex items-center gap-2">
+                              {link.paymentMethod === 'upi' && <img src={upiLogo} alt="UPI" className="h-5 opacity-80" />}
+                              {link.paymentMethod === 'bank' && <img src={bankLogo} alt="Bank" className="h-5 opacity-80" />}
+                              {link.paymentMethod === 'razorpay' && <img src={razorpayLogo} alt="RP" className="h-5 opacity-80" />}
+                              {link.paymentMethod !== 'bank' && (
+                                <span className="text-xs font-black text-white uppercase">{link.paymentMethod}</span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-end gap-1.5 w-[150px] shrink-0">
+                            <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Total Amount</span>
+                            <span className="text-3xl font-black text-white tracking-tighter">
                               ₹{new Intl.NumberFormat('en-IN').format(link.amount)}
                             </span>
                           </div>
+                        </div>
 
-                          <div className="flex items-center gap-3">
-                            <div className="flex flex-col items-end gap-1.5 hidden sm:flex shrink-0">
-                              {link.paymentMethod === 'upi' && <img src={upiLogo} alt="UPI" className="h-4 md:h-5 opacity-60" />}
-                              {link.paymentMethod === 'bank' && <img src={bankLogo} alt="Bank" className="h-4 md:h-5 opacity-60" />}
-                            </div>
-                            
-                            <div className="flex items-center gap-2">
-                              {['PENDING', 'SUBMITTED'].includes(link.status) && link.paymentMethod !== 'razorpay' && (
+                        {/* Right: Actions */}
+                        <div className="flex items-center justify-end gap-3 w-[160px] shrink-0 ml-10">
+                          {['PENDING', 'SUBMITTED'].includes(link.status) && (
+                            <>
+                              {link.paymentMethod !== 'razorpay' && (
                                 <button
                                   onClick={() => handleStatusUpdate(link._id, 'SETTLED')}
-                                  className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#d4ff3f]/10 text-[#d4ff3f] flex items-center justify-center hover:bg-[#d4ff3f] hover:text-black transition-all"
+                                  className="w-12 h-12 rounded-full bg-[#d4ff3f]/10 text-[#d4ff3f] flex items-center justify-center hover:bg-[#d4ff3f] hover:text-black transition-all duration-300 opacity-40 hover:opacity-100 hover:rotate-12 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+                                  title="Validate Payment"
                                 >
-                                  <Check size={18} strokeWidth={3} />
+                                  <Check size={20} strokeWidth={3} />
                                 </button>
                               )}
-                              <a
-                                href={link.fullUrl || `http://localhost:5173/app?pay_id=${link.linkId}`}
-                                target="_blank"
-                                className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-white/5 text-zinc-500 flex items-center justify-center hover:bg-white hover:text-black transition-all"
+                              <button
+                                onClick={() => handleStatusUpdate(link._id, 'INVALIDATED')}
+                                className="w-12 h-12 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-black transition-all duration-300 opacity-40 hover:opacity-100 hover:-rotate-12 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+                                title="Invalidate Link"
                               >
-                                <ExternalLink size={18} />
-                              </a>
-                            </div>
-                          </div>
+                                <X size={20} strokeWidth={3} />
+                              </button>
+                            </>
+                          )}
+                          <a
+                            href={link.fullUrl || `http://localhost:5173/app?pay_id=${link.linkId}`}
+                            target="_blank"
+                            className="w-12 h-12 rounded-full bg-white/5 text-zinc-500 flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 opacity-40 hover:opacity-100 shadow-xl"
+                            title="View Payment Page"
+                          >
+                            <ExternalLink size={20} />
+                          </a>
                         </div>
                       </motion.div>
                     ))}
@@ -643,7 +635,7 @@ export default function AdminDashboard() {
                   >
                     {/* Visual Accent Decoration */}
                     <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#d4ff3f]/5 rounded-full blur-[80px] group-hover:bg-[#d4ff3f]/10 transition-all duration-700" />
-                    
+
                     <div className="relative z-10">
                       <div className="flex items-center gap-3 mb-8 opacity-40 group-hover:opacity-80 transition-opacity">
                         <span className="text-xs font-black tracking-tighter text-white">ArcPay</span>
@@ -654,7 +646,7 @@ export default function AdminDashboard() {
                       <h3 className="text-6xl text-[#d4ff3f] mb-4">
                         {stats.totalRevenue > 100000 ? `₹${(stats.totalRevenue / 1000).toFixed(0)}k` : `₹${stats.totalRevenue}`}
                       </h3>
-                      
+
                       <div className="flex items-center justify-between">
                         <p className="text-zinc-500 text-[10px] font-black uppercase tracking-[0.2em]">Total Settle Volume</p>
                         <div className="flex -space-x-2">
@@ -678,9 +670,9 @@ export default function AdminDashboard() {
                     {links.filter(l => l.status === 'SETTLED').slice(0, 5).map((link, i) => (
                       <div key={i} className="flex items-center gap-5 py-6 border-b border-white/[0.03] group cursor-default transition-all hover:bg-white/[0.01]">
                         <div className="w-10 h-10 rounded-full bg-zinc-900/50 flex items-center justify-center p-2 border border-white/5 transition-transform group-hover:scale-110">
-                          {link.paymentMethod === 'bank' ? <img src={bankLogo} alt="Bank" className="w-full h-full object-contain opacity-60 group-hover:opacity-100" /> : 
-                           link.paymentMethod === 'upi' ? <img src={upiLogo} alt="UPI" className="h-5 opacity-80" /> : 
-                           <img src={razorpayLogo} alt="Razorpay" className="w-full h-full object-contain opacity-60 group-hover:opacity-100" />}
+                          {link.paymentMethod === 'bank' ? <img src={bankLogo} alt="Bank" className="w-full h-full object-contain opacity-60 group-hover:opacity-100" /> :
+                            link.paymentMethod === 'upi' ? <img src={upiLogo} alt="UPI" className="h-5 opacity-80" /> :
+                              <img src={razorpayLogo} alt="Razorpay" className="w-full h-full object-contain opacity-60 group-hover:opacity-100" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-3">
@@ -753,29 +745,29 @@ export default function AdminDashboard() {
                   </h2>
                 </div>
               </div>
-                          {/* PERFECTED EDITORIAL SPREAD (UNCARDED T-GRID) */}
+              {/* PERFECTED EDITORIAL SPREAD (UNCARDED T-GRID) */}
               <div className="relative border-t border-white/[0.08] pt-12">
                 {/* Horizontal T-Bar */}
                 <div className="absolute top-0 right-0 w-32 h-[1px] bg-[#d4ff3f]/40" />
-                
+
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 lg:gap-0">
                   {/* SEGMENT I: GATE PROTOCOL */}
                   <div className="lg:pr-16 relative">
                     <div className="flex flex-col h-full">
                       <div className="flex items-center gap-4 mb-16">
-                         <div className="w-1.5 h-1.5 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
-                         <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Integrated Firewall Cluster</h4>
+                        <div className="w-1.5 h-1.5 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
+                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Integrated Firewall Cluster</h4>
                       </div>
 
                       <div className="space-y-6">
-                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Gate<br/>Protection</h3>
+                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Gate<br />Protection</h3>
                         <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-widest leading-relaxed max-w-xs">
                           Enabling this setting triggers a 6-digit security code for all entry points.
                         </p>
                       </div>
 
                       <div className="mt-16 flex items-center gap-10">
-                        <button 
+                        <button
                           onClick={() => setMaintenanceSettings(prev => ({ ...prev, requirePasscode: !prev.requirePasscode }))}
                           className={cn(
                             "w-24 h-12 rounded-full p-1.5 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] relative overflow-hidden group shadow-2xl",
@@ -792,11 +784,11 @@ export default function AdminDashboard() {
                           )} />
                         </button>
                         <div className="flex flex-col">
-                           <span className={cn(
-                             "text-[10px] font-black uppercase tracking-widest transition-colors duration-500",
-                             maintenanceSettings.requirePasscode ? "text-[#d4ff3f]" : "text-zinc-700"
-                           )}>{maintenanceSettings.requirePasscode ? 'PROTECTION_ACTIVE' : 'GATE_BYPASSED'}</span>
-                           <span className="text-[9px] font-black text-zinc-800 uppercase mt-1">Status Report 7-A</span>
+                          <span className={cn(
+                            "text-[10px] font-black uppercase tracking-widest transition-colors duration-500",
+                            maintenanceSettings.requirePasscode ? "text-[#d4ff3f]" : "text-zinc-700"
+                          )}>{maintenanceSettings.requirePasscode ? 'PROTECTION_ACTIVE' : 'GATE_BYPASSED'}</span>
+                          <span className="text-[9px] font-black text-zinc-800 uppercase mt-1">Status Report 7-A</span>
                         </div>
                       </div>
                     </div>
@@ -808,20 +800,20 @@ export default function AdminDashboard() {
                   {/* NEW SEGMENT III: GLOBAL ACCESS BLOCK (Master Switch) */}
                   <div className="lg:pl-16 relative">
                     <div className="flex flex-col h-full">
-                       <div className="flex items-center gap-4 mb-16">
-                         <div className="w-1.5 h-1.5 bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
-                         <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Master Access Switch</h4>
+                      <div className="flex items-center gap-4 mb-16">
+                        <div className="w-1.5 h-1.5 bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
+                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Master Access Switch</h4>
                       </div>
 
                       <div className="space-y-6">
-                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Global<br/>Block</h3>
+                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Global<br />Block</h3>
                         <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-widest leading-relaxed max-w-xs">
                           Instantly prevent anyone from entering the ArcPay portal from the main landing page.
                         </p>
                       </div>
 
                       <div className="mt-16 flex items-center gap-10">
-                        <button 
+                        <button
                           onClick={() => setMaintenanceSettings(prev => ({ ...prev, isArcPayBlocked: !prev.isArcPayBlocked }))}
                           className={cn(
                             "w-24 h-12 rounded-full p-1.5 transition-all duration-700 ease-[cubic-bezier(0.23,1,0.32,1)] relative overflow-hidden group shadow-2xl",
@@ -834,10 +826,10 @@ export default function AdminDashboard() {
                           )} />
                         </button>
                         <div className="flex flex-col">
-                           <span className={cn(
-                             "text-[10px] font-black uppercase tracking-widest transition-colors duration-500",
-                             maintenanceSettings.isArcPayBlocked ? "text-red-500" : "text-zinc-700"
-                           )}>{maintenanceSettings.isArcPayBlocked ? 'ACCESS_BLOCKED' : 'SYSTEM_OPEN'}</span>
+                          <span className={cn(
+                            "text-[10px] font-black uppercase tracking-widest transition-colors duration-500",
+                            maintenanceSettings.isArcPayBlocked ? "text-red-500" : "text-zinc-700"
+                          )}>{maintenanceSettings.isArcPayBlocked ? 'ACCESS_BLOCKED' : 'SYSTEM_OPEN'}</span>
                         </div>
                       </div>
                     </div>
@@ -849,13 +841,13 @@ export default function AdminDashboard() {
                   {/* SEGMENT II (was II, now moved down or side) */}
                   <div className="lg:pr-16 relative">
                     <div className="flex flex-col h-full">
-                       <div className="flex items-center gap-4 mb-16">
-                         <div className="w-1.5 h-1.5 bg-[#d4ff3f] shadow-[0_0_10px_rgba(212,255,63,0.5)]" />
-                         <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Security Keys</h4>
+                      <div className="flex items-center gap-4 mb-16">
+                        <div className="w-1.5 h-1.5 bg-[#d4ff3f] shadow-[0_0_10px_rgba(212,255,63,0.5)]" />
+                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Security Keys</h4>
                       </div>
 
                       <div className="space-y-6">
-                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Master<br/>Access</h3>
+                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Master<br />Access</h3>
                         <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-widest leading-relaxed max-w-xs">
                           Primary override code for the terminal security suite. Changes apply instantly.
                         </p>
@@ -863,7 +855,7 @@ export default function AdminDashboard() {
 
                       <div className="mt-16 space-y-6">
                         <div className="relative group">
-                          <input 
+                          <input
                             type="password"
                             placeholder="••••••"
                             maxLength={6}
@@ -875,7 +867,7 @@ export default function AdminDashboard() {
                             className="w-full bg-transparent border-b-2 border-white/[0.05] pb-6 text-white font-black text-7xl tracking-[0.3em] outline-none focus:border-[#d4ff3f] transition-all placeholder:text-[#111] selection:bg-[#d4ff3f]/50"
                           />
                           {maintenanceSettings.passcode?.length === 6 && (
-                            <motion.div 
+                            <motion.div
                               initial={{ opacity: 0, scale: 0.5 }}
                               animate={{ opacity: 1, scale: 1 }}
                               className="absolute right-0 bottom-8 text-[#d4ff3f]"
@@ -902,7 +894,7 @@ export default function AdminDashboard() {
                     Applying updates triggers a global update across all locations.
                   </p>
                 </div>
-                <button 
+                <button
                   onClick={async () => {
                     const token = localStorage.getItem('arcpay_token');
                     try {
@@ -919,18 +911,18 @@ export default function AdminDashboard() {
                         })
                       });
                       if (response.ok) {
-                        showStatus({ 
-                          type: 'success', 
-                          title: 'FIREWALL UPDATED', 
-                          message: "Security settings have been applied globally." 
+                        showStatus({
+                          type: 'success',
+                          title: 'FIREWALL UPDATED',
+                          message: "Security settings have been applied globally."
                         });
                         fetchDashboardData();
                       }
                     } catch (err) {
-                      showStatus({ 
-                        type: 'error', 
-                        title: 'UPDATE ERROR', 
-                        message: "Unable to save security settings to the server." 
+                      showStatus({
+                        type: 'error',
+                        title: 'UPDATE ERROR',
+                        message: "Unable to save security settings to the server."
                       });
                     }
                   }}
@@ -1001,18 +993,18 @@ export default function AdminDashboard() {
 
                         <div className="col-span-4 md:col-span-2 flex justify-start md:justify-center">
                           <div className="flex items-center gap-2">
-                             <div className={cn(
-                               "w-1.5 h-1.5 rounded-full",
-                               log.type === 'success' ? "bg-[#d4ff3f] shadow-[0_0_8px_#d4ff3f]" :
-                               log.type === 'error' ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" :
-                               "bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]"
-                             )} />
-                             <span className={cn(
-                               "text-[10px] font-black uppercase tracking-widest",
-                               log.type === 'success' ? "text-[#d4ff3f]" :
-                               log.type === 'error' ? "text-red-500" :
-                               "text-blue-400"
-                             )}>{log.status}</span>
+                            <div className={cn(
+                              "w-1.5 h-1.5 rounded-full",
+                              log.type === 'success' ? "bg-[#d4ff3f] shadow-[0_0_8px_#d4ff3f]" :
+                                log.type === 'error' ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" :
+                                  "bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.5)]"
+                            )} />
+                            <span className={cn(
+                              "text-[10px] font-black uppercase tracking-widest",
+                              log.type === 'success' ? "text-[#d4ff3f]" :
+                                log.type === 'error' ? "text-red-500" :
+                                  "text-blue-400"
+                            )}>{log.status}</span>
                           </div>
                         </div>
 
@@ -1034,25 +1026,25 @@ export default function AdminDashboard() {
           )}
 
           {activeTab === 'links' && (
-            <div className="space-y-8 md:space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 px-6 md:px-10">
-               <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-0">
+            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="flex items-end justify-between">
                 <div>
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-8 h-[1px] bg-[#d4ff3f]/40" />
                     <span className="text-[10px] font-black text-[#d4ff3f] uppercase tracking-[0.4em]">Asset Management Suite</span>
                   </div>
-                  <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white">
+                  <h2 className="text-5xl font-black italic uppercase tracking-tighter text-white">
                     Link <span className="text-zinc-600">Control</span>
                   </h2>
                 </div>
-                
-                <div className="flex items-center gap-6 self-end md:self-auto">
+
+                <div className="flex items-center gap-6">
                   <div className="flex flex-col items-end">
                     <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest leading-none mb-1">Active Assets</span>
                     <span className="text-xl font-black text-white">{links.length.toString().padStart(2, '0')}</span>
                   </div>
                   <div className="w-[1px] h-8 bg-white/5" />
-                  <button 
+                  <button
                     onClick={fetchDashboardData}
                     className="p-3 bg-white/5 rounded-2xl text-zinc-500 hover:text-[#d4ff3f] transition-all hover:scale-110"
                   >
@@ -1061,9 +1053,9 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 lg:flex lg:flex-col gap-4 lg:gap-1">
+              <div className="flex flex-col gap-1 min-h-[600px]">
                 {links.length === 0 ? (
-                   <div className="flex flex-col items-center justify-center py-40 bg-[#0a0a0c] rounded-[40px] border border-dashed border-white/5">
+                  <div className="flex flex-col items-center justify-center py-40 bg-[#0a0a0c] rounded-[40px] border border-dashed border-white/5">
                     <LinkIcon className="w-12 h-12 text-zinc-800 mb-6" />
                     <p className="text-zinc-600 font-black uppercase tracking-[0.2em] text-[10px]">No payment assets registered in system</p>
                   </div>
@@ -1074,72 +1066,72 @@ export default function AdminDashboard() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.03 }}
-                      className="group relative flex flex-col lg:flex-row lg:items-center justify-between py-6 md:py-10 px-6 md:px-8 border border-white/[0.03] lg:border-0 lg:border-b border-white/[0.03] bg-[#0a0a0c] lg:bg-transparent hover:bg-white/[0.02] transition-all duration-500 rounded-[24px] lg:rounded-[32px] cursor-default gap-6 lg:gap-0"
+                      className="group relative flex items-center justify-between py-10 px-8 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all duration-500 rounded-[32px] cursor-default"
                     >
-                      <div className="flex items-center gap-6 md:gap-10 w-full lg:w-[400px]">
-                         <div className="w-12 h-12 md:w-14 md:h-14 bg-zinc-900 rounded-2xl flex items-center justify-center border border-white/5 text-zinc-600 group-hover:text-[#d4ff3f] transition-all duration-500 group-hover:rotate-12 shrink-0">
-                           <Smartphone size={24} />
-                         </div>
-                         <div className="flex flex-col gap-1.5 min-w-0">
-                            <span className="text-white font-black text-lg md:text-xl tracking-tight uppercase italic truncate">{link.linkId.toUpperCase()}</span>
-                            <div className="flex flex-wrap items-center gap-3">
-                               <div className={cn("px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest", link.amount ? "bg-white/5 text-zinc-400" : "bg-[#d4ff3f] text-black italic")}>
-                                  {link.amount ? 'Fixed Value' : 'Open Amount'}
-                               </div>
-                               <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">{new Date(link.createdAt).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-10 w-[400px]">
+                        <div className="w-14 h-14 bg-zinc-900 rounded-2xl flex items-center justify-center border border-white/5 text-zinc-600 group-hover:text-[#d4ff3f] transition-all duration-500 group-hover:rotate-12">
+                          <Smartphone size={24} />
+                        </div>
+                        <div className="flex flex-col gap-1.5">
+                          <span className="text-white font-black text-xl tracking-tight uppercase italic">{link.linkId.toUpperCase()}</span>
+                          <div className="flex items-center gap-3">
+                            <div className={cn("px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest", link.amount ? "bg-white/5 text-zinc-400" : "bg-[#d4ff3f] text-black italic")}>
+                              {link.amount ? 'Fixed Value' : 'Open Amount'}
                             </div>
-                         </div>
+                            <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">{new Date(link.createdAt).toDateString()}</span>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="flex-1 flex flex-col sm:flex-row sm:items-center gap-6 md:gap-20 justify-end h-full pr-0 lg:pr-10 border-t lg:border-t-0 border-white/5 pt-6 lg:pt-0">
-                         <div className="flex flex-col items-start sm:items-end gap-1.5 min-w-[150px]">
-                            <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Linked Merchant</span>
-                            <div className="flex items-center gap-2">
-                               <span className="text-[11px] font-bold text-zinc-400">{link.name || "Default Vendor"}</span>
-                               <img src={arcbyteLogo} alt="ArcByte" className="h-3 opacity-40 group-hover:opacity-100 transition-opacity" />
-                            </div>
-                         </div>
+                      <div className="flex-1 flex items-center gap-20 justify-end h-full pr-10">
+                        <div className="flex flex-col items-end gap-1.5 min-w-[150px]">
+                          <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Linked Merchant</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-bold text-zinc-400">{link.name || "Default Vendor"}</span>
+                            <img src={arcbyteLogo} alt="ArcByte" className="h-3 opacity-40 group-hover:opacity-100 transition-opacity" />
+                          </div>
+                        </div>
 
-                         <div className="flex flex-col items-start sm:items-end gap-1.5 min-w-[100px]">
-                            <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Asset Status</span>
-                            <div className="flex items-center gap-2">
-                               <div className="w-1.5 h-1.5 bg-[#d4ff3f] rounded-full shadow-[0_0_8px_#d4ff3f]" />
-                               <span className="text-[10px] font-black uppercase tracking-widest text-white">Online</span>
-                            </div>
-                         </div>
+                        <div className="flex flex-col items-end gap-1.5 min-w-[100px]">
+                          <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Asset Status</span>
+                          <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 bg-[#d4ff3f] rounded-full shadow-[0_0_8px_#d4ff3f]" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white">Online</span>
+                          </div>
+                        </div>
                       </div>
 
-                      <div className="flex items-center gap-3 min-w-[200px] justify-end border-t lg:border-t-0 border-white/5 pt-6 lg:pt-0">
+                      <div className="flex items-center gap-3 min-w-[200px] justify-end">
                         <button
                           onClick={() => {
                             const url = link.fullUrl || `${window.location.origin}/app?pay_id=${link.linkId}`;
                             navigator.clipboard.writeText(url);
                             showStatus({ type: 'success', title: 'LINK COPIED', message: 'Ready for distribution.' });
                           }}
-                          className="flex-1 lg:flex-none flex items-center justify-center gap-3 px-6 py-3 bg-white/5 rounded-2xl text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:bg-[#d4ff3f] hover:text-black transition-all group/copy"
+                          className="flex items-center gap-3 px-6 py-3 bg-white/5 rounded-2xl text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:bg-[#d4ff3f] hover:text-black transition-all group/copy"
                         >
                           <Copy size={14} className="group-hover/copy:scale-110 transition-transform" />
-                          <span className="lg:hidden xl:inline">Copy</span>
+                          Copy Link
                         </button>
-                        
+
                         <button
                           onClick={async () => {
-                             if (!window.confirm("PERMANENTLY DELETE ASSET? DATA RECOVERY IS IMPOSSIBLE.")) return;
-                             const token = localStorage.getItem('arcpay_token');
-                             try {
-                               const response = await fetch(`${BACKEND_URL}/api/admin/links/${link._id}`, {
-                                 method: 'DELETE',
-                                 headers: { 'Authorization': `Bearer ${token}` }
-                               });
-                               if (response.ok) {
-                                 showStatus({ type: 'success', title: 'ASSET DELETED', message: 'Link permanently removed from system.' });
-                                 fetchDashboardData();
-                               }
-                             } catch (err) {
-                               showStatus({ type: 'error', title: 'DELETE FAILED', message: 'Security system blocked removal.' });
-                             }
+                            if (!window.confirm("PERMANENTLY DELETE ASSET? DATA RECOVERY IS IMPOSSIBLE.")) return;
+                            const token = localStorage.getItem('arcpay_token');
+                            try {
+                              const response = await fetch(`${BACKEND_URL}/api/admin/links/${link._id}`, {
+                                method: 'DELETE',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                              });
+                              if (response.ok) {
+                                showStatus({ type: 'success', title: 'ASSET DELETED', message: 'Link permanently removed from system.' });
+                                fetchDashboardData();
+                              }
+                            } catch (err) {
+                              showStatus({ type: 'error', title: 'DELETE FAILED', message: 'Security system blocked removal.' });
+                            }
                           }}
-                          className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-black transition-all shadow-xl shrink-0"
+                          className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-black transition-all shadow-xl"
                         >
                           <Trash2 size={18} />
                         </button>
@@ -1148,7 +1140,7 @@ export default function AdminDashboard() {
                           href={link.fullUrl || `${window.location.origin}/app?pay_id=${link.linkId}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="w-12 h-12 rounded-2xl bg-white/5 text-zinc-600 flex items-center justify-center hover:bg-zinc-800 hover:text-white transition-all shadow-xl shrink-0"
+                          className="w-12 h-12 rounded-2xl bg-white/5 text-zinc-600 flex items-center justify-center hover:bg-zinc-800 hover:text-white transition-all shadow-xl"
                         >
                           <ExternalLink size={18} />
                         </a>
@@ -1159,27 +1151,138 @@ export default function AdminDashboard() {
               </div>
             </div>
           )}
+          {activeTab === 'settings' && (
+            <div className="space-y-16">
+              <div className="flex items-end justify-between">
+                <div>
+                  <h2 className="text-[clamp(1.5rem,5vw,5rem)] text-white">
+                    SITE ACCESS <br />
+                    <span className="text-[#d4ff3f]">CONFIGURATION</span>
+                  </h2>
+                  <div className="flex items-center gap-3 mt-8">
+                    <span className="px-3 py-1 bg-[#d4ff3f] text-black text-[10px] font-black uppercase tracking-widest rounded-full">Admin Control</span>
+                    <span className="text-zinc-600 text-[10px] font-black uppercase tracking-widest uppercase">Server Control 882</span>
+                  </div>
+                </div>
+              </div>
 
+              <div className="space-y-16 relative py-8">
+                {/* Thin Vertical Grid Line */}
+                <div className="absolute left-0 top-0 bottom-0 w-[1px] bg-white/[0.05] pointer-events-none" />
+
+                <div className="flex items-center justify-between relative z-10 pl-10">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 bg-[#d4ff3f] shadow-[0_0_8px_#d4ff3f]" />
+                      <h3 className="text-xl text-white">Maintenance Mode</h3>
+                    </div>
+                    <p className="text-[12px] font-bold text-zinc-500 max-w-lg uppercase tracking-tight pl-4 leading-relaxed">When active, the public payment gateway will be inaccessible. Admins can still manage the system.</p>
+                  </div>
+                  <button
+                    onClick={() => setMaintenanceSettings(prev => ({ ...prev, isMaintenanceMode: !prev.isMaintenanceMode }))}
+                    className={`w-20 h-10 rounded-full p-1.5 transition-all duration-300 border border-white/10 ${maintenanceSettings.isMaintenanceMode ? 'bg-[#d4ff3f]' : 'bg-zinc-800'}`}
+                  >
+                    <div className={`w-7 h-7 rounded-full transition-transform duration-300 transform ${maintenanceSettings.isMaintenanceMode ? 'translate-x-10 bg-black' : 'translate-x-0 bg-zinc-600'}`} />
+                  </button>
+                </div>
+
+                <div className="h-[1px] bg-white/[0.03]" />
+
+                <div className="grid grid-cols-1 gap-12 pl-10">
+                  <div className="space-y-4 max-w-2xl">
+                    <label className="text-[11px] font-black uppercase tracking-[0.2em] text-[#d4ff3f]">System Message</label>
+                    <textarea
+                      rows="4"
+                      value={maintenanceSettings.maintenanceMessage}
+                      onChange={(e) => setMaintenanceSettings(prev => ({ ...prev, maintenanceMessage: e.target.value }))}
+                      placeholder="WE ARE CURRENTLY UPDATING OUR INFRASTRUCTURE..."
+                      className="w-full bg-transparent border-b border-white/10 rounded-none py-4 text-white font-bold outline-none focus:border-[#d4ff3f] transition-all resize-none uppercase text-sm placeholder:text-zinc-800"
+                    />
+                    <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">This message will be displayed directly to all public visitors during downtime.</p>
+                  </div>
+                </div>
+
+                <div className="h-[1px] bg-white/[0.03]" />
+
+                <div className="pt-8 flex items-center gap-10 pl-10 border-t border-white/[0.03]">
+                  <button
+                    onClick={async () => {
+                      const token = localStorage.getItem('arcpay_token');
+                      try {
+                        const response = await fetch(`${BACKEND_URL}/api/admin/settings`, {
+                          method: 'POST',
+                          headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify({
+                            isMaintenanceMode: maintenanceSettings.isMaintenanceMode,
+                            maintenanceEndTime: maintenanceSettings.maintenanceEndTime,
+                            maintenanceMessage: maintenanceSettings.maintenanceMessage,
+                            isArcPayBlocked: maintenanceSettings.isArcPayBlocked,
+                            requirePasscode: maintenanceSettings.requirePasscode,
+                            passcode: maintenanceSettings.passcode || undefined // Only send if user changed it
+                          })
+                        });
+                        if (response.ok) {
+                          showStatus({
+                            type: 'success',
+                            title: 'SYSTEM CONFIG',
+                            message: "Maintenance settings successfully applied."
+                          });
+                          fetchDashboardData();
+                        }
+                      } catch (err) {
+                        showStatus({
+                          type: 'error',
+                          title: 'UPDATE FAILURE',
+                          message: "Unable to update global system state."
+                        });
+                      }
+                    }}
+                    className="flex items-center gap-3 px-12 py-5 bg-[#d4ff3f] text-black rounded-full font-black uppercase tracking-widest text-[11px] hover:shadow-[0_0_30px_#d4ff3f]/30 transition-all group"
+                  >
+                    <RefreshCcw className="w-4 h-4 group-hover:rotate-180 transition-transform duration-700" />
+                    Save Changes
+                  </button>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">System Status</span>
+                    <span className="text-[10px] font-bold text-zinc-600 uppercase">Main Server Sync Active</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="py-10 pl-10 flex items-center gap-8 relative overflow-hidden group">
+                <div className="w-12 h-12 rounded-2xl bg-zinc-900 flex items-center justify-center text-[#d4ff3f] border border-white/10 shadow-2xl">
+                  <ShieldCheck size={24} />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <h4 className="text-white text-[13px]">Security: On</h4>
+                  <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-tight">System state is currently locked and monitored via security system.</p>
+                </div>
+              </div>
+            </div>
+          )}
           {activeTab === 'payments' && (
-            <div className="space-y-8 md:space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-32 px-6 md:px-10">
-              <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 md:gap-0">
+            <div className="space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div className="flex items-end justify-between">
                 <div>
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-8 h-[1px] bg-[#d4ff3f]/40" />
                     <span className="text-[10px] font-black text-[#d4ff3f] uppercase tracking-[0.4em]">Integrated Ledger Control</span>
                   </div>
-                  <h2 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-white">
+                  <h2 className="text-5xl font-black italic uppercase tracking-tighter text-white">
                     Master <span className="text-zinc-600">Ledger</span>
                   </h2>
                 </div>
-                
-                <div className="flex items-center gap-6 self-end md:self-auto">
+
+                <div className="flex items-center gap-6">
                   <div className="flex flex-col items-end">
                     <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest leading-none mb-1">Total Entries</span>
                     <span className="text-xl font-black text-white">{filteredLinks.length.toString().padStart(2, '0')}</span>
                   </div>
                   <div className="w-[1px] h-8 bg-white/5" />
-                  <button 
+                  <button
                     onClick={fetchDashboardData}
                     className="p-3 bg-white/5 rounded-2xl text-zinc-500 hover:text-[#d4ff3f] transition-all hover:scale-110"
                   >
@@ -1188,8 +1291,7 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto no-scrollbar">
-              <div className="flex flex-col gap-3 md:gap-1 min-h-[600px] ">
+              <div className="flex flex-col gap-1 min-h-[600px]">
                 {filteredLinks.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-40 bg-[#0a0a0c] rounded-[40px] border border-dashed border-white/5">
                     <Search className="w-12 h-12 text-zinc-800 mb-6" />
@@ -1202,58 +1304,55 @@ export default function AdminDashboard() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.03 }}
-                      className="group relative flex flex-col lg:flex-row lg:items-center justify-between py-6 md:py-10 px-6 md:px-8 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all duration-500 rounded-[24px] md:rounded-[32px] gap-6 lg:gap-0"
+                      className="group relative flex items-center justify-between py-10 px-8 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all duration-500 rounded-[32px] cursor-default"
                     >
-                      {/* Identity Section */}
-                      <div className="flex items-center gap-6 md:gap-10 w-full lg:w-[350px]">
-                        <div className="w-12 h-12 md:w-14 md:h-14 bg-zinc-900 rounded-2xl flex items-center justify-center border border-white/5 text-lg font-black text-[#d4ff3f] shadow-2xl relative shrink-0">
+                      {/* Detailed Column Layout */}
+                      <div className="flex items-center gap-10 w-[350px]">
+                        <div className="w-14 h-14 bg-zinc-900 rounded-2xl flex items-center justify-center border border-white/5 text-lg font-black text-[#d4ff3f] shadow-2xl relative">
                           {(link.payerName || link.name || "AC").charAt(0)}
-                          <div className={`absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-black ${
-                            link.status === 'SETTLED' ? 'bg-[#d4ff3f]' : 
-                            link.status === 'SUBMITTED' ? 'bg-[#d4ff3f] animate-pulse' : 
-                            'bg-zinc-800'
-                          }`} />
+                          <div className={`absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-black ${link.status === 'SETTLED' ? 'bg-[#d4ff3f]' :
+                              link.status === 'SUBMITTED' ? 'bg-[#d4ff3f] animate-pulse' :
+                                'bg-zinc-800'
+                            }`} />
                         </div>
-                        <div className="flex flex-col gap-1 min-w-0">
-                          <span className="text-white font-black text-lg md:text-xl truncate tracking-tight group-hover:text-[#d4ff3f] transition-colors">{link.payerName || link.name || "Anonymous"}</span>
+                        <div className="flex flex-col gap-1">
+                          <span className="text-white font-black text-xl truncate tracking-tight group-hover:text-[#d4ff3f] transition-colors">{link.payerName || link.name || "Anonymous"}</span>
                           <span className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em]">{new Date(link.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                         </div>
                       </div>
 
-                      {/* Info Grid */}
-                      <div className="flex-1 grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10 items-center px-0 lg:px-10">
+                      <div className="flex-1 grid grid-cols-3 gap-10 items-center px-10">
                         <div className="flex flex-col gap-1.5">
                           <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Transaction Verified</span>
-                          <span className="text-[11px] font-bold text-zinc-400 group-hover:text-white transition-colors truncate">{link.linkId.toUpperCase()}</span>
+                          <span className="text-[11px] font-bold text-zinc-400 group-hover:text-white transition-colors">{link.linkId.toUpperCase()}</span>
                         </div>
                         <div className="flex flex-col gap-1.5">
                           <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Payment Security</span>
                           <div className="flex items-center gap-2">
-                             <ShieldCheck className={cn("w-3.5 h-3.5", link.status === 'SETTLED' ? "text-[#d4ff3f]" : "text-zinc-600")} />
-                             <span className={cn("text-[10px] font-black uppercase tracking-widest", link.status === 'SETTLED' ? "text-[#d4ff3f]" : "text-zinc-500")}>
-                               {link.status}
-                             </span>
+                            <ShieldCheck className={cn("w-3.5 h-3.5", link.status === 'SETTLED' ? "text-[#d4ff3f]" : "text-zinc-600")} />
+                            <span className={cn("text-[10px] font-black uppercase tracking-widest", link.status === 'SETTLED' ? "text-[#d4ff3f]" : "text-zinc-500")}>
+                              {link.status}
+                            </span>
                           </div>
                         </div>
-                        <div className="flex flex-col items-start lg:items-end gap-1.5 col-span-2 lg:col-span-1 border-t lg:border-t-0 border-white/5 pt-4 lg:pt-0">
+                        <div className="flex flex-col items-end gap-1.5 pr-10">
                           <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Settlement Value</span>
-                          <span className="text-2xl md:text-3xl font-black text-white tracking-tighter">₹{new Intl.NumberFormat('en-IN').format(link.amount)}</span>
+                          <span className="text-2xl font-black text-white tracking-tighter">₹{new Intl.NumberFormat('en-IN').format(link.amount)}</span>
                         </div>
                       </div>
 
-                      {/* Actions */}
-                      <div className="flex items-center justify-end gap-3 md:gap-4 border-t lg:border-t-0 border-white/5 pt-6 lg:pt-0">
+                      <div className="flex items-center gap-4">
                         {['PENDING', 'SUBMITTED'].includes(link.status) && (
                           <div className="flex items-center gap-3">
                             <button
                               onClick={() => handleStatusUpdate(link._id, 'SETTLED')}
-                              className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-[#d4ff3f]/10 text-[#d4ff3f] flex items-center justify-center hover:bg-[#d4ff3f] hover:text-black transition-all shadow-xl"
+                              className="w-12 h-12 rounded-2xl bg-[#d4ff3f]/10 text-[#d4ff3f] flex items-center justify-center hover:bg-[#d4ff3f] hover:text-black transition-all shadow-xl"
                             >
                               <Check size={20} />
                             </button>
                             <button
                               onClick={() => handleStatusUpdate(link._id, 'INVALIDATED')}
-                              className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-black transition-all shadow-xl"
+                              className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-black transition-all shadow-xl"
                             >
                               <X size={20} />
                             </button>
@@ -1262,7 +1361,7 @@ export default function AdminDashboard() {
                         <a
                           href={link.fullUrl || `http://localhost:5173/app?pay_id=${link.linkId}`}
                           target="_blank"
-                          className="w-10 h-10 md:w-12 md:h-12 rounded-2xl bg-white/5 text-zinc-600 flex items-center justify-center hover:bg-zinc-800 hover:text-white transition-all shadow-xl"
+                          className="w-12 h-12 rounded-2xl bg-white/5 text-zinc-600 flex items-center justify-center hover:bg-zinc-800 hover:text-white transition-all"
                         >
                           <ExternalLink size={18} />
                         </a>
@@ -1271,34 +1370,32 @@ export default function AdminDashboard() {
                   ))
                 )}
               </div>
-              </div>
             </div>
           )}
-
           {['stats', 'users'].includes(activeTab) && (
             <div className="flex flex-col items-center justify-center min-h-[60vh] text-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
-               <div className="relative mb-12">
-                  <div className="absolute -inset-20 bg-[#d4ff3f]/5 rounded-full blur-[100px] pointer-events-none" />
-                  <p className="text-[#d4ff3f] text-[10px] font-black uppercase tracking-[0.5em] mb-4 flex items-center justify-center gap-4">
-                    <span className="w-8 h-[1px] bg-[#d4ff3f]/30"></span>
-                    Module under construction
-                    <span className="w-8 h-[1px] bg-[#d4ff3f]/30"></span>
-                  </p>
-                  <h2 className="text-[clamp(2rem,10vw,6rem)] italic font-black uppercase tracking-tighter leading-none text-white mix-blend-difference">
-                    COMING<br />
-                    <span className="text-[#d4ff3f] drop-shadow-[0_0_30px_rgba(212,255,63,0.3)]">SOON</span>
-                  </h2>
-               </div>
-               
-               <div className="flex flex-col items-center gap-6">
-                  <div className="flex items-center gap-3 px-6 py-2 bg-white/5 border border-white/5 rounded-full backdrop-blur-md">
-                     <div className="w-1.5 h-1.5 bg-[#d4ff3f] rounded-full animate-pulse shadow-[0_0_8px_#d4ff3f]" />
-                     <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">System Status: Active</span>
-                  </div>
-                  <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-[0.2em] max-w-sm leading-relaxed">
-                    This administrative system is currently being configured for detailed reports and payment matching.
-                  </p>
-               </div>
+              <div className="relative mb-12">
+                <div className="absolute -inset-20 bg-[#d4ff3f]/5 rounded-full blur-[100px] pointer-events-none" />
+                <p className="text-[#d4ff3f] text-[10px] font-black uppercase tracking-[0.5em] mb-4 flex items-center justify-center gap-4">
+                  <span className="w-8 h-[1px] bg-[#d4ff3f]/30"></span>
+                  Module under construction
+                  <span className="w-8 h-[1px] bg-[#d4ff3f]/30"></span>
+                </p>
+                <h2 className="text-[clamp(2rem,10vw,6rem)] italic font-black uppercase tracking-tighter leading-none text-white mix-blend-difference">
+                  COMING<br />
+                  <span className="text-[#d4ff3f] drop-shadow-[0_0_30px_rgba(212,255,63,0.3)]">SOON</span>
+                </h2>
+              </div>
+
+              <div className="flex flex-col items-center gap-6">
+                <div className="flex items-center gap-3 px-6 py-2 bg-white/5 border border-white/5 rounded-full backdrop-blur-md">
+                  <div className="w-1.5 h-1.5 bg-[#d4ff3f] rounded-full animate-pulse shadow-[0_0_8px_#d4ff3f]" />
+                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">System Status: Active</span>
+                </div>
+                <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-[0.2em] max-w-sm leading-relaxed">
+                  This administrative system is currently being configured for detailed reports and payment matching.
+                </p>
+              </div>
             </div>
           )}
 
