@@ -2,45 +2,51 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Code, Key, Cpu, Webhook, TerminalSquare } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import arcbyteLogo from '../assets/arcbyte_logo_white_transparent.png';
+import SEO from '../components/common/SEO';
 
 export default function DevDocs() {
   const navigate = useNavigate();
 
   const sections = [
     {
-      id: 'architecture',
-      title: '1. REST API Architecture',
+      id: 'setup',
+      title: '1. Simple API Setup',
       icon: <Code className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'The ArcPay financial conduit exposes a highly predictable, resource-oriented REST API. All endpoints are rooted at `https://api.arcpay.network/v1/`. We explicitly enforce strict JSON payloads for both issuance and consumption. All programmatic responses, including fault geometries, utilize standard HTTP verbs (GET, POST, DELETE) alongside verbose semantic status codes. Our architecture relies strictly on TLS 1.3; any algorithmic request failing to negotiate this cryptographic standard will be instantly dropped at the edge routing layer to prevent downgrade vectors.'
+      content: 'ArcPay provides a simple and reliable way to connect your system to ours. Use our API to create and manage payments easily. You can access all features at `https://api.arcpay.network/v1/`. We use clear data formats and standard web rules to ensure everything works smoothly. We also use the highest security standards to keep every request safe.'
     },
     {
       id: 'authentication',
       title: '2. Authentication & Bearer Tokens',
       icon: <Key className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'Machine-to-machine authentication is executed via immutable, high-entropy API Keys instantiated from your ArcPay Developer Console. Every API request must include the `Authorization` header formatted strictly as `Bearer sk_live_YOUR_SECRET_KEY`. We mandate absolute key hygiene: secret keys hold destructive permissions. If our heuristic scanners detect an active `sk_live` key hardcoded within a public repository (e.g., GitHub), the key will be forcefully invalidated without prior consultation, and your deployment nodes will halt processing.'
+      content: 'Connect safely using unique security keys found in your settings. Every request needs a special code with your secret key. It is very important to keep your keys secret. If our security checks find a live key shown in public (like on GitHub), the key will be automatically disabled, and your system will stop processing payments for safety.'
     },
     {
       id: 'generation',
-      title: '3. Algorithmic Link Generation',
+      title: '3. Creating Payment Links',
       icon: <Cpu className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'To programmatically synthesize a payment terminal, execute a POST payload to `/v1/checkout/sessions`. Your schema must define `amount` (in absolute paise/cents to eliminate floating-point truncation), currency parameters, and cryptographic `metadata` tags for internal reconciliation. The API responds in under 45ms with an encrypted VPA string (`checkout_url`) alongside an orchestration ID. This URL mathematically binds the payment constraints to your underlying banking identity, ensuring that the final payer cannot tamper with the ledger denomination prior to authorization.'
+      content: 'To create a payment link automatically, send a request to `/v1/checkout/sessions`. You should include the amount in paise (like 100 for ₹1) to ensure accuracy, and any extra notes you need. The system responds almost instantly with a payment link. This link is uniquely tied to your account and cannot be changed by anyone else.'
     },
     {
       id: 'webhooks',
-      title: '4. Webhook Orchestrations',
+      title: '4. Payment Notifications',
       icon: <Webhook className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'Due to the inherently asynchronous nature of UPI grid settlements, ArcPay utilizes HTTP POST webhooks to notify your backend infrastructure of localized state mutations. You must provision an active HTTPS endpoint within the Developer Console capable of sinking JSON payloads. When a transaction finalizes, we dispatch a `payment_intent.succeeded` event. Crucially, all webhook drops include an `Arc-Signature` header. You are mathematically required to verify this HMAC signature using your webhook signing secret prior to fulfilling any merchant logic, explicitly neutralizing replay attacks.'
+      content: 'Since UPI payments can take a moment to confirm, ArcPay sends an automatic message to your site as soon as the payment is done. Set up a safe address in your settings to receive these messages. Our system will tell you when a payment is successful. Always check the security signature we send to make sure the message is real and safe.'
     },
     {
       id: 'ratelimits',
-      title: '5. Rate Limiting & Throttling',
+      title: '5. Safe Usage Limits',
       icon: <TerminalSquare className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'To preserve grid stability and defend against algorithmic sybil attacks, ArcPay strictly enforces granular rate limiting. The standard production quota allows 100 state-mutating requests (POST/DELETE) per second, per allocated IP cluster. Exceeding this boundary will result in immediate `HTTP 429 Too Many Requests` responses. Response headers will explicitly define the `X-RateLimit-Reset` epoch timestamp. Aggressive, automated retry loops that bypass our exponential backoff algorithms will automatically trigger permanent WAF blacklisting.'
+      content: 'To keep the system fast for everyone, we have fair usage limits. You can make up to 100 changes per second. If you go over this limit, you will see an error message. Please use our systems fairly; trying to bypass these limits may result in being blocked from the system.'
     }
   ];
 
   return (
     <div className="min-h-screen bg-[#050505] text-[#e0e0e0] flex flex-col relative overflow-hidden font-sans selection:bg-[#d4ff3f]/30">
+      <SEO 
+        title="Developer Hub" 
+        description="Access simple API guides and integration manuals for your payment system."
+        url="https://pay.arcbyte.co/developer"
+      />
       
       {/* EDITORIAL GRID BACKGROUND */}
       <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
@@ -83,7 +89,7 @@ export default function DevDocs() {
       <main className="flex-1 relative z-10 flex flex-col px-6 md:px-20 py-12 md:py-20">
         <div className="max-w-4xl mx-auto w-full space-y-16 md:space-y-24">
           
-          {/* HERO TYPOGRAPHY */}
+          {/* SEGMENT I: SYSTEM CONNECTION */}
           <div className="w-full">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
@@ -137,7 +143,7 @@ export default function DevDocs() {
             >
               <div>
                 <h3 className="text-white font-black uppercase tracking-widest text-lg mb-2">Developer Relations</h3>
-                <p className="text-zinc-500 text-xs uppercase tracking-widest">Connect with our core platform engineers.</p>
+                <p className="text-zinc-500 text-xs uppercase tracking-widest">Connect with our support team for any help.</p>
               </div>
               <a 
                 href="mailto:developers@arcbyte.co" 

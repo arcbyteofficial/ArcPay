@@ -124,10 +124,10 @@ const BankDetailsCard = ({ details }) => {
 
   const handleCopy = (text, label) => {
     copyToClipboard(text);
-    showStatus({ 
-      type: 'success', 
-      title: 'DATA CRYPTOGRAPHY', 
-      message: `${label} encoded and copied to secure clipboard.` 
+    showStatus({
+      type: 'success',
+      title: 'COPY SUCCESS',
+      message: `${label} copied to clipboard.`
     });
   };
 
@@ -264,18 +264,18 @@ const BankConfirmationSheet = ({
 
   const handleAction = () => {
     if (!localTxId.trim()) {
-      showStatus({ 
-        type: 'error', 
-        title: 'PROTOCOL ERROR', 
-        message: "Transaction ID hash is required for verification." 
+      showStatus({
+        type: 'error',
+        title: 'CONNECTION ERROR',
+        message: "Transaction ID hash is required for verification."
       });
       return;
     }
     if (!localScreenshot) {
-      showStatus({ 
-        type: 'error', 
-        title: 'INTEGRITY CHECK', 
-        message: "Visual proof of transfer is required to commit status." 
+      showStatus({
+        type: 'error',
+        title: 'UPLOAD REQUIRED',
+        message: "Please upload a screenshot of your payment."
       });
       return;
     }
@@ -324,7 +324,7 @@ const BankConfirmationSheet = ({
               <div className="py-4 border-b border-white/[0.03]">
                 <div className="flex items-center gap-2 mb-3 px-1">
                   <CreditCard className="w-3 h-3 text-zinc-600" />
-                  <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Beneficiary Account</p>
+                  <p className="text-[9px] font-black text-zinc-500 uppercase tracking-[0.2em]">Receiver Account</p>
                 </div>
                 <div className="flex items-center justify-between">
                   <p className="text-[#d4ff3f] text-2xl font-black tracking-widest font-mono drop-shadow-[0_0_15px_rgba(117,242,198,0.2)]">
@@ -354,7 +354,7 @@ const BankConfirmationSheet = ({
                   <button
                     onClick={() => {
                       copyToClipboard(DEFAULT_BANK_DETAILS.ifsc);
-                      showStatus({ type: 'success', title: 'COPY SUCCESS', message: 'IFSC protocol copied.' });
+                      showStatus({ type: 'success', title: 'COPY SUCCESS', message: 'IFSC code copied.' });
                     }}
                     className="p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white transition-all border border-white/5 hover:border-[#d4ff3f]/30 active:scale-95"
                   >
@@ -577,7 +577,7 @@ const InvoiceTemplate = ({ amount, name, txId, method, invoiceId, note, payerNam
           <div>
             <h4 className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.3em] mb-3">Recipient</h4>
             <p className="text-xl font-black text-white">{name}</p>
-            <p className="text-[11px] text-zinc-500 font-bold uppercase mt-1 tracking-widest leading-loose">Technology Interface: ArcPay Ecology</p>
+            <p className="text-[11px] text-zinc-500 font-bold uppercase mt-1 tracking-widest leading-loose">Interface: ArcPay</p>
           </div>
           <div>
             <h4 className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.3em] mb-3">Payer Details</h4>
@@ -640,10 +640,10 @@ const SuccessState = ({ amount, name, txId, method, invoiceId, note, payerName, 
 
   const handleDownloadInvoice = async () => {
     setIsDownloading(true);
-    const loadingToast = showStatus({ 
-      type: 'loading', 
-      title: 'GENERATING', 
-      message: "Generating high-fidelity invoice..." 
+    const loadingToast = showStatus({
+      type: 'loading',
+      title: 'GENERATING',
+      message: "Generating invoice..."
     });
 
     try {
@@ -673,7 +673,7 @@ const SuccessState = ({ amount, name, txId, method, invoiceId, note, payerName, 
       showStatus({ type: 'success', title: 'DOWNLOAD SUCCESS', message: 'Invoice downloaded successfully!' });
     } catch (err) {
       console.error('Invoice Generation Error:', err);
-      showStatus({ type: 'error', title: 'GENERATION FAILURE', message: 'Failed to generate digital invoice.' });
+      showStatus({ type: 'error', title: 'ERROR', message: 'Failed to generate digital invoice.' });
     } finally {
       setIsDownloading(false);
     }
@@ -707,8 +707,8 @@ const SuccessState = ({ amount, name, txId, method, invoiceId, note, payerName, 
         </h3>
         <p className="text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px] mb-12 px-8 max-w-sm mx-auto leading-relaxed">
           {method === 'razorpay'
-            ? "Your transaction has been captured and settled instantly via Razorpay. Status: Finalized."
-            : "Our team will take 8-12 hours to review your manual payment. We will update you via mail."}
+            ? "Your payment was received instantly. Status: Paid."
+            : "Reviewing your payment. We will update you soon."}
         </p>
 
         <div className="w-full max-w-sm space-y-0.5 mb-12">
@@ -1106,10 +1106,10 @@ const SecurityAlertSheet = ({
 
   const handleDownloadInvoice = async () => {
     setIsDownloading(true);
-    const loadingToast = showStatus({ 
-      type: 'loading', 
-      title: 'GENERATING', 
-      message: "Generating digital invoice..." 
+    const loadingToast = showStatus({
+      type: 'loading',
+      title: 'GENERATING',
+      message: "Generating digital invoice..."
     });
 
     try {
@@ -1177,9 +1177,9 @@ const SecurityAlertSheet = ({
       border: 'border-amber-400/20',
       shadow: 'shadow-[0_-40px_80px_rgba(245,158,11,0.2)]',
       icon: <Clock className="w-6 h-6 text-amber-400 drop-shadow-[0_0_10px_rgba(245,158,11,0.3)] animate-pulse" />,
-      title: "Audit Pending",
+      title: "Checking Status",
       description: "Payment detected. We are currently checking this payment. Your funds are safe.",
-      btnText: "AUDIT IN PROGRESS - BACK"
+      btnText: "CHECKING STATUS - BACK"
     }
   };
 
@@ -1416,16 +1416,16 @@ const LinkGeneratedSheet = ({ isOpen, onClose, link }) => {
   const handleCopy = async () => {
     const success = await copyToClipboard(link);
     if (success) {
-      showStatus({ 
-        type: 'success', 
-        title: 'LINK SECURED', 
-        message: 'Unique payment link has been synced to your clipboard.' 
+      showStatus({
+        type: 'success',
+        title: 'LINK COPIED',
+        message: 'Your payment link is copied and ready to share.'
       });
     } else {
-      showStatus({ 
-        type: 'error', 
-        title: 'ERROR', 
-        message: 'Unable to copy. Please manually select the secure string.' 
+      showStatus({
+        type: 'error',
+        title: 'ERROR',
+        message: 'Unable to copy. Please manually select the secure string.'
       });
     }
 
@@ -1515,13 +1515,13 @@ const InspectionRestrictedSheet = ({ isOpen, onClose }) => {
 
             <h3 className="text-3xl text-white mb-6 text-center">
               Action <span className="text-red-500 relative inline-block">
-                Restricted
+                Protected
                 <div className="absolute -bottom-1.5 left-0 w-full h-1 bg-red-500/30 rounded-full blur-[2px]" />
               </span>
             </h3>
 
             <p className="text-zinc-500 text-center font-bold uppercase tracking-[0.15em] text-[8px] leading-relaxed max-w-xs mx-auto mb-10">
-              Security Settings Active. Right-click and viewing source are disabled to keep your payment safe.
+              Security is active. Right-click and other actions are disabled to keep your payment safe.
             </p>
 
             <SlideToCancel onComplete={onClose} />
@@ -1541,22 +1541,22 @@ const CreatorView = ({
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-start pt-10">
       <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ duration: 0.6 }} className="flex flex-col">
         <div className="space-y-2 mb-12">
-            <h1 className="text-4xl font-black italic uppercase tracking-tighter text-white">
-              Set Payment <span className="text-[#d4ff3f] drop-shadow-[0_0_15px_rgba(212,255,63,0.3)]">Details</span>
-            </h1>
-            <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] max-w-md leading-relaxed">
-              Enter the payment details below for a professional and safe checkout process.
-            </p>
-          </div>
+          <h1 className="text-4xl font-black italic uppercase tracking-tighter text-white">
+            Set Payment <span className="text-[#d4ff3f] drop-shadow-[0_0_15px_rgba(212,255,63,0.3)]">Details</span>
+          </h1>
+          <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] max-w-md leading-relaxed">
+            Enter the payment details below for a professional and safe checkout process.
+          </p>
+        </div>
 
         <div className="space-y-6 max-w-md">
           <PaymentMethodSelector method={paymentMethod} onChange={setPaymentMethod} />
 
-          {/* Editorial Amount Specification */}
+          {/* Payment Amount */}
           <div className="pt-4 pb-10 border-b border-white/[0.03] space-y-4">
             <div className="flex items-center gap-2 mb-2 px-1">
               <Wallet className="w-3.5 h-3.5 text-zinc-600" />
-                <label className="text-[9px] font-black uppercase tracking-[0.3em] text-[#d4ff3f]">Payment Amount (INR)</label>
+              <label className="text-[9px] font-black uppercase tracking-[0.3em] text-[#d4ff3f]">Payment Amount (INR)</label>
             </div>
             <div className="flex items-center gap-4 px-1">
               <span className="text-[#d4ff3f] text-4xl font-black drop-shadow-[0_0_15px_rgba(117,242,198,0.2)]">₹</span>
@@ -1600,7 +1600,7 @@ const CreatorView = ({
             <div className="py-6 border-b border-white/[0.03]">
               <div className="flex items-center gap-2 mb-4 px-1">
                 <User className="w-3.5 h-3.5 text-zinc-600" />
-                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Payer Identifier</p>
+                <p className="text-[10px] font-black text-zinc-500 uppercase tracking-[0.2em]">Payer Name</p>
               </div>
               <input
                 type="text"
@@ -1701,10 +1701,10 @@ const PayerView = ({
           Securely
         </h2>
         <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-[0.2em] max-w-md leading-relaxed mb-12">
-              Check the payment details below. Use the security code or choose a payment app to finish your payment.
-            </p>
+          Check the payment details below. Use the security code or choose a payment app to finish your payment.
+        </p>
         <div className="mb-10 sm:mb-12 relative group/settlement">
-            <div className="text-[9px] font-black uppercase tracking-[0.3em] text-[#d4ff3f] mb-4">Payment Method</div>
+          <div className="text-[9px] font-black uppercase tracking-[0.3em] text-[#d4ff3f] mb-4">Payment Method</div>
           <div className="flex items-center gap-4 bg-white/[0.02] border border-white/[0.05] rounded-2xl p-4 pr-6 backdrop-blur-sm transition-all duration-500 hover:bg-white/[0.04] hover:border-white/[0.1] shadow-2xl relative overflow-hidden">
             {/* Background Glow */}
             <div className="absolute -top-10 -left-10 w-20 h-20 bg-[#d4ff3f]/5 blur-3xl rounded-full" />
@@ -1853,8 +1853,8 @@ const PayerView = ({
               <div className="flex items-start gap-3 pt-8 border-t border-white/[0.04] mt-auto">
                 <ShieldCheck className="w-3.5 h-3.5 text-[#d4ff3f] mt-0.5 shrink-0" />
                 <p className="text-[9px] leading-relaxed font-bold uppercase tracking-widest text-zinc-600">
-              SECURITY NOTICE: This is a safe payment page. ArcPay helps you make direct payments easily.
-            </p>
+                  SECURITY NOTICE: This is a safe payment page. ArcPay helps you make direct payments easily.
+                </p>
               </div>
             </div>
           </div>
@@ -2068,30 +2068,30 @@ const PayerView = ({
           <div className="space-y-10">
             <div className="flex items-start gap-6 group/term">
               <ShieldCheck className="w-5 h-5 text-[#d4ff3f] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
-                <div className="col-span-8 text-white font-mono text-[10px] tracking-widest uppercase">
-                  DIRECT PAYMENT: PAYMENTS ARE MADE DIRECTLY TO THE RECEIVER. ONCE LOGGED, DETAILS CANNOT BE CHANGED FOR SECURITY.
-                </div>
+              <div className="col-span-8 text-white font-mono text-[10px] tracking-widest uppercase">
+                DIRECT PAYMENT: PAYMENTS ARE MADE DIRECTLY TO THE RECEIVER. ONCE LOGGED, DETAILS CANNOT BE CHANGED FOR SECURITY.
+              </div>
             </div>
 
             <div className="flex items-start gap-6 group/term">
               <Clock className="w-5 h-5 text-[#d4ff3f] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
-                <div className="col-span-8 text-white font-mono text-[10px] tracking-widest uppercase">
-                  VERIFICATION TIME: PAYMENTS ARE CHECKED AND VERIFIED WITHIN AN 8-12 HOUR TIME FRAME.
-                </div>
+              <div className="col-span-8 text-white font-mono text-[10px] tracking-widest uppercase">
+                VERIFICATION TIME: PAYMENTS ARE CHECKED AND VERIFIED WITHIN AN 8-12 HOUR TIME FRAME.
+              </div>
             </div>
 
             <div className="flex items-start gap-6 group/term">
               <User className="w-5 h-5 text-[#d4ff3f] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
-                <div className="col-span-8 text-white font-mono text-[10px] tracking-widest uppercase">
-                  NAME MATCH: MAKE SURE THE SENDER NAME MATCHES BANK RECORDS FOR QUICK SETUP AND SECURITY.
-                </div>
+              <div className="col-span-8 text-white font-mono text-[10px] tracking-widest uppercase">
+                NAME MATCH: MAKE SURE THE SENDER NAME MATCHES BANK RECORDS FOR QUICK SETUP AND SECURITY.
+              </div>
             </div>
 
             <div className="flex items-start gap-6 group/term">
               <Info className="w-5 h-5 text-[#d4ff3f] shrink-0 mt-0.5 transition-transform duration-300 group-hover/term:scale-110" />
-                <div className="col-span-8 text-white font-mono text-[10px] tracking-widest uppercase">
-                  SYSTEM NOTICE: ARCPAY IS A TECHNOLOGY TOOL AND DOES NOT HOLD OR MANAGE YOUR MONEY DIRECTLY.
-                </div>
+              <div className="col-span-8 text-white font-mono text-[10px] tracking-widest uppercase">
+                SYSTEM NOTICE: ARCPAY IS A TECHNOLOGY TOOL AND DOES NOT HOLD OR MANAGE YOUR MONEY DIRECTLY.
+              </div>
             </div>
           </div>
         </motion.div>
@@ -2112,7 +2112,7 @@ export default function Dashboard() {
       try {
         const response = await fetch(`${BACKEND_URL}/api/public/settings`);
         const data = await response.json();
-        
+
         if (data.isArcPayBlocked) {
           showStatus({
             type: 'error',
@@ -2128,7 +2128,7 @@ export default function Dashboard() {
         console.error("Security sync failed");
       }
     };
-    
+
     checkSecurityStatus();
   }, [navigate, showStatus]);
 
@@ -2178,7 +2178,7 @@ export default function Dashboard() {
     if (payId) {
       const decoded = verifyPayload(payId);
       const targetId = decoded?.lid || payId; // Use LID if available, fallback to payId for older structures
-      
+
       await fetch(`${BACKEND_URL}/api/links/settle/${targetId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -2339,19 +2339,19 @@ export default function Dashboard() {
 
   const handleRazorpayPayment = async () => {
     if (!window.Razorpay) {
-      showStatus({ 
-        type: 'error', 
-        title: 'GATEWAY OFFLINE', 
-        message: "Razorpay secure verification failed. Check your network." 
+      showStatus({
+        type: 'error',
+        title: 'CONNECTION ERROR',
+        message: "Payment system check failed. Check your network."
       });
       return;
     }
 
     setIsCreatingOrder(true);
-    showStatus({ 
-      type: 'loading', 
-      title: 'ORDER INITIATION', 
-      message: "Securing transaction with encrypted gateway..." 
+    showStatus({
+      type: 'loading',
+      title: 'STARTING PAYMENT',
+      message: "Starting secure payment..."
     });
 
     try {
@@ -2436,19 +2436,19 @@ export default function Dashboard() {
 
       const rzp1 = new window.Razorpay(options);
       rzp1.on('payment.failed', function (response) {
-        showStatus({ 
-          type: 'error', 
-          title: 'PAYMENT FAILURE', 
-          message: response.error.description 
+        showStatus({
+          type: 'error',
+          title: 'PAYMENT FAILURE',
+          message: response.error.description
         });
       });
       rzp1.open();
     } catch (err) {
       console.error('Order Creation Error:', err);
-      showStatus({ 
-        type: 'error', 
-        title: 'SECURITY VIOLATION', 
-        message: err.message || "Failed to secure transaction" 
+      showStatus({
+        type: 'error',
+        title: 'SECURITY VIOLATION',
+        message: err.message || "Failed to secure transaction"
       });
     } finally {
       setIsCreatingOrder(false);
@@ -2504,10 +2504,10 @@ export default function Dashboard() {
       if (window.innerWidth < 1024) {
         setShowSuccessSheet(true);
       } else {
-        showStatus({ 
-          type: 'success', 
-          title: 'LINK GENERATED', 
-          message: "Secure payment terminal hash copied to your clipboard." 
+        showStatus({
+          type: 'success',
+          title: 'LINK GENERATED',
+          message: "Secure payment terminal hash copied to your clipboard."
         });
       }
     }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, ShieldAlert, Zap, Globe, Smartphone, ShieldCheck, Server, Activity } from 'lucide-react';
 import arcbyteLogo from '../assets/arcbyte_logo_white_transparent.png';
+import SEO from '../components/common/SEO';
 
 export default function Maintenance() {
   const [timeLeft, setTimeLeft] = useState({ h: '00', m: '00', s: '00' });
@@ -52,6 +53,11 @@ export default function Maintenance() {
 
   return (
     <div className="min-h-screen bg-[#050505] text-[#e0e0e0] flex flex-col relative overflow-hidden font-sans selection:bg-[#d4ff3f]/30">
+      <SEO 
+        title="System Maintenance" 
+        description="ArcPay is currently undergoing updates to improve our payment system."
+        noindex={true}
+      />
       
       {/* EDITORIAL GRID BACKGROUND */}
       <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
@@ -86,7 +92,7 @@ export default function Maintenance() {
               <div className="absolute w-4 h-4 bg-[#d4ff3f]/20 rounded-full blur-md animate-pulse" />
               <div className="w-1.5 h-1.5 bg-[#d4ff3f] relative z-10" />
             </div>
-            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] text-[#d4ff3f] whitespace-nowrap">Live Status</span>
+            <span className="text-[9px] md:text-[10px] font-black uppercase tracking-[0.4em] text-[#d4ff3f] whitespace-nowrap">System Status</span>
           </div>
           <div className="h-3 w-[1px] bg-white/10" />
           <span className="text-[8px] md:text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 whitespace-nowrap">Status: Active</span>
@@ -107,7 +113,7 @@ export default function Maintenance() {
             >
               <div className="flex items-center gap-2 mb-6">
                 <span className="px-3 py-1 bg-[#d4ff3f] text-black text-[10px] font-black uppercase tracking-widest rounded-full">System Update</span>
-                <span className="text-zinc-600 text-[10px] font-black uppercase tracking-widest hidden sm:inline">Build 882</span>
+                <span className="text-zinc-600 text-[10px] font-black uppercase tracking-widest hidden sm:inline">Version 2.0</span>
               </div>
               <h1 className="text-[clamp(2rem,10vw,8rem)] text-white break-words italic-center-balance">
                 DOWN FOR <br />
@@ -123,7 +129,7 @@ export default function Maintenance() {
               transition={{ delay: 0.5 }}
               className="max-w-4xl text-zinc-400 font-bold text-lg md:text-2xl leading-relaxed uppercase tracking-tight"
             >
-              {settings?.maintenanceMessage || "We are currently making some key improvements to the ArcPay core. The platform will be back online in just a few moments."}
+              {settings?.maintenanceMessage || "We are currently making some key improvements to the ArcPay system. The platform will be back online in just a few moments."}
             </motion.p>
           </div>
         </div>

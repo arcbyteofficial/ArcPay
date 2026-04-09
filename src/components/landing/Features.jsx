@@ -4,7 +4,7 @@ const Card = ({ icon: Icon, title, desc, iconBg }) => (
   <div className="bg-white rounded-[40px] p-12 text-center shadow-xl relative overflow-hidden group hover:-translate-y-2 transition-transform duration-500">
     {/* Subtle grid background */}
     <div className="absolute inset-0 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:2rem_2rem] [mask-image:radial-gradient(circle_50%_at_50%_50%,#000_20%,transparent_100%)] opacity-50 pointer-events-none"></div>
-    
+
     <div className="relative z-10 flex flex-col items-center">
       <div className="mb-8">
         {Icon}
@@ -20,7 +20,7 @@ const Card = ({ icon: Icon, title, desc, iconBg }) => (
 export default function Features() {
   return (
     <div className="bg-[#f8f9fc] w-full px-4 md:px-8 pb-16 md:pb-32 pt-12 md:pt-20 font-sans">
-      
+
       {/* Logos Marquee Mock */}
       <div className="flex overflow-hidden space-x-6 mb-16 md:mb-32 -mx-4 md:-mx-8 px-4 md:px-8 max-w-[1400px]">
         <div className="flex space-x-6 animate-[marquee_20s_linear_infinite] shrink-0">
@@ -35,18 +35,19 @@ export default function Features() {
       </div>
 
       <div className="text-center max-w-[600px] mx-auto mb-16 md:mb-20">
-        <h2 className="text-4xl sm:text-[52px] md:text-6xl text-[#111] mb-4 sm:mb-6">
-          What do we offer?
+        <h2 className="text-4xl sm:text-[52px] md:text-6xl text-[#111] mb-4 sm:mb-6 font-black leading-tight tracking-tight">
+          Everything you need <br />
+          <span className="text-[#888]">to get paid</span>
         </h2>
         <p className="text-[#666] font-medium text-base sm:text-lg px-4 sm:px-0">
-          Since 2013, we've guided millions of global users on their digital financial journey.
+          Simple, fast, and free. No hidden charges or complicated steps to get started.
         </p>
       </div>
 
       <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-        <Card 
-          title="Security Guarantee"
-          desc="Your data and funds will be securely protected."
+        <Card
+          title="Safe Payments"
+          desc="Your money is always protected with the highest bank-level security standards."
           Icon={
             <div className="relative">
               <svg width="72" height="72" viewBox="0 0 24 24" fill="#111" className="drop-shadow-lg">
@@ -60,10 +61,10 @@ export default function Features() {
             </div>
           }
         />
-        
-        <Card 
-          title="Investing"
-          desc="Your data and funds will be securely protected."
+
+        <Card
+          title="Direct Transfers"
+          desc="Money goes straight into your bank account. No waiting for days to get your funds."
           Icon={
             <div className="relative w-[72px] h-[72px]">
               <div className="absolute inset-0 bg-[#111] rounded-full drop-shadow-lg" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 0, 50% 50%, 100% 50%, 100% 0)' }}></div>
@@ -72,9 +73,9 @@ export default function Features() {
           }
         />
 
-        <Card 
-          title="Multiple Method"
-          desc="Your data and funds will be securely protected."
+        <Card
+          title="Works Everywhere"
+          desc="Your customers can pay using any app they already have like GPay or PhonePe."
           Icon={
             <svg width="72" height="72" viewBox="0 0 24 24" className="drop-shadow-lg">
               <rect x="2" y="2" width="20" height="20" rx="6" fill="#111" />

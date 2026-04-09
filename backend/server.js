@@ -53,8 +53,8 @@ app.use(xss());
 app.use(hpp());
 
 const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 1000, 
+  windowMs: 15 * 60 * 1000,
+  max: 1000,
   message: { error: 'Traffic volume exceeded threshold. Temporary network freeze.' },
   standardHeaders: true,
   legacyHeaders: false
@@ -71,7 +71,7 @@ app.use(cors({
 
 const authLimiter = rateLimit({
   windowMs: 30 * 60 * 1000, // 30-minute strict lockout
-  max: 5, 
+  max: 5,
   message: { error: 'Authentication threshold vastly exceeded. IP strictly locked for 30 minutes.' },
   standardHeaders: true,
   legacyHeaders: false
@@ -132,7 +132,7 @@ app.post('/api/public/verify-passcode', async (req, res) => {
   try {
     const { passcode } = req.body;
     const settings = await Settings.findOne();
-    
+
     if (!settings || !settings.requirePasscode) {
       return res.json({ success: true, message: "Passcode verification bypassed" });
     }
@@ -316,12 +316,14 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
     const totalLinks = await Link.countDocuments();
     const settledLinks = await Link.find({ status: 'SETTLED' });
     const totalRevenue = settledLinks.reduce((acc, curr) => acc + curr.amount, 0);
-    const unsettledCount = await Link.countDocuments({ 
-      status: { $in: ['PENDING', 'SUBMITTED'] } 
+    const unsettledCount = await Link.countDocuments({
+      status: { $in: ['PENDING', 'SUBMITTED'] }
     });
 
     // 14-Day Revenue Aggregation
-    const fourteenDaysAgo = new Date();
+    const now = new Date();
+    // Use local midnight for the starting point
+    const fourteenDaysAgo = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
     fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
     fourteenDaysAgo.setHours(0, 0, 0, 0);
 
@@ -337,10 +339,13 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
       },
       {
         $group: {
-          _id: { $dateToString: { 
-            format: "%Y-%m-%d", 
-            date: { $ifNull: ["$settledAt", "$createdAt"] } 
-          } },
+          _id: {
+            $dateToString: {
+              format: "%Y-%m-%d",
+              date: { $ifNull: ["$settledAt", "$createdAt"] },
+              timezone: "Asia/Kolkata"
+            }
+          },
           revenue: { $sum: "$amount" },
           count: { $sum: 1 }
         }
@@ -352,10 +357,18 @@ app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
 
     // Map to a complete 14-day array (fill gaps with zeros)
     const dailyStats = [];
+    const localToday = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    
     for (let i = 13; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
+      const d = new Date(localToday);
+      d.setDate(localToday.getDate() - i);
+      
+      // Manual formatting to ensure YYYY-MM-DD in local time
+      const year = d.getFullYear();
+      const month = (d.getMonth() + 1).toString().padStart(2, '0');
+      const day = d.getDate().toString().padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      
       const match = rawDailyStats.find(s => s._id === dateStr);
       dailyStats.push({
         date: dateStr,
@@ -412,20 +425,20 @@ app.delete('/api/admin/links/:id', authenticateAdmin, async (req, res) => {
 // Update global settings (Maintenance Mode toggle)
 app.post('/api/admin/settings', authenticateAdmin, async (req, res) => {
   try {
-    const { 
-      isMaintenanceMode, 
-      maintenanceEndTime, 
+    const {
+      isMaintenanceMode,
+      maintenanceEndTime,
       maintenanceMessage,
       requirePasscode,
       isArcPayBlocked,
-      passcode 
+      passcode
     } = req.body;
 
-    const updateData = { 
-      isMaintenanceMode, 
-      maintenanceEndTime, 
-      maintenanceMessage, 
-      updatedAt: new Date() 
+    const updateData = {
+      isMaintenanceMode,
+      maintenanceEndTime,
+      maintenanceMessage,
+      updatedAt: new Date()
     };
 
     if (requirePasscode !== undefined) updateData.requirePasscode = requirePasscode;
@@ -433,7 +446,7 @@ app.post('/api/admin/settings', authenticateAdmin, async (req, res) => {
     if (passcode !== undefined) updateData.passcode = passcode;
 
     const settings = await Settings.findOneAndUpdate(
-      {}, 
+      {},
       updateData,
       { new: true, upsert: true }
     );
@@ -461,7 +474,7 @@ app.get('/api/admin/gateway', authenticateAdmin, async (req, res) => {
 app.post('/api/admin/gateway', authenticateAdmin, async (req, res) => {
   try {
     const { razorpayApiKey, razorpayApiSecret } = req.body;
-    
+
     const updateData = {};
     if (razorpayApiKey !== undefined) updateData.razorpayApiKey = razorpayApiKey;
     // Don't override with mask if submitted blindly
@@ -470,7 +483,7 @@ app.post('/api/admin/gateway', authenticateAdmin, async (req, res) => {
     }
 
     await Settings.findOneAndUpdate({}, updateData, { new: true, upsert: true });
-    
+
     // Hot-reload the gateway parameters dynamically on the node
     await initializeRazorpay();
 
@@ -497,8 +510,8 @@ app.get('/api/admin/2fa/generate', authenticateAdmin, async (req, res) => {
     const admin = await Admin.findById(req.adminId);
     if (!admin) return res.status(404).json({ error: 'Admin identity lost' });
 
-    const secret = speakeasy.generateSecret({ 
-      name: `ArcPay (${admin.businessName})` 
+    const secret = speakeasy.generateSecret({
+      name: `ArcPay (${admin.businessName})`
     });
 
     qrcode.toDataURL(secret.otpauth_url, (err, data_url) => {
@@ -576,7 +589,7 @@ app.patch('/api/links/settle/:linkId', async (req, res) => {
       status: newStatus,
       txId: txId
     };
-    
+
     if (newStatus === 'SETTLED') {
       update.settledAt = new Date();
     }

@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, ShieldCheck, Scale, FileText, AlertTriangle, Zap } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import arcbyteLogo from '../assets/arcbyte_logo_white_transparent.png';
+import SEO from '../components/common/SEO';
 
 export default function Terms() {
   const navigate = useNavigate();
@@ -9,38 +10,43 @@ export default function Terms() {
   const sections = [
     {
       id: 'acceptance',
-      title: '1. Acceptance & General Provisions',
+      title: '1. The Agreement',
       icon: <Scale className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'By accessing, integrating, or utilizing the ArcPay payment infrastructure ("Platform"), operated by ArcByte Official, you ("Merchant", "User", or "Entity") enter into a legally binding agreement. Your continued use of our financial routing nodes, APIs, and generated UPI deep-links constitutes your irrevocable acceptance of these collective terms. If you do not explicitly agree with every clause, addendum, and subsequent modification within this document, you are instructed to immediately cease all interactions and algorithmic requests to the Platform. This agreement remains binding across geographic jurisdictions and supersedes any preceding verbal or textual service agreements.'
+      content: 'By using ArcPay, you agree to follow these simple rules. These terms are a legal agreement between you and ArcByte Official. If you do not agree with all the rules here, please stop using ArcPay immediately.'
     },
     {
       id: 'services',
-      title: '2. Platform Infrastructure & Role',
+      title: '2. How it works',
       icon: <Zap className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'ArcPay operates strictly as a zero-trust, automated UPI payment routing and verification layer. We act as a software intermediary facilitating point-to-point communication. We are not a bank, neither a financial depository, nor an escrow agent. ArcPay does not hold, secure, or transit monetary funds at any point during your transactions. Settlement is exclusively negotiated and finalized between the initiating user\'s decentralized endpoint (UPI Identity) and their respective banking institution. You acknowledge that ArcPay merely provides the cryptographic conduit to request funds, and bears zero fiduciary responsibility for the actual transmission of capital.'
+      content: 'ArcPay is a tool that helps you send payment links. We are not a bank and we do not hold your money. All payments happen directly between you and your customers through your respective bank apps. We simply provide the secure connection to make that happen.'
     },
     {
-      id: 'aml',
-      title: '3. Compliance & Anti-Money Laundering',
+      id: 'rules',
+      title: '3. Simple Rules',
       icon: <AlertTriangle className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'Platform utilization is strictly subject to adherence to all national and international anti-money laundering (AML) and counter-terrorism financing (CTF) directives. Users are fundamentally prohibited from utilizing ArcPay for routing transactions related to illegal activities, unregulated gambling, illicit substances, weapons trafficking, or any economic protocol explicitly banned by the Reserve Bank of India (RBI) or respective national banking authorities. ArcByte Official maintains active heuristic monitoring protocols and reserves the right to execute immediate, permanent node invalidation (ban) without prior notice upon detection of anomalous or illicit routing patterns. You agree to fully cooperate with all federal audits regarding your ledger history.'
+      content: 'You can only use ArcPay for legal business activities. Using it for anything illegal or banned by the bank is strictly prohibited. If we find any suspicious or illegal activity, we have the right to stop your service immediately and without warning.'
     },
     {
       id: 'liability',
-      title: '4. Liability & Disclaimers',
+      title: '4. Responsibility',
       icon: <ShieldCheck className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'The Platform is provisioned strictly on an "AS-IS", "WITH ALL FAULTS" and "AS-AVAILABLE" basis. ArcByte Official explicitly disclaims all warranties, both express and implied, including but not limited to algorithmic merchantability or fitness for a specific financial purpose. We assume zero liability for transactional failures, bank-side timeouts, network latency, UPI grid blackouts, or unauthorized gateway access resulting from end-user negligence or credential compromise. In no event shall ArcByte Official, its directors, or its developers be liable for lost profits, data corruption, or indirect punitive damages. Total aggregate liability in any prevailing jurisdiction shall absolutely not exceed the computational fees paid by the user to ArcPay in the three (3) months preceding the claim.'
+      content: 'We provide ArcPay "as-is" and do our best to keep it running smoothly. We are not responsible for bank downtimes, internet issues, or if you accidentally share your account details with others. Our goal is to provide a great tool, but we can\'t control everything that happens on the internet.'
     },
     {
       id: 'intellectual',
-      title: '5. Intellectual Property Rights',
+      title: '5. Ownership',
       icon: <FileText className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'All source code, proprietary algorithms, visual assets, trademarks, and architectural schemas constituting the ArcPay ecosystem remain the exclusive intellectual property of ArcByte Official. Merchants are granted a temporary, revocable, non-exclusive license strictly limited to utilizing our standard APIs and link-generation interfaces. Reverse engineering, decompiling, aggressive scraping, or deploying automated sybil attacks against our routing hardware is a direct violation of this agreement and will result in immediate prosecution under international cyber law.'
+      content: 'All the code, designs, and logos belong to ArcByte Official. We give you a license to use our tools to get paid, as long as you follow these rules. You cannot copy or try to steal our code or designs.'
     }
   ];
 
   return (
     <div className="min-h-screen bg-[#050505] text-[#e0e0e0] flex flex-col relative overflow-hidden font-sans selection:bg-[#d4ff3f]/30">
+      <SEO 
+        title="Terms of Service" 
+        description="Review the legal framework governing the use of ArcPay's payment infrastructure."
+        url="https://pay.arcbyte.co/terms-and-conditions"
+      />
       
       {/* EDITORIAL GRID BACKGROUND */}
       <div className="absolute inset-0 z-0 pointer-events-none opacity-20">

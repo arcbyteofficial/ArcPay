@@ -25,28 +25,28 @@ export default function Testimonials() {
     <div className="bg-[#f8f9fc] w-full px-4 md:px-8 py-16 md:py-32 font-sans relative">
       <div className="text-center max-w-[800px] mx-auto mb-16 md:mb-20">
         <h2 className="text-4xl md:text-5xl lg:text-[56px] font-black text-[#111] tracking-[-0.04em] leading-tight">
-          What our clients are<br />
-          saying about us!
+          Used by thousands <br />
+          of business owners
         </h2>
       </div>
 
       <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
         <TestimonialCard 
-          quote="It's is both attractive and highly adaptable. It's exactly what I've been looking for definitely worth the investment."
+          quote="ArcPay is amazing. I can create payment links in seconds and my customers love how fast and easy it is to pay."
           name="Hadid Khan"
-          role="UI/UX Designer"
+          role="Small Business Owner"
           avatar="https://i.pravatar.cc/150?u=4"
         />
         <TestimonialCard 
-          quote="Great session! Dani was super helpful. She shared some practical advice on how can we go about refining our service offerings."
+          quote="The best part is getting paid instantly. No more waiting for days to see the money in my bank account."
           name="Wade Warren"
-          role="Web Designer"
+          role="Freelancer"
           avatar="https://i.pravatar.cc/150?u=5"
         />
         <TestimonialCard 
-          quote="I am really satisfied with it. I'm good to go. It really saves me time and effort. It's is exactly what our business has been lacking."
+          quote="Simple, fast, and secure. It's exactly what my business needed to handle payments without any headache."
           name="Jenny Wilson"
-          role="Trust Administrator"
+          role="Store Manager"
           avatar="https://i.pravatar.cc/150?u=6"
         />
       </div>

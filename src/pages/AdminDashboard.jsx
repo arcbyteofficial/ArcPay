@@ -2,15 +2,17 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ShieldCheck, LogOut, ExternalLink,
-  Copy, Trash2, AlertTriangle,
-  CheckCircle2, Clock, Ban,
-  TrendingUp, Wallet, Link as LinkIcon,
-  RefreshCcw, Search, Filter, Check,
-  Home, Users, Settings, HelpCircle,
-  ChevronRight, MoreHorizontal, MessageSquare,
-  Smartphone, CreditCard, Landmark, Mail,
-  LayoutGrid, X, Zap, Lock, Terminal
+  ChevronLeft, Users, Terminal, TrendingUp, Wallet, Settings, MessageSquare, Plus, Check, Ban, Download, FileText, PieChart, BarChart3, Activity, Info, X, Home, Link as LinkIcon,
+  Search, RefreshCcw, Filter, Copy, Trash2, AlertTriangle, CheckCircle2, Clock, ChevronRight, MoreHorizontal, Smartphone, CreditCard, Landmark, Mail, LayoutGrid, Zap, Lock, HelpCircle
 } from 'lucide-react';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer
+} from 'recharts';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -26,88 +28,64 @@ function cn(...inputs) {
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
 
-const StatLine = ({ color, dashed = false, data = [], selectedDate = null }) => {
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-[#0a0a0c] border border-white/10 p-4 rounded-2xl shadow-2xl backdrop-blur-xl">
+        <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-2">
+          {new Date(label).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+        </p>
+        <div className="flex flex-col gap-1">
+          <div className="flex items-center gap-2">
+            <div className="w-1.5 h-1.5 rounded-full bg-[#d4ff3f] shadow-[0_0_5px_#d4ff3f]" />
+            <span className="text-sm font-black text-white">
+              ₹{payload[0].value.toLocaleString('en-IN')}
+            </span>
+          </div>
+          <p className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest ml-3">
+            {payload[0].payload.count} Settlements
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
+const DashboardChart = ({ data, selectedDate }) => {
   if (!data || data.length === 0) return null;
 
-  // Normalize data points to fit a 1000x100 coordinate system
-  const maxVal = Math.max(...data.map(d => d.revenue), 1000); // at least 1000 for scale
-  const points = data.map((val, i) => ({
-    x: (i / (data.length - 1)) * 1000,
-    y: 100 - (val.revenue / maxVal) * 80, // Leave 20 units for top padding
-    dateStr: val.date
-  }));
-
-  // Find selection index
-  const selectedIndex = selectedDate ? points.findIndex(p => p.dateStr === selectedDate) : -1;
-  const selectedPoint = selectedIndex !== -1 ? points[selectedIndex] : null;
-
-  // Generate a smooth quadratic bezier path string
-  let path = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 0; i < points.length - 1; i++) {
-    const p0 = points[i];
-    const p1 = points[i + 1];
-    const cpX = (p0.x + p1.x) / 2;
-    path += ` Q ${cpX} ${p0.y}, ${p1.x} ${p1.y}`;
-  }
-
-  const fillPath = `${path} V 100 H 0 Z`;
-
   return (
-    <svg viewBox="0 0 1000 100" className="absolute inset-x-0 bottom-12 w-full h-32 opacity-60 overflow-visible" preserveAspectRatio="none">
-      {/* SHADOW LINE FOR SELECTION */}
-      <AnimatePresence>
-        {selectedPoint && (
-          <motion.g
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            <motion.line
-              x1={selectedPoint.x}
-              y1={0}
-              x2={selectedPoint.x}
-              y2={100}
-              stroke={color}
-              strokeWidth="1"
-              strokeDasharray="4,4"
-              opacity={0.3}
-            />
-            <motion.circle
-              cx={selectedPoint.x}
-              cy={selectedPoint.y}
-              r={4}
-              fill={color}
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              transition={{ type: "spring", damping: 10 }}
-            />
-          </motion.g>
-        )}
-      </AnimatePresence>
-
-      <motion.path
-        d={path}
-        fill="none"
-        stroke={color}
-        strokeWidth="2"
-        strokeDasharray={dashed ? "5,5" : "none"}
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 2, ease: "easeInOut" }}
-      />
-      <motion.path
-        d={fillPath}
-        fill={`url(#gradient-${color.replace('#', '')})`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 0.15 }}
-      />
-      <defs>
-        <linearGradient id={`gradient-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} />
-          <stop offset="100%" stopColor="transparent" />
-        </linearGradient>
-      </defs>
-    </svg>
+    <div className="absolute inset-0 top-10 bottom-6 left-[-20px] right-[-20px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+          <defs>
+            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#d4ff3f" stopOpacity={0.3} />
+              <stop offset="95%" stopColor="#d4ff3f" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <XAxis
+            dataKey="date"
+            hide={true}
+          />
+          <YAxis hide={true} domain={['auto', 'auto']} />
+          <Tooltip
+            content={<CustomTooltip />}
+            cursor={{ stroke: '#d4ff3f', strokeWidth: 1, strokeDasharray: '4 4', opacity: 0.3 }}
+          />
+          <Area
+            type="monotone"
+            dataKey="revenue"
+            stroke="#d4ff3f"
+            strokeWidth={3}
+            fillOpacity={1}
+            fill="url(#colorRevenue)"
+            animationDuration={2000}
+          />
+        </AreaChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
 
@@ -154,7 +132,7 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     const token = localStorage.getItem('arcpay_token');
     if (!token) {
-      navigate('/admin/login');
+      navigate('/arc-gate/access');
       return;
     }
 
@@ -168,7 +146,7 @@ export default function AdminDashboard() {
 
       if (statsRes.status === 401 || linksRes.status === 401) {
         localStorage.removeItem('arcpay_token');
-        navigate('/admin/login');
+        navigate('/arc-gate/access');
         return;
       }
 
@@ -184,8 +162,8 @@ export default function AdminDashboard() {
       }
       if (gateRes.ok) {
         setGatewayConfig({
-           razorpayApiKey: gateData.razorpayApiKey || '',
-           razorpayApiSecret: gateData.razorpayApiSecret || ''
+          razorpayApiKey: gateData.razorpayApiKey || '',
+          razorpayApiSecret: gateData.razorpayApiSecret || ''
         });
       }
     } catch (err) {
@@ -262,7 +240,7 @@ export default function AdminDashboard() {
       console.warn("SECURITY OVERRIDE: Terminal Idle Exceeded. Erasing Session State.");
       localStorage.removeItem('arcpay_token');
       localStorage.removeItem('arcpay_merchant');
-      navigate('/admin/login', { replace: true });
+      navigate('/arc-gate/access', { replace: true });
     };
 
     const resetIdleTimer = () => {
@@ -344,21 +322,21 @@ export default function AdminDashboard() {
         body: JSON.stringify(gatewayConfig)
       });
       const data = await response.json();
-      
+
       if (response.ok) {
-        showStatus({ type: 'success', title: 'GATEWAY BOUND', message: 'API Keys updated. Node automatically securely reloaded.' });
+        showStatus({ type: 'success', title: 'CONNECTED', message: 'API Keys updated. System updated successfully.' });
         fetchDashboardData();
       } else {
-        showStatus({ type: 'error', title: 'ERROR', message: data.error || 'Failed to update protocol keys.' });
+        showStatus({ type: 'error', title: 'ERROR', message: data.error || 'Failed to update connection keys.' });
       }
     } catch (err) {
-      showStatus({ type: 'error', title: 'CONNECTION ERROR', message: 'Server proxy failed to catch update.' });
+      showStatus({ type: 'error', title: 'CONNECTION ERROR', message: 'Connection failed to update.' });
     }
   };
 
   const handleLogout = () => {
     localStorage.removeItem('arcpay_token');
-    navigate('/admin/login');
+    navigate('/arc-gate/access');
   };
 
   const handleGenerate2FA = async () => {
@@ -372,7 +350,7 @@ export default function AdminDashboard() {
       if (res.ok) {
         setAuth2FA(prev => ({ ...prev, qrCode: data.qrCode, secret: data.secret }));
       }
-    } catch(err) {
+    } catch (err) {
       showStatus({ type: 'error', title: 'SECURITY ERROR', message: 'Failed to generate cryptographic key.' });
     }
   };
@@ -393,8 +371,8 @@ export default function AdminDashboard() {
       } else {
         showStatus({ type: 'error', title: 'CODE REJECTED', message: data.error || 'Algorithmic mismatch' });
       }
-    } catch(err) {
-      showStatus({ type: 'error', title: 'VERIFICATION ERROR', message: 'Unable to communicate with authentication node.' });
+    } catch (err) {
+      showStatus({ type: 'error', title: 'SECURITY ERROR', message: 'Unable to verify identity.' });
     }
   };
 
@@ -414,7 +392,7 @@ export default function AdminDashboard() {
       } else {
         showStatus({ type: 'error', title: 'UNAUTHORIZED', message: data.error || 'Invalid attempt' });
       }
-    } catch(err) {
+    } catch (err) {
       showStatus({ type: 'error', title: 'SYSTEM ERROR', message: 'Unable to release security lock.' });
     }
   };
@@ -430,21 +408,32 @@ export default function AdminDashboard() {
 
     if (!selectedDate) return matchesSearch && matchesStatus && matchesMethod;
 
-    const linkDate = new Date(link.createdAt).toISOString().split('T')[0];
+    // Fix: Local date comparison for link filtering
+    const d = new Date(link.createdAt);
+    const year = d.getFullYear();
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    const linkDate = `${year}-${month}-${day}`;
+
     return matchesSearch && matchesStatus && matchesMethod && linkDate === selectedDate;
   });
 
-  // Dynamic 14-day scroller generation
+  // Fix: Dynamic 14-day scroller generation (Local Time)
   const today = new Date();
   const dynamicDays = Array.from({ length: 14 }, (_, i) => {
     const d = new Date();
     d.setDate(today.getDate() - (13 - i));
-    const isToday = d.toDateString() === today.toDateString();
+
+    const year = d.getFullYear();
+    const month = (d.getMonth() + 1).toString().padStart(2, '0');
+    const dayNum = d.getDate().toString().padStart(2, '0');
+    const dateStr = `${year}-${month}-${dayNum}`;
+
     return {
-      num: d.getDate().toString().padStart(2, '0'),
+      num: dayNum,
       day: d.toLocaleDateString('en-US', { weekday: 'short' }),
-      dateStr: d.toISOString().split('T')[0],
-      active: isToday
+      dateStr: dateStr,
+      active: d.toDateString() === today.toDateString()
     };
   });
 
@@ -596,11 +585,11 @@ export default function AdminDashboard() {
                 <div className="relative z-10">
                   <p className="text-[#d4ff3f] text-[10px] font-black uppercase tracking-[0.5em] mb-4 flex items-center gap-4">
                     <span className="w-8 h-[1px] bg-[#d4ff3f]/30"></span>
-                    Gateway Protocol 1.0
+                    Payment System 1.0
                   </p>
                   <h2 className="text-[clamp(1.5rem,6vw,3.5rem)] italic font-black uppercase tracking-tighter leading-[0.95] text-white">
                     API<br />
-                    <span className="text-[#d4ff3f] drop-shadow-[0_0_20px_rgba(212,255,63,0.2)]">NODE</span>
+                    <span className="text-[#d4ff3f] drop-shadow-[0_0_20px_rgba(212,255,63,0.2)]">SYSTEM</span>
                   </h2>
                 </div>
               </div>
@@ -618,9 +607,9 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="space-y-6">
-                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Razorpay<br />Binding</h3>
+                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Razorpay<br />Connection</h3>
                         <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-widest leading-relaxed max-w-xs">
-                          Inject your target Razorpay API credentials here to hot-reload the backend processing node.
+                          Enter your Razorpay API keys here to update the payment system.
                         </p>
                       </div>
 
@@ -639,7 +628,7 @@ export default function AdminDashboard() {
 
                         {/* API SECRET */}
                         <div className="relative group">
-                           <label className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.4em] block mb-4">REST API Secret</label>
+                          <label className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.4em] block mb-4">REST API Secret</label>
                           <input
                             type="password"
                             placeholder="Enter new secret to override..."
@@ -658,13 +647,13 @@ export default function AdminDashboard() {
                     <div className="flex flex-col h-full">
                       <div className="flex items-center gap-4 mb-16">
                         <Terminal className="w-4 h-4 text-zinc-600" />
-                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Node Diagnostic Output</h4>
+                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Connection Details</h4>
                       </div>
 
                       <div className="space-y-6">
                         <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Gateway<br />Status</h3>
                         <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-widest leading-relaxed max-w-xs">
-                          Current status of the Razorpay protocol proxy running on the backend securely.
+                          Check if your Razorpay connection is active and ready.
                         </p>
                       </div>
 
@@ -674,17 +663,17 @@ export default function AdminDashboard() {
                           <div className="space-y-6">
                             <div className="flex items-center gap-3">
                               <div className="w-2 h-2 rounded-full bg-[#d4ff3f] animate-pulse shadow-[0_0_10px_#d4ff3f]" />
-                              <span className="text-[10px] font-black text-[#d4ff3f] uppercase tracking-[0.3em]">Protocol Bound</span>
+                              <span className="text-[10px] font-black text-[#d4ff3f] uppercase tracking-[0.3em]">Connected</span>
                             </div>
-                            <p className="text-zinc-500 font-mono text-[10px] uppercase">Proxy layer established and awaiting incoming webhooks.</p>
+                            <p className="text-zinc-500 font-mono text-[10px] uppercase">System is ready and waiting for payments.</p>
                           </div>
                         ) : (
                           <div className="space-y-6">
                             <div className="flex items-center gap-3">
                               <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" />
-                              <span className="text-[10px] font-black text-red-500 uppercase tracking-[0.3em]">Protocol Disabled</span>
+                              <span className="text-[10px] font-black text-red-500 uppercase tracking-[0.3em]">Disconnected</span>
                             </div>
-                            <p className="text-zinc-500 font-mono text-[10px] uppercase">System is missing active Razorpay payloads. Awaiting binding.</p>
+                            <p className="text-zinc-500 font-mono text-[10px] uppercase">Your system is ready. Please connect your Razorpay keys.</p>
                           </div>
                         )}
                         <Terminal className="w-32 h-32 absolute -bottom-10 -right-10 opacity-5 text-[#d4ff3f]" />
@@ -697,9 +686,9 @@ export default function AdminDashboard() {
               {/* ACTION BUTTON LAYER */}
               <div className="pt-16 border-t border-white/[0.05] flex flex-col md:flex-row items-center justify-between gap-10">
                 <div className="max-w-md">
-                  <h4 className="text-[#d4ff3f] text-[9px] font-black uppercase tracking-[0.4em] mb-3">Sync Node</h4>
+                  <h4 className="text-[#d4ff3f] text-[9px] font-black uppercase tracking-[0.4em] mb-3">Update System</h4>
                   <p className="text-zinc-600 text-[10px] font-medium leading-relaxed uppercase tracking-widest">
-                    Hot-reloads the backend with the written REST Keys without terminating the socket layer.
+                    Saves your keys and updates the connection immediately.
                   </p>
                 </div>
                 <button
@@ -707,7 +696,7 @@ export default function AdminDashboard() {
                   className="w-full sm:w-auto flex items-center justify-center gap-4 px-12 py-5 bg-[#d4ff3f] text-black rounded-full font-black uppercase tracking-widest text-[11px] hover:shadow-[0_0_50px_rgba(212,255,63,0.3)] transition-all group active:scale-95"
                 >
                   <Terminal className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  Establish Protocol Binding
+                  Save and Connect
                 </button>
               </div>
             </div>
@@ -774,15 +763,16 @@ export default function AdminDashboard() {
                       })}
                     </div>
 
-                    {/* Dynamic Chart Visual */}
-                    <div className="relative h-48 w-full">
-                      <StatLine color="#d4ff3f" data={stats.dailyStats} selectedDate={selectedDate} />
-                      <StatLine color="#ffffff" dashed={true} data={stats.dailyStats?.map(d => ({ ...d, revenue: d.revenue * 0.8 }))} selectedDate={selectedDate} />
+                    {/* Recharts Graphical Layer */}
+                    <div className="relative h-64 w-full">
+                      <DashboardChart data={stats.dailyStats} selectedDate={selectedDate} />
 
-                      {/* Time markers */}
-                      <div className="absolute bottom-0 left-0 right-0 flex justify-between px-2">
-                        {['7 am', '8 am', '9 am', '10 am', '11 am', '12 am', '1 pm', '2 pm', '3 pm', '4 pm'].map(t => (
-                          <span key={t} className="text-[8px] font-black text-zinc-700 uppercase">{t}</span>
+                      {/* Dynamic Axis Grid Hooks */}
+                      <div className="absolute bottom-0 left-0 right-0 flex justify-between px-6">
+                        {stats.dailyStats?.filter((_, i) => i % 3 === 0).map((d, i) => (
+                          <span key={i} className="text-[9px] font-black text-zinc-800 uppercase tracking-widest">
+                            {new Date(d.date).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                          </span>
                         ))}
                       </div>
                     </div>
@@ -844,8 +834,8 @@ export default function AdminDashboard() {
                               {(link.payerName || link.name || "AC").charAt(0)}
                             </div>
                             <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-4 border-black ${link.status === 'SETTLED' ? 'bg-[#d4ff3f]' :
-                                link.status === 'SUBMITTED' ? 'bg-[#d4ff3f] animate-pulse' :
-                                  'bg-zinc-800'
+                              link.status === 'SUBMITTED' ? 'bg-[#d4ff3f] animate-pulse' :
+                                'bg-zinc-800'
                               }`} />
                           </div>
 
@@ -1040,8 +1030,8 @@ export default function AdminDashboard() {
                             </span>
                           </div>
                         </div>
-                        <button 
-                          onClick={() => handleStatusUpdate(link._id, 'SETTLED')} 
+                        <button
+                          onClick={() => handleStatusUpdate(link._id, 'SETTLED')}
                           className="w-10 h-10 ml-2 rounded-full border border-white/10 text-zinc-500 shrink-0 flex items-center justify-center hover:bg-[#d4ff3f] hover:border-[#d4ff3f] hover:text-black transition-all group-hover:border-white/30"
                           title="Mark as Settled"
                         >
@@ -1069,11 +1059,11 @@ export default function AdminDashboard() {
                 <div className="relative z-10">
                   <p className="text-[#d4ff3f] text-[10px] font-black uppercase tracking-[0.5em] mb-4 flex items-center gap-4">
                     <span className="w-8 h-[1px] bg-[#d4ff3f]/30"></span>
-                    Security System 2.4
+                    Security Settings 2.4
                   </p>
                   <h2 className="text-[clamp(1.5rem,6vw,3.5rem)] italic font-black uppercase tracking-tighter leading-[0.95] text-white">
                     SECURITY<br />
-                    <span className="text-[#d4ff3f] drop-shadow-[0_0_20px_rgba(212,255,63,0.2)]">SETTINGS</span>
+                    <span className="text-[#d4ff3f] drop-shadow-[0_0_20px_rgba(212,255,63,0.2)]">SAFETY</span>
                   </h2>
                 </div>
               </div>
@@ -1083,16 +1073,16 @@ export default function AdminDashboard() {
                 <div className="absolute top-0 right-0 w-32 h-[1px] bg-[#d4ff3f]/40" />
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 lg:gap-0">
-                  {/* SEGMENT I: GATE PROTOCOL */}
+                  {/* SEGMENT I: SYSTEM CONNECTION */}
                   <div className="lg:pr-16 relative">
                     <div className="flex flex-col h-full">
                       <div className="flex items-center gap-4 mb-16">
                         <div className="w-1.5 h-1.5 bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]" />
-                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Integrated Firewall Cluster</h4>
+                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Security Protection</h4>
                       </div>
 
                       <div className="space-y-6">
-                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Gate<br />Protection</h3>
+                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Entry<br />Protection</h3>
                         <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-widest leading-relaxed max-w-xs">
                           Enabling this setting triggers a 6-digit security code for all entry points.
                         </p>
@@ -1119,7 +1109,7 @@ export default function AdminDashboard() {
                           <span className={cn(
                             "text-[10px] font-black uppercase tracking-widest transition-colors duration-500",
                             maintenanceSettings.requirePasscode ? "text-[#d4ff3f]" : "text-zinc-700"
-                          )}>{maintenanceSettings.requirePasscode ? 'PROTECTION_ACTIVE' : 'GATE_BYPASSED'}</span>
+                          )}>{maintenanceSettings.requirePasscode ? 'PROTECTION_ACTIVE' : 'PROTECTION_OFF'}</span>
                           <span className="text-[9px] font-black text-zinc-800 uppercase mt-1">Status Report 7-A</span>
                         </div>
                       </div>
@@ -1134,13 +1124,13 @@ export default function AdminDashboard() {
                     <div className="flex flex-col h-full">
                       <div className="flex items-center gap-4 mb-16">
                         <div className="w-1.5 h-1.5 bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
-                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Master Access Switch</h4>
+                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Main Access Switch</h4>
                       </div>
 
                       <div className="space-y-6">
-                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Global<br />Block</h3>
+                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Emergency<br />Stop</h3>
                         <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-widest leading-relaxed max-w-xs">
-                          Instantly prevent anyone from entering the ArcPay portal from the main landing page.
+                          Instantly prevent anyone from entering the ArcPay site from the home page.
                         </p>
                       </div>
 
@@ -1161,7 +1151,7 @@ export default function AdminDashboard() {
                           <span className={cn(
                             "text-[10px] font-black uppercase tracking-widest transition-colors duration-500",
                             maintenanceSettings.isArcPayBlocked ? "text-red-500" : "text-zinc-700"
-                          )}>{maintenanceSettings.isArcPayBlocked ? 'ACCESS_BLOCKED' : 'SYSTEM_OPEN'}</span>
+                          )}>{maintenanceSettings.isArcPayBlocked ? 'ENTRY_STOPPED' : 'SYSTEM_OPEN'}</span>
                         </div>
                       </div>
                     </div>
@@ -1179,9 +1169,9 @@ export default function AdminDashboard() {
                       </div>
 
                       <div className="space-y-6">
-                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Master<br />Access</h3>
+                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Main<br />Access</h3>
                         <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-widest leading-relaxed max-w-xs">
-                          Primary override code for the terminal security suite. Changes apply instantly.
+                          Enter your main code to change security settings. Changes apply instantly.
                         </p>
                       </div>
 
@@ -1222,13 +1212,13 @@ export default function AdminDashboard() {
                     <div className="flex flex-col h-full">
                       <div className="flex items-center gap-4 mb-16">
                         <div className="w-1.5 h-1.5 bg-[#d4ff3f] shadow-[0_0_10px_rgba(212,255,63,0.5)]" />
-                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Cryptographic Module</h4>
+                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Extra Protection</h4>
                       </div>
 
                       <div className="space-y-6">
-                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Two-Factor<br />Lock</h3>
+                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Two-Factor<br />Login</h3>
                         <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-widest leading-relaxed max-w-xs">
-                          Requires a time-based Google Authenticator code for dashboard login.
+                          Use a 6-digit code from your phone app to login securely.
                         </p>
                       </div>
 
@@ -1240,7 +1230,7 @@ export default function AdminDashboard() {
                               className="group flex items-center justify-between w-full border-b-2 border-white/[0.05] pb-6 hover:border-[#d4ff3f] transition-colors"
                             >
                               <div className="flex flex-col items-start gap-1">
-                                <span className="text-[12px] font-black text-zinc-600 uppercase tracking-widest leading-none group-hover:text-white transition-colors">Setup Protocol</span>
+                                <span className="text-[12px] font-black text-zinc-600 uppercase tracking-widest leading-none group-hover:text-white transition-colors">Setup Security</span>
                                 <span className="text-[9px] font-bold text-zinc-800 uppercase tracking-widest">Not Configured</span>
                               </div>
                               <ChevronRight className="w-8 h-8 text-zinc-800 group-hover:text-[#d4ff3f] transition-colors" />
@@ -1260,7 +1250,7 @@ export default function AdminDashboard() {
                                   </span>
                                 </div>
                               </div>
-                              
+
                               <div className="space-y-6">
                                 <div className="flex items-center justify-between">
                                   <span className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.4em]">Confirmation Code</span>
@@ -1306,8 +1296,8 @@ export default function AdminDashboard() {
                             <div className="space-y-6">
                               <div className="flex items-center justify-between border-b-2 border-white/[0.05] pb-6">
                                 <div className="flex flex-col gap-1">
-                                  <span className="text-[12px] font-black text-[#d4ff3f] uppercase tracking-widest leading-none">Security Active</span>
-                                  <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">Protocol engaged</span>
+                                  <span className="text-[12px] font-black text-[#d4ff3f] uppercase tracking-widest leading-none">Security ON</span>
+                                  <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">System Active</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <div className="w-2 h-2 rounded-full bg-[#d4ff3f] animate-pulse shadow-[0_0_10px_#d4ff3f]" />
@@ -1409,7 +1399,7 @@ export default function AdminDashboard() {
                   className="w-full sm:w-auto flex items-center justify-center gap-4 px-12 py-5 bg-[#d4ff3f] text-black rounded-full font-black uppercase tracking-widest text-[11px] hover:shadow-[0_0_50px_rgba(212,255,63,0.3)] transition-all group active:scale-95"
                 >
                   <ShieldCheck className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  Apply Security Settings
+                  Save Security Settings
                 </button>
               </div>
 
@@ -1425,8 +1415,8 @@ export default function AdminDashboard() {
                   </div>
                   <div className="flex items-center gap-6">
                     <div className="text-right hidden md:block">
-                      <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">System Location</p>
-                      <p className="text-[10px] font-mono text-zinc-400">AP_CORE_MUM_01</p>
+                      <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">Server Location</p>
+                      <p className="text-[10px] font-mono text-zinc-400">MUMBAI_01</p>
                     </div>
                     <div className="w-[1px] h-8 bg-white/10 hidden md:block" />
                     <div className="flex -space-x-2">
@@ -1450,10 +1440,10 @@ export default function AdminDashboard() {
                   <div className="divide-y divide-white/[0.03]">
                     {[
                       { event: 'PASSCODE_VERIFIED', status: 'VERIFIED', time: '2m ago', origin: 'MUM-01', type: 'success' },
-                      { event: 'SETTINGS_UPDATED', status: 'SYNCED', time: '14m ago', origin: 'SYS-CORE', type: 'info' },
-                      { event: 'ACCESS_BLOCKED', status: 'REJECTED', time: '42m ago', origin: 'GW-PROXY', type: 'error' },
-                      { event: 'SESSION_CHECK_PASSED', status: 'PASSED', time: '1h ago', origin: 'EDGE-02', type: 'success' },
-                      { event: 'SECURITY_KEY_ROTATION', status: 'SECURED', time: '3h ago', origin: 'KMS-MAIN', type: 'info' }
+                      { event: 'SAVED_SETTINGS', status: 'SYNCED', time: '14m ago', origin: 'SYS-CORE', type: 'info' },
+                      { event: 'ENTRY_STOPPED', status: 'REJECTED', time: '42m ago', origin: 'GATEWAY', type: 'error' },
+                      { event: 'LOGGED_IN', status: 'PASSED', time: '1h ago', origin: 'EDGE-02', type: 'success' },
+                      { event: 'KEYS_UPDATED', status: 'SECURED', time: '3h ago', origin: 'KMS-MAIN', type: 'info' }
                     ].map((log, i) => (
                       <motion.div
                         key={i}
@@ -1511,16 +1501,16 @@ export default function AdminDashboard() {
                 <div>
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-8 h-[1px] bg-[#d4ff3f]/40" />
-                    <span className="text-[10px] font-black text-[#d4ff3f] uppercase tracking-[0.4em]">Asset Management Suite</span>
+                    <span className="text-[10px] font-black text-[#d4ff3f] uppercase tracking-[0.4em]">Manage Links</span>
                   </div>
                   <h2 className="text-5xl font-black italic uppercase tracking-tighter text-white">
-                    Link <span className="text-zinc-600">Control</span>
+                    My <span className="text-zinc-600">Links</span>
                   </h2>
                 </div>
 
                 <div className="flex items-center gap-6">
                   <div className="flex flex-col items-end">
-                    <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest leading-none mb-1">Active Assets</span>
+                    <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest leading-none mb-1">Active Links</span>
                     <span className="text-xl font-black text-white">{links.length.toString().padStart(2, '0')}</span>
                   </div>
                   <div className="w-[1px] h-8 bg-white/5" />
@@ -1537,7 +1527,7 @@ export default function AdminDashboard() {
                 {links.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-40 bg-[#0a0a0c] rounded-[40px] border border-dashed border-white/5">
                     <LinkIcon className="w-12 h-12 text-zinc-800 mb-6" />
-                    <p className="text-zinc-600 font-black uppercase tracking-[0.2em] text-[10px]">No payment assets registered in system</p>
+                    <p className="text-zinc-600 font-black uppercase tracking-[0.2em] text-[10px]">No payment links found.</p>
                   </div>
                 ) : (
                   links.map((link, i) => (
@@ -1573,7 +1563,7 @@ export default function AdminDashboard() {
                         </div>
 
                         <div className="flex flex-col items-end gap-1.5 min-w-[100px]">
-                          <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Asset Status</span>
+                          <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Status</span>
                           <div className="flex items-center gap-2">
                             <div className="w-1.5 h-1.5 bg-[#d4ff3f] rounded-full shadow-[0_0_8px_#d4ff3f]" />
                             <span className="text-[10px] font-black uppercase tracking-widest text-white">Online</span>
@@ -1604,11 +1594,11 @@ export default function AdminDashboard() {
                                 headers: { 'Authorization': `Bearer ${token}` }
                               });
                               if (response.ok) {
-                                showStatus({ type: 'success', title: 'ASSET DELETED', message: 'Link permanently removed from system.' });
+                                showStatus({ type: 'success', title: 'LINK DELETED', message: 'The payment link was deleted.' });
                                 fetchDashboardData();
                               }
                             } catch (err) {
-                              showStatus({ type: 'error', title: 'DELETE FAILED', message: 'Security system blocked removal.' });
+                              showStatus({ type: 'error', title: 'DELETE FAILED', message: 'Security stopped the deletion.' });
                             }
                           }}
                           className="w-12 h-12 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-black transition-all shadow-xl"
@@ -1637,11 +1627,11 @@ export default function AdminDashboard() {
                 <div>
                   <h2 className="text-[clamp(1.5rem,5vw,5rem)] text-white">
                     SITE ACCESS <br />
-                    <span className="text-[#d4ff3f]">CONFIGURATION</span>
+                    <span className="text-[#d4ff3f]">SETTINGS</span>
                   </h2>
                   <div className="flex items-center gap-3 mt-8">
                     <span className="px-3 py-1 bg-[#d4ff3f] text-black text-[10px] font-black uppercase tracking-widest rounded-full">Admin Control</span>
-                    <span className="text-zinc-600 text-[10px] font-black uppercase tracking-widest uppercase">Server Control 882</span>
+                    <span className="text-zinc-600 text-[10px] font-black uppercase tracking-widest">Site Control</span>
                   </div>
                 </div>
               </div>
@@ -1656,7 +1646,7 @@ export default function AdminDashboard() {
                       <div className="w-1.5 h-1.5 bg-[#d4ff3f] shadow-[0_0_8px_#d4ff3f]" />
                       <h3 className="text-xl text-white">Maintenance Mode</h3>
                     </div>
-                    <p className="text-[12px] font-bold text-zinc-500 max-w-lg uppercase tracking-tight pl-4 leading-relaxed">When active, the public payment gateway will be inaccessible. Admins can still manage the system.</p>
+                    <p className="text-[12px] font-bold text-zinc-500 max-w-lg uppercase tracking-tight pl-4 leading-relaxed">When active, the payment site will be closed. Admins can still manage the system.</p>
                   </div>
                   <button
                     onClick={() => setMaintenanceSettings(prev => ({ ...prev, isMaintenanceMode: !prev.isMaintenanceMode }))}
@@ -1675,7 +1665,7 @@ export default function AdminDashboard() {
                       rows="4"
                       value={maintenanceSettings.maintenanceMessage}
                       onChange={(e) => setMaintenanceSettings(prev => ({ ...prev, maintenanceMessage: e.target.value }))}
-                      placeholder="WE ARE CURRENTLY UPDATING OUR INFRASTRUCTURE..."
+                      placeholder="WE ARE CURRENTLY UPDATING OUR SYSTEM..."
                       className="w-full bg-transparent border-b border-white/10 rounded-none py-4 text-white font-bold outline-none focus:border-[#d4ff3f] transition-all resize-none uppercase text-sm placeholder:text-zinc-800"
                     />
                     <p className="text-[9px] font-black text-zinc-600 uppercase tracking-widest">This message will be displayed directly to all public visitors during downtime.</p>
@@ -1707,16 +1697,16 @@ export default function AdminDashboard() {
                         if (response.ok) {
                           showStatus({
                             type: 'success',
-                            title: 'SYSTEM CONFIG',
-                            message: "Maintenance settings successfully applied."
+                            title: 'SUCCESS',
+                            message: "Settings saved."
                           });
                           fetchDashboardData();
                         }
                       } catch (err) {
                         showStatus({
                           type: 'error',
-                          title: 'UPDATE FAILURE',
-                          message: "Unable to update global system state."
+                          title: 'ERROR',
+                          message: "Could not save settings."
                         });
                       }
                     }}
@@ -1727,7 +1717,7 @@ export default function AdminDashboard() {
                   </button>
                   <div className="flex flex-col">
                     <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">System Status</span>
-                    <span className="text-[10px] font-bold text-zinc-600 uppercase">Main Server Sync Active</span>
+                    <span className="text-[10px] font-bold text-zinc-600 uppercase">System Active</span>
                   </div>
                 </div>
               </div>
@@ -1738,7 +1728,7 @@ export default function AdminDashboard() {
                 </div>
                 <div className="flex flex-col gap-2">
                   <h4 className="text-white text-[13px]">Security: On</h4>
-                  <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-tight">System state is currently locked and monitored via security system.</p>
+                  <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-tight">Your system is safe and being monitored.</p>
                 </div>
               </div>
             </div>
@@ -1749,16 +1739,16 @@ export default function AdminDashboard() {
                 <div>
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-8 h-[1px] bg-[#d4ff3f]/40" />
-                    <span className="text-[10px] font-black text-[#d4ff3f] uppercase tracking-[0.4em]">Integrated Ledger Control</span>
+                    <span className="text-[10px] font-black text-[#d4ff3f] uppercase tracking-[0.4em]">Payment List</span>
                   </div>
                   <h2 className="text-5xl font-black italic uppercase tracking-tighter text-white">
-                    Master <span className="text-zinc-600">Ledger</span>
+                    All <span className="text-zinc-600">Payments</span>
                   </h2>
                 </div>
 
                 <div className="flex items-center gap-6">
                   <div className="flex flex-col items-end">
-                    <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest leading-none mb-1">Total Entries</span>
+                    <span className="text-[9px] font-black text-zinc-600 uppercase tracking-widest leading-none mb-1">Total Payments</span>
                     <span className="text-xl font-black text-white">{filteredLinks.length.toString().padStart(2, '0')}</span>
                   </div>
                   <div className="w-[1px] h-8 bg-white/5" />
@@ -1791,8 +1781,8 @@ export default function AdminDashboard() {
                         <div className="w-14 h-14 bg-zinc-900 rounded-2xl flex items-center justify-center border border-white/5 text-lg font-black text-[#d4ff3f] shadow-2xl relative">
                           {(link.payerName || link.name || "AC").charAt(0)}
                           <div className={`absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-black ${link.status === 'SETTLED' ? 'bg-[#d4ff3f]' :
-                              link.status === 'SUBMITTED' ? 'bg-[#d4ff3f] animate-pulse' :
-                                'bg-zinc-800'
+                            link.status === 'SUBMITTED' ? 'bg-[#d4ff3f] animate-pulse' :
+                              'bg-zinc-800'
                             }`} />
                         </div>
                         <div className="flex flex-col gap-1">
@@ -1803,11 +1793,11 @@ export default function AdminDashboard() {
 
                       <div className="flex-1 grid grid-cols-3 gap-10 items-center px-10">
                         <div className="flex flex-col gap-1.5">
-                          <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Transaction Verified</span>
+                          <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Payment Details</span>
                           <span className="text-[11px] font-bold text-zinc-400 group-hover:text-white transition-colors">{link.linkId.toUpperCase()}</span>
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Payment Security</span>
+                          <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Status</span>
                           <div className="flex items-center gap-2">
                             <ShieldCheck className={cn("w-3.5 h-3.5", link.status === 'SETTLED' ? "text-[#d4ff3f]" : "text-zinc-600")} />
                             <span className={cn("text-[10px] font-black uppercase tracking-widest", link.status === 'SETTLED' ? "text-[#d4ff3f]" : "text-zinc-500")}>
@@ -1816,7 +1806,7 @@ export default function AdminDashboard() {
                           </div>
                         </div>
                         <div className="flex flex-col items-end gap-1.5 pr-10">
-                          <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Settlement Value</span>
+                          <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Amount</span>
                           <span className="text-2xl font-black text-white tracking-tighter">₹{new Intl.NumberFormat('en-IN').format(link.amount)}</span>
                         </div>
                       </div>
@@ -1858,7 +1848,7 @@ export default function AdminDashboard() {
                 <div className="absolute -inset-20 bg-[#d4ff3f]/5 rounded-full blur-[100px] pointer-events-none" />
                 <p className="text-[#d4ff3f] text-[10px] font-black uppercase tracking-[0.5em] mb-4 flex items-center justify-center gap-4">
                   <span className="w-8 h-[1px] bg-[#d4ff3f]/30"></span>
-                  Module under construction
+                  Coming Soon
                   <span className="w-8 h-[1px] bg-[#d4ff3f]/30"></span>
                 </p>
                 <h2 className="text-[clamp(2rem,10vw,6rem)] italic font-black uppercase tracking-tighter leading-none text-white mix-blend-difference">
@@ -1870,10 +1860,10 @@ export default function AdminDashboard() {
               <div className="flex flex-col items-center gap-6">
                 <div className="flex items-center gap-3 px-6 py-2 bg-white/5 border border-white/5 rounded-full backdrop-blur-md">
                   <div className="w-1.5 h-1.5 bg-[#d4ff3f] rounded-full animate-pulse shadow-[0_0_8px_#d4ff3f]" />
-                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">System Status: Active</span>
+                  <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">Status: Active</span>
                 </div>
                 <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-[0.2em] max-w-sm leading-relaxed">
-                  This administrative system is currently being configured for detailed reports and payment matching.
+                  This admin area is currently being readied for reports and tracking.
                 </p>
               </div>
             </div>

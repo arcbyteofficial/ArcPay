@@ -38,7 +38,7 @@ export default function App() {
   }, [location.pathname]);
 
   // Gatekeeper Constants
-  const isAdminRoute = location.pathname.startsWith('/admin');
+  const isAdminRoute = location.pathname.startsWith('/arc-gate');
   const isMaintenancePage = location.pathname === '/maintenance';
   const isLandingPage = location.pathname === '/';
   const isTermsPage = location.pathname === '/terms-and-conditions';
@@ -83,10 +83,11 @@ export default function App() {
         <Route path="/docs" element={<Docs />} />
         <Route path="/developer" element={<DevDocs />} />
 
-        {/* Merchant Management Portal */}
-        <Route path="/admin/setup" element={<AdminSetup />} />
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        {/* Merchant Management Portal - OBSCURED */}
+        <Route path="/arc-gate" element={<Navigate to="/arc-gate/access" replace />} />
+        <Route path="/arc-gate/init" element={<AdminSetup />} />
+        <Route path="/arc-gate/access" element={<AdminLogin />} />
+        <Route path="/arc-gate/portal" element={<AdminDashboard />} />
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

@@ -1,12 +1,12 @@
 import React from 'react';
 import { Camera, MessageCircle, Mail, Globe, ShieldCheck } from 'lucide-react';
-import arcbyteLogo from '../../assets/arcbyte.co Logo_white_transparent.png';
+import arcbyteLogo from '../../assets/arcbyte_logo_white_transparent.png';
 
 export default function Footer() {
   return (
     <div className="bg-[#151518] w-full px-6 md:px-8 pt-16 md:pt-24 pb-8 font-sans">
       <div className="max-w-[1200px] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10 lg:gap-12 mb-10 lg:mb-20 border-b border-white/10 pb-10 lg:pb-16">
-        
+
         {/* Brand Column */}
         <div className="lg:col-span-2 pr-8">
           <div className="flex items-center gap-2 sm:gap-2.5 mb-6">
@@ -16,7 +16,7 @@ export default function Footer() {
             <img src={arcbyteLogo} alt="ArcByte" className="h-5 sm:h-6 opacity-90 object-contain" />
           </div>
           <p className="text-zinc-500 text-sm font-medium leading-relaxed mb-8 max-w-[200px]">
-            Discover the power of our secure and rewarding payment links
+            The easiest way to send payment links and get paid instantly.
           </p>
           <div className="flex gap-3">
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center cursor-pointer hover:bg-zinc-200 transition-colors text-black">
@@ -47,7 +47,7 @@ export default function Footer() {
         {/* Links Column 2 */}
         <div className="flex flex-col gap-5">
           <h4 className="text-white font-bold tracking-wide">Products</h4>
-          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Credits Cards</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Credit Cards</a>
           <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Gift Cards</a>
           <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Savings accounts</a>
           <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">NFT</a>
@@ -66,14 +66,14 @@ export default function Footer() {
           <h4 className="text-white font-bold tracking-wide">Social</h4>
           <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Changelog</a>
           <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">License</a>
-          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Site Maps</a>
+          <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">Sitemap</a>
           <a href="https://arcbyte.co" className="text-zinc-500 text-sm font-medium hover:text-white transition-colors">News</a>
         </div>
 
       </div>
 
       <div className="text-center text-zinc-600 text-[13px] font-medium tracking-wide">
-        @2024 Copy Right-ArcPay
+        © 2024 ArcPay. All rights reserved.
       </div>
     </div>
   );

@@ -379,7 +379,7 @@ export default function Hero() {
           setIsArcPayBlocked(data.isArcPayBlocked);
         }
       } catch (err) {
-        console.error("Failed to fetch security protocol");
+        console.error("Failed to fetch security settings");
       }
     };
     fetchSettings();
@@ -452,10 +452,10 @@ export default function Hero() {
 
         {/* Left Typography Block */}
         <div className="pt-10">
-          <h1 className="text-4xl sm:text-7xl lg:text-[80px] mb-6 drop-shadow-sm italic-center-balance">
-            Seamless<br />
-            <span className="text-[#d4ff3f]">payments</span> for<br />
-            ArcByte
+          <h1 className="text-4xl sm:text-7xl lg:text-[80px] mb-6 drop-shadow-sm italic-center-balance leading-[0.9]">
+            Get paid<br />
+            <span className="text-[#d4ff3f]">instantly</span> with<br />
+            ArcPay
             <span className="inline-block ml-2 sm:ml-4 align-middle pb-1 sm:pb-2 w-8 h-8 sm:w-12 sm:h-12">
               {/* Pristine 4-point Sparkle SVG */}
               <svg viewBox="0 0 24 24" className="w-full h-full text-[#d4ff3f] animate-pulse">
@@ -465,7 +465,7 @@ export default function Hero() {
           </h1>
 
           <p className="text-zinc-400 text-lg max-w-[420px] mb-12 font-medium leading-relaxed">
-            Generate highly converting, intent-driven payment links that securely route transactions through native applications.
+            Create easy payment links and get money directly into your bank account. No fees, no waiting.
           </p>
 
           <button
@@ -509,7 +509,7 @@ export default function Hero() {
               const isVerified = sessionStorage.getItem('merchant_verified') === 'true';
               
               if (!currentPasscodeRequired || isVerified) {
-                // Grant protocol bypass if firewall is off to satisfy Dashboard guard
+                // Skip security check if it is not required
                 if (!currentPasscodeRequired) {
                   sessionStorage.setItem('merchant_verified', 'true');
                 }

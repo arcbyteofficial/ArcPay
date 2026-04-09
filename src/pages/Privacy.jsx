@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, Database, Shield, Lock, Activity, EyeOff } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import arcbyteLogo from '../assets/arcbyte_logo_white_transparent.png';
+import SEO from '../components/common/SEO';
 
 export default function Privacy() {
   const navigate = useNavigate();
@@ -9,38 +10,43 @@ export default function Privacy() {
   const sections = [
     {
       id: 'collection',
-      title: '1. Granular Data Collection Scope',
+      title: '1. What we collect',
       icon: <Database className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'ArcPay operates as a highly specialized, minimal-surface transit layer. We explicitly log device metadata (User-Agent, OS architecture), IP routing origins, geographic nodal approximations, and transaction initiation timestamps. This telemetry is harvested strictly for maintaining network health, optimizing latency, and executing advanced anti-fraud heuristics. Under no circumstances do we deploy persistent tracking cookies, pixel trackers, or behavioral analytics software intended to monitor your activity outside of the immediate ArcPay transactional ecosystem. You explicitly consent to this minimal, targeted telemetry necessary for secure operations.'
+      content: 'We only collect the basic information needed to make your payments work safely. This includes things like your device type and IP address, which we use to help prevent fraud and keep the system running fast. We do not track what you do on other websites or use any sneaky tracking software.'
     },
     {
       id: 'financial',
-      title: '2. Transit Integrity & Non-Custodial Data',
+      title: '2. Your money is safe',
       icon: <Activity className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'ArcPay is engineered upon a fundamental zero-trust, non-custodial architecture. We unequivocally do not record, store, nor transmit your private banking credentials, UPI PINs, raw biometric authorization metrics, or persistent financial instruments. Generated payment strings (VPA deep-links) are publicly verifiable objects but remain fully enciphered during server generation to prevent man-in-the-middle vectoring. Final settlement and authorization occur entirely within the encrypted, localized boundaries of your chosen banking application, rendering ArcPay mathematically blind to your underlying liquidity.'
+      content: 'We never see, store, or share your bank passwords, PINs, or private bank details. ArcPay simply helps you create a payment link. The actual payment happens inside your own trusted bank app. This means we are completely blind to your bank balance or private financial info.'
     },
     {
       id: 'sharing',
-      title: '3. Third-Party Bridging & Disclosures',
+      title: '3. No data selling',
       icon: <EyeOff className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'Your transaction signatures and algorithmic node data are strictly compartmentalized within our proprietary databases. ArcByte Official maintains a scorched-earth policy against aggregate data commoditization: we do not sell, lease, or algorithmically distribute user metrics to third-party ad networks, marketing syndicates, or external data brokers. Network telemetry is strictly interfaced with verified banking APIs for routing validation. We will only disclose specific transaction payloads when presented with a legally binding subpoena, court order, or explicit regulatory mandate from federal oversight authorities (e.g., RBI, CERT-In, or FATF compliance bureaus).'
+      content: 'We have a very strict rule: we never sell or rent your information to advertisers or anyone else. We only share details with banks to make sure your payments are real. We will only share info with authorities if we are legally forced to by a court order.'
     },
     {
       id: 'security',
-      title: '4. Cryptographic Security Standards',
+      title: '4. Bank-level Security',
       icon: <Lock className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'The ArcPay management dashboard and all associated payment nodes are secured utilizing military-grade TLS 1.3 encryption, ensuring perfect forward secrecy. System architecture is fortified behind aggressive web application firewalls (WAF) and active heuristic monitoring. Administrative data retrieval is heavily sandboxed, requiring multi-factor authentication (MFA) and IP-whitelisting for internal operators. While we guarantee adherence to state-of-the-art cryptographic standards, you acknowledge that no interconnected server node is entirely impervious to novel, nation-state level cyber vulnerabilities.'
+      content: 'We use the same high-level security as banks to keep your data safe. Our systems are protected by strong firewalls and are constantly checked for any security risks. While we do our absolute best to keep everything safe, no system on the internet is 100% perfect, so we stay alert 24/7.'
     },
     {
       id: 'rights',
-      title: '5. End-User Data Rights & Deletion',
+      title: '5. Your rights',
       icon: <Shield className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'In accordance with progressive data sovereignty frameworks, users maintain explicit rights over their generated telemetry. You may request a complete cryptographic export of your ledger history or mandate the outright deletion of your merchant profile. However, be advised that requests for permanent account erasure will inherently nullify all active payment links and immediately shutter dashboard access. Note: Archival copies of specific transaction signatures may be retained in cold storage for up to 60 months exclusively to comply with international AML/KYC audit requirements.'
+      content: 'You are in control of your info. You can ask us for a copy of your records or ask us to delete your account at any time. Just keep in mind that deleting your account will instantly stop any active payment links you have created.'
     }
   ];
 
   return (
     <div className="min-h-screen bg-[#050505] text-[#e0e0e0] flex flex-col relative overflow-hidden font-sans selection:bg-[#d4ff3f]/30">
+      <SEO 
+        title="Privacy Framework" 
+        description="Learn how ArcPay uses advanced security to protect your payment information."
+        url="https://pay.arcbyte.co/privacy-policy"
+      />
       
       {/* EDITORIAL GRID BACKGROUND */}
       <div className="absolute inset-0 z-0 pointer-events-none opacity-20">

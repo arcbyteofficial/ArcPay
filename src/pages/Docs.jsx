@@ -2,6 +2,7 @@ import { motion } from 'framer-motion';
 import { ArrowLeft, BookOpen, Link as LinkIcon, CheckCircle, ShieldAlert, Settings, HelpCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import arcbyteLogo from '../assets/arcbyte_logo_white_transparent.png';
+import SEO from '../components/common/SEO';
 
 export default function Docs() {
   const navigate = useNavigate();
@@ -11,36 +12,41 @@ export default function Docs() {
       id: 'generation',
       title: '1. Instant Link Generation',
       icon: <LinkIcon className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'ArcPay radically simplifies the issuance of secure UPI payment requests. To initiate a transaction, navigate to the Dashboard and input the required denomination into the cryptographic terminal. Within milliseconds, ArcPay computes a distinct, shareable VPA string linked to your underlying bank credentials. This link can be transmitted via SMS, email, or embedded as a QR payload in digital invoices. The generated URL bypasses conventional payment gateways, allowing your payer to directly authorize the ledger transfer within their native banking environment without intermediary delays.'
+      content: 'ArcPay makes it easy to create secure UPI payment links. To start, go to your Dashboard and enter the amount you want to receive. In seconds, ArcPay creates a unique link that connects directly to your bank. You can send this link via SMS, email, or show it as a QR code on your bills. This link lets your customers pay you directly from their bank app, without any extra steps or delays.'
     },
     {
       id: 'settlement',
       title: '2. P2P Settlement & Verification',
       icon: <CheckCircle className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'Because ArcPay functions as a non-custodial layer rather than a traditional financial depository, settlement speeds are strictly bound by the capabilities of the underlying NPCI network. In 99% of scenarios, liquidity is routed instantaneously to your designated bank account. ArcPay cannot artificially delay or escrow these funds. Transaction verification relies on immutable UPI Reference Numbers (UTR). Instruct your clients to retain their UTRs, as these cryptographic signatures serve as definitive proof-of-transit for any reconciliation requirements.'
+      content: 'ArcPay helps you get paid directly. Because the money goes straight to your bank, the speed depends on the bank\'s system (NPCI). Most payments arrive in your bank account instantly. ArcPay doesn\'t hold or delay your money. To track a payment, use the UPI Reference Number (UTR). Ask your customers to keep their UTR as proof if you ever need to check a payment.'
     },
     {
       id: 'sentinel',
-      title: '3. Zero-Trust Security Sentinel',
+      title: '3. Emergency Safety System',
       icon: <ShieldAlert className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'The ArcPay framework integrates a proprietary module known as the Security Sentinel. Accessible via the Admin Dashboard, the Sentinel grants operators immediate, absolute control over platform stability. If an acute cyber-threat or API anomaly is detected, administrators can engage the "Global Access Block"—an emergency kill-switch that instantly freezes all API endpoints and severs external routing access to the payment terminals. This scorched-earth protocol ensures that fraudulent links cannot be successfully queried while active mitigation procedures are deployed.'
+      content: 'ArcPay has a built-in safety system that you can control from your Admin Dashboard. This system gives you full control over your payments. If you see anything suspicious, you can use the "Emergency Stop" button. This button instantly stops all new payments and keeps your account safe. This safety measure ensures that fake links won\'t work while you perform security checks.'
     },
     {
       id: 'admin',
       title: '4. Administrative Operations',
       icon: <Settings className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'The ArcPay Administration portal (`/admin/login`) is structurally isolated from the public ledger tools. From here, you possess granular control over platform aesthetics, active merchant terminals, and live telemetry. The Admin Dashboard also houses the "Maintenance Mode" toggle. Activating Maintenance Mode automatically redirects all public traffic to a secure hold screen, concealing the application interface while developers execute back-end improvements. Note: Legal and Documentation pages purposefully bypass these lockouts for compliance auditing.'
+      content: 'Your Admin area is separate from the main site to keep it extra secure. From there, you can change how your site looks, manage your links, and see live activity. You can also turn on "Maintenance Mode" to hide your site while you make system updates. Please note: Legal and help pages stay visible even in maintenance mode for safety.'
     },
     {
       id: 'troubleshooting',
       title: '5. Diagnostic Troubleshooting',
       icon: <HelpCircle className="w-5 h-5 text-[#d4ff3f]" />,
-      content: 'Should a payment link fail to compute, ensure your local connectivity is stable and that your VPA configuration within the main database has not been structurally altered. Persistent network latency during link generation often indicates temporary throttling from the primary UPI grid. Under no circumstances should users attempt to aggressively retry failing mutations, as this may trigger automated anti-sybil defenses causing a temporary IP ban. If issues continue unabated, diagnostic logs should be escalated to your internal operations engineering unit.'
+      content: 'If a link isn\'t working, check your internet first and make sure your settings are correct. If link creation is slow, it might be a temporary delay with the UPI system. Don\'t try to create a link too many times if it fails, as the system might block you for safety. If issues continue, please send us a message at our support desk.'
     }
   ];
 
   return (
     <div className="min-h-screen bg-[#050505] text-[#e0e0e0] flex flex-col relative overflow-hidden font-sans selection:bg-[#d4ff3f]/30">
+      <SEO 
+        title="Knowledge Base" 
+        description="Explore the easy-to-read guides and user manuals for using ArcPay."
+        url="https://pay.arcbyte.co/docs"
+      />
       
       {/* EDITORIAL GRID BACKGROUND */}
       <div className="absolute inset-0 z-0 pointer-events-none opacity-20">
@@ -136,8 +142,8 @@ export default function Docs() {
               className="mt-20 p-8 rounded-3xl bg-[#d4ff3f]/5 border border-[#d4ff3f]/20 flex flex-col md:flex-row items-start md:items-center justify-between gap-6"
             >
               <div>
-                <h3 className="text-white font-black uppercase tracking-widest text-lg mb-2">Technical Support Desk</h3>
-                <p className="text-zinc-500 text-xs uppercase tracking-widest">Open a direct ticket with our engineering team.</p>
+                <h3 className="text-white font-black uppercase tracking-widest text-lg mb-2">Support Desk</h3>
+                 <p className="text-zinc-500 text-xs uppercase tracking-widest">Message our team for help with any issues.</p>
               </div>
               <a 
                 href="mailto:support@arcbyte.co" 

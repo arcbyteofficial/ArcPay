@@ -41,31 +41,31 @@ export default function AdminSetup() {
       const data = await response.json();
 
       if (data.success) {
-        showStatus({ 
-          type: 'success', 
-          title: 'IDENTITY LOCKED', 
-          message: "Merchant identity established. Terminal is now operational. Proceeding to Login." 
+        showStatus({
+          type: 'success',
+          title: 'IDENTITY LOCKED',
+          message: "Merchant identity established. Terminal is now operational. Proceeding to Login."
         });
-        navigate('/admin/login');
+        navigate('/arc-gate/access');
       } else {
-        showStatus({ 
-          type: 'error', 
-          title: 'SECURE verification FAILURE', 
-          message: data.error || "Setup failed. System may already be locked for security." 
+        showStatus({
+          type: 'error',
+          title: 'SECURE verification FAILURE',
+          message: data.error || "Setup failed. System may already be locked for security."
         });
       }
     } catch (err) {
       if (err.name === 'AbortError') {
-        showStatus({ 
-          type: 'error', 
-          title: 'PROTOCOL TIMEOUT', 
-          message: "Request exceed 10s latency. Please check secure node status." 
+        showStatus({
+          type: 'error',
+          title: 'TIMEOUT',
+          message: "The request took too long. Please check your connection."
         });
       } else {
-        showStatus({ 
-          type: 'error', 
-          title: 'GATEWAY FAILURE', 
-          message: "Unable to establish secure verification with authentication server." 
+        showStatus({
+          type: 'error',
+          title: 'GATEWAY FAILURE',
+          message: "Unable to establish secure verification with authentication server."
         });
       }
     } finally {

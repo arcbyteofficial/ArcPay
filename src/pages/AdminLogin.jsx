@@ -1,12 +1,36 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, ChevronRight, Mail, Lock, ArrowRight } from 'lucide-react';
-import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
+import { 
+  ShieldCheck, 
+  Mail, 
+  Lock, 
+  ArrowRight,
+  ChevronLeft,
+  Smartphone,
+  LockKeyhole,
+  CheckCircle2,
+  Menu
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNotification } from '../context/NotificationContext';
 import arcbyteLogo from '../assets/arcbyte_logo_white_transparent.png';
-import { useRef } from 'react';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
+
+// ArcPay Theme Styles 
+const ArcPayEditorialStyles = () => (
+  <style>{`
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700;900&display=swap');
+    
+    .font-brand { font-family: 'Inter', sans-serif; }
+    
+    .neon-text-shadow {
+      text-shadow: 0 0 20px rgba(212, 255, 63, 0.4);
+    }
+    
+    .arcpay-border { border-color: rgba(212, 255, 63, 0.1); }
+  `}</style>
+);
 
 function cn(...inputs) {
   return twMerge(clsx(inputs));
@@ -18,8 +42,6 @@ export default function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
-  // 2FA State
   const [requires2FA, setRequires2FA] = useState(false);
   const [otpCode, setOtpCode] = useState('');
   const [tempToken, setTempToken] = useState(null);
@@ -28,12 +50,12 @@ export default function AdminLogin() {
   const { showStatus } = useNotification();
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setIsLoading(true);
 
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
         method: 'POST',
@@ -51,48 +73,40 @@ export default function AdminLogin() {
           setRequires2FA(true);
           showStatus({
             type: 'info',
-            title: '2FA CHALLENGE',
-            message: 'Provide your Authenticator OTP to proceed.'
+            title: 'IDENTITY SECURE',
+            message: 'A security code is required to access your account.'
           });
           return;
         }
 
         localStorage.setItem('arcpay_token', data.token);
         localStorage.setItem('arcpay_merchant', data.businessName);
-        showStatus({ 
-          type: 'success', 
-          title: 'AUTHENTICATION', 
-          message: `Digital identity verified. Welcome back, ${data.businessName}.` 
+        showStatus({
+          type: 'success',
+          title: 'ACCESS GRANTED',
+          message: `Welcome, ${data.businessName}. Signing you in...`
         });
-        navigate('/admin/dashboard');
+        navigate('/arc-gate/portal');
       } else {
-        showStatus({ 
-          type: 'error', 
-          title: 'ACCESS DENIED', 
-          message: data.error || "Credentials invalid. Firewall protection active." 
+        showStatus({
+          type: 'error',
+          title: 'ACCESS DENIED',
+          message: data.error || "The email or password entered is incorrect."
         });
       }
     } catch (err) {
-      if (err.name === 'AbortError') {
-        showStatus({ 
-          type: 'error', 
-          title: 'TIMEOUT', 
-          message: "Request exceed 10s latency. Please check your connection." 
-        });
-      } else {
-        showStatus({ 
-          type: 'error', 
-          title: 'GATEWAY FAILURE', 
-          message: "Unable to establish secure connection with authentication server." 
-        });
-      }
+      showStatus({
+        type: 'error',
+        title: 'CONNECTION ERROR',
+        message: "Unable to connect to the server."
+      });
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleVerify2FA = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setIsLoading(true);
 
     try {
@@ -106,24 +120,24 @@ export default function AdminLogin() {
       if (data.success) {
         localStorage.setItem('arcpay_token', data.token);
         localStorage.setItem('arcpay_merchant', data.businessName);
-        showStatus({ 
-          type: 'success', 
-          title: 'AUTHENTICATION', 
-          message: `Digital identity verified. Welcome back, ${data.businessName}.` 
+        showStatus({
+          type: 'success',
+          title: 'VERIFIED',
+          message: "You are now signed in."
         });
-        navigate('/admin/dashboard');
+        navigate('/arc-gate/portal');
       } else {
-        showStatus({ 
-          type: 'error', 
-          title: 'ACCESS DENIED', 
-          message: data.error || "Invalid OTP code." 
+        showStatus({
+          type: 'error',
+          title: 'INVALID CODE',
+          message: data.error || "The security code is incorrect."
         });
       }
     } catch (err) {
-      showStatus({ 
-        type: 'error', 
-        title: 'GATEWAY FAILURE', 
-        message: "Unable to verify authentication code." 
+      showStatus({
+        type: 'error',
+        title: 'CONNECTION ERROR',
+        message: "Confirmation failure."
       });
     } finally {
       setIsLoading(false);
@@ -131,188 +145,165 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center p-6 relative overflow-hidden">
-      {/* Background Ambience */}
-      <div className="absolute top-0 left-0 w-[500px] h-[500px] bg-[#d4ff3f]/[0.02] rounded-full blur-[120px]" />
-
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-md"
-      >
-        <div className="flex flex-col items-center mb-12 text-center">
-          <div className="flex items-center gap-3 mb-8">
-            <ShieldCheck className="w-8 h-8 text-[#d4ff3f]" strokeWidth={2.5} />
-            <div className="w-[1px] h-6 bg-white/20 mx-1"></div>
-            <img src={arcbyteLogo} alt="ArcByte" className="h-6 opacity-90 object-contain" />
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-brand selection:bg-[#d4ff3f] selection:text-[#000000]">
+      <ArcPayEditorialStyles />
+      
+      {/* Masthead Header */}
+      <header className="fixed top-0 left-0 right-0 p-8 flex justify-between items-center z-50 border-b border-white/[0.03]">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-[#d4ff3f] rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(212,255,63,0.3)]">
+            <ShieldCheck className="w-5 h-5 text-black stroke-[3]" />
           </div>
-          <h2 className="text-5xl font-black mb-4 text-white uppercase tracking-tighter italic">
-            ArcPay <span className="text-[#d4ff3f]">{requires2FA ? '2FA' : 'Login'}</span>
-          </h2>
-          <p className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.5em] ml-[0.5em]">
-            {requires2FA ? 'Security Challenge' : 'Access Your Dashboard'}
-          </p>
+          <span className="text-[10px] font-black tracking-[0.5em] uppercase text-zinc-500 pl-4 border-l border-white/10">ArcPay Admin Login</span>
+        </div>
+        <button className="text-zinc-500 hover:text-[#d4ff3f] transition-colors">
+          <Menu className="w-5 h-5" />
+        </button>
+      </header>
+
+      <main className="min-h-screen pt-32 p-8 md:p-24 flex flex-col md:flex-row gap-16 md:gap-32 max-w-[1600px] mx-auto">
+        {/* LEFT COMPONENT: HERO BRANDING */}
+        <div className="w-full md:w-1/2 flex flex-col justify-center">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+          >
+            <h2 className="text-[#d4ff3f] text-[11px] font-black uppercase tracking-[0.8em] mb-8 opacity-60">Admin / 01</h2>
+            <h1 className="text-5xl md:text-6xl lg:text-[80px] font-black leading-[0.85] tracking-[-0.05em] text-white uppercase italic">
+              The <br />
+              <span className="text-[#d4ff3f] neon-text-shadow">Portal</span> <br />
+              to Commerce.
+            </h1>
+          </motion.div>
         </div>
 
-        <AnimatePresence mode="wait">
-          {!requires2FA ? (
-            <motion.form 
-              key="login"
-              initial={{ opacity: 0, x: -20 }} 
-              animate={{ opacity: 1, x: 0 }} 
-              exit={{ opacity: 0, x: 20 }}
-              onSubmit={handleLogin} 
-              className="space-y-12"
-            >
-              <div className="space-y-10">
-                <div className="relative group border-b border-white/[0.05] focus-within:border-[#d4ff3f]/40 transition-colors pb-4">
-                  <p className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.3em] mb-4">Business Email</p>
-                  <div className="flex items-center">
-                <Mail className="w-5 h-5 text-zinc-700 mr-4 shrink-0" />
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@business.com"
-                  className="w-full bg-transparent outline-none text-white font-black text-2xl tracking-tighter placeholder:text-zinc-900 transition-all font-sans"
-                />
-              </div>
-            </div>
+        {/* RIGHT COMPONENT: SECURE FORM */}
+        <div className="w-full md:w-[400px] flex flex-col justify-center">
+          <AnimatePresence mode="wait">
+            {!requires2FA ? (
+              <motion.div
+                key="login"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-16"
+              >
+                <div className="space-y-2">
+                  <h3 className="text-[#d4ff3f] text-2xl font-black uppercase italic tracking-tighter">Sign In.</h3>
+                  <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
+                    Enter your details to access the admin area.
+                  </p>
+                </div>
 
-            <div className="relative group border-b border-white/[0.05] focus-within:border-[#d4ff3f]/40 transition-colors pb-4">
-              <p className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.3em] mb-4">Password</p>
-              <div className="flex items-center">
-                <Lock className="w-5 h-5 text-zinc-700 mr-4 shrink-0" />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-transparent outline-none text-white font-black text-2xl tracking-tighter placeholder:text-zinc-900 transition-all font-sans"
-                />
-              </div>
-            </div>
-          </div>
+                <form onSubmit={handleLogin} className="space-y-10">
+                  <div className="space-y-12">
+                    <div className="relative group">
+                      <p className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.4em] mb-4">Official Email</p>
+                      <input 
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="ADMIN@ARCPAY.COM"
+                        className="w-full bg-transparent border-b border-white/10 py-4 text-xs font-black tracking-[0.2em] outline-none focus:border-[#d4ff3f] transition-all uppercase placeholder:text-zinc-900"
+                      />
+                    </div>
 
-              <div className="pt-8">
-                <SlideToSubmit
-                  onComplete={() => {
-                    const form = document.querySelector('form');
-                    if (form.checkValidity()) {
-                      handleLogin({ preventDefault: () => { } });
-                    } else {
-                      form.reportValidity();
-                    }
-                  }}
-                  text="SLIDE TO LOGIN"
-                  isLoading={isLoading}
-                />
-              </div>
-            </motion.form>
-          ) : (
-            <motion.form 
-              key="2fa"
-              initial={{ opacity: 0, x: 20 }} 
-              animate={{ opacity: 1, x: 0 }} 
-              exit={{ opacity: 0, x: -20 }}
-              onSubmit={handleVerify2FA} 
-              className="space-y-12"
-            >
-              <div className="space-y-10">
-                <div className="relative group border-b border-white/[0.05] focus-within:border-[#d4ff3f]/40 transition-colors pb-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <p className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.3em]">Authenticator Code</p>
-                    <button type="button" onClick={() => { setRequires2FA(false); setOtpCode(''); }} className="text-[#d4ff3f]/60 hover:text-[#d4ff3f] text-[9px] font-bold uppercase tracking-widest transition-colors">Cancel</button>
+                    <div className="relative group">
+                      <p className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.4em] mb-4">Password</p>
+                      <input 
+                        type="password"
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="••••••••••••"
+                        className="w-full bg-transparent border-b border-white/10 py-4 text-xs font-black tracking-[0.2em] outline-none focus:border-[#d4ff3f] transition-all placeholder:text-zinc-900"
+                      />
+                    </div>
                   </div>
-                  <div className="flex items-center">
-                    <Lock className="w-5 h-5 text-zinc-700 mr-4 shrink-0" />
-                    <input
-                      type="text"
-                      required
-                      maxLength="6"
-                      value={otpCode}
-                      onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
-                      placeholder="000000"
-                      className="w-full bg-transparent outline-none text-[#d4ff3f] font-black text-4xl tracking-[0.5em] placeholder:text-zinc-900 transition-all font-sans text-center"
-                    />
+
+                  <button 
+                    disabled={isLoading}
+                    className="group relative w-full h-16 bg-[#d4ff3f] text-black font-black text-[12px] uppercase tracking-[0.4em] flex items-center justify-center gap-4 active:scale-[0.98] transition-all overflow-hidden shadow-[0_0_30px_rgba(212,255,63,0.15)]"
+                  >
+                    <div className="absolute inset-x-0 bottom-0 h-0 group-hover:h-full bg-white/10 transition-all duration-300" />
+                    <span className="relative z-10">{isLoading ? "Signing in..." : "Sign In"}</span>
+                    {!isLoading && <ArrowRight className="relative z-10 w-4 h-4 transition-transform group-hover:translate-x-2" />}
+                  </button>
+                </form>
+
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-[9px] font-black text-zinc-800 uppercase tracking-widest border-t border-white/5 pt-8">
+                  <span className="cursor-pointer hover:text-[#d4ff3f] transition-colors">Key Recovery</span>
+                  <span className="cursor-pointer hover:text-[#d4ff3f] transition-colors">Admin Support</span>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="2fa"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-16"
+              >
+                <div className="space-y-6">
+                  <div className="w-12 h-12 bg-[#d4ff3f] rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(212,255,63,0.3)]">
+                    <LockKeyhole className="w-5 h-5 text-black stroke-[3]" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-[#d4ff3f] text-2xl font-black uppercase italic tracking-tighter">Security.</h3>
+                    <p className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest leading-relaxed">
+                      Verification required. Enter the 6-digit code to continue.
+                    </p>
                   </div>
                 </div>
-              </div>
 
-              <div className="pt-8">
-                <SlideToSubmit
-                  onComplete={() => {
-                    const form = document.querySelector('form');
-                    if (form.checkValidity() && otpCode.length === 6) {
-                      handleVerify2FA({ preventDefault: () => { } });
-                    } else {
-                      form.reportValidity();
-                    }
-                  }}
-                  text="VERIFY CODE"
-                  isLoading={isLoading}
-                />
-              </div>
-            </motion.form>
-          )}
-        </AnimatePresence>
+                <form onSubmit={handleVerify2FA} className="space-y-12">
+                  <div className="relative group">
+                    <div className="flex justify-between items-center mb-6">
+                      <p className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.4em]">Auth Code</p>
+                      <button type="button" onClick={() => setRequires2FA(false)} className="text-[9px] font-black text-zinc-800 hover:text-[#d4ff3f] transition-colors uppercase tracking-[0.2em]">Return</button>
+                    </div>
+                    <input 
+                      type="text"
+                      required
+                      maxLength={6}
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
+                      placeholder="000 000"
+                      autoFocus
+                      className="w-full bg-transparent border-b border-white/10 py-6 text-5xl font-black text-white tracking-[0.3em] outline-none focus:border-[#d4ff3f] transition-all placeholder:text-zinc-950 text-center uppercase"
+                    />
+                  </div>
 
-        <p className="text-zinc-600 text-[9px] font-bold uppercase tracking-[0.2em] text-center mt-12 leading-loose px-12">
-          This system is protected by the ArcPay Security System. Unauthorized access attempts are logged and restricted.
-        </p>
-      </motion.div>
+                  <button 
+                    disabled={isLoading || otpCode.length !== 6}
+                    className="group relative w-full h-16 bg-[#d4ff3f] text-black font-black text-[12px] uppercase tracking-[0.4em] flex items-center justify-center gap-4 active:scale-[0.98] transition-all overflow-hidden shadow-[0_0_30px_rgba(212,255,63,0.15)]"
+                  >
+                    <div className="absolute inset-x-0 bottom-0 h-0 group-hover:h-full bg-white/10 transition-all duration-300" />
+                    <span className="relative z-10">{isLoading ? "Verifying..." : "Sign In"}</span>
+                    {!isLoading && <ArrowRight className="relative z-10 w-4 h-4" />}
+                  </button>
+                </form>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </main>
+
+      {/* Editorial Footer Decoration */}
+      <footer className="relative md:fixed bottom-0 left-0 right-0 p-8 flex flex-col md:flex-row justify-between items-center md:items-end z-10 gap-8 md:gap-0 mt-20 md:mt-0">
+        <div className="space-y-1 opacity-20 text-center md:text-left">
+          <p className="text-[10px] font-black tracking-[1em] uppercase text-white">ARCPAY ADMIN</p>
+          <div className="h-[2px] w-32 bg-[#d4ff3f] mx-auto md:mx-0" />
+        </div>
+        <div className="text-center md:text-right opacity-30">
+          <p className="text-[8px] font-bold text-zinc-500 uppercase tracking-[0.4em] mb-3">Secure Admin Portal</p>
+          <div className="flex gap-1 justify-center md:justify-end">
+            {[1, 2, 3, 4, 5, 6].map(i => <div key={i} className="w-0.5 h-3 bg-white" />)}
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
-
-const SlideToSubmit = ({ onComplete, text, isLoading }) => {
-  const containerRef = useRef(null);
-  const x = useMotionValue(0);
-
-  return (
-    <div
-      ref={containerRef}
-      className={cn(
-        "relative w-full h-[64px] bg-[#151518] rounded-full overflow-hidden flex items-center border border-white/10 shadow-[inset_0_4px_10px_rgba(0,0,0,0.5)] transition-all duration-500",
-        isLoading && "opacity-50 pointer-events-none"
-      )}
-    >
-      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-        <span className="text-zinc-500 font-extrabold tracking-[0.25em] text-[10px] uppercase">
-          {isLoading ? "Checking Security..." : "SLIDE TO LOGIN"}
-        </span>
-      </div>
-
-      <motion.div
-        drag={isLoading ? false : "x"}
-        style={{ x }}
-        dragConstraints={{ left: 0, right: containerRef.current ? containerRef.current.offsetWidth - 68 : 300 }}
-        dragElastic={0.05}
-        dragSnapToOrigin={true}
-        onDragEnd={(e, info) => {
-          if (!isLoading && containerRef.current) {
-            const trackWidth = containerRef.current.offsetWidth;
-            // Completion threshold: 80% of the available track
-            if (x.get() > (trackWidth - 80)) {
-              onComplete();
-            }
-          }
-        }}
-        animate={!isLoading ? { x: [0, 8, 0] } : {}}
-        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", repeatDelay: 1 }}
-        className={cn(
-          "absolute left-1.5 top-1.5 bottom-1.5 w-[52px] bg-white rounded-full flex items-center justify-center z-10",
-          isLoading ? "cursor-not-allowed" : "cursor-grab active:cursor-grabbing shadow-[0_0_20px_rgba(255,255,255,0.4)]"
-        )}
-      >
-        {isLoading ? (
-          <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-        ) : (
-          <ArrowRight className="w-5 h-5 text-black stroke-[3px]" />
-        )}
-      </motion.div>
-    </div>
-  );
-};
