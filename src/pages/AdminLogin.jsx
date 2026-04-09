@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShieldCheck, ChevronRight, Mail, Lock, ArrowRight } from 'lucide-react';
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { motion, useMotionValue, useTransform, AnimatePresence } from 'framer-motion';
 import { useNotification } from '../context/NotificationContext';
 import arcbyteLogo from '../assets/arcbyte_logo_white_transparent.png';
 import { useRef } from 'react';
@@ -18,6 +18,12 @@ export default function AdminLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // 2FA State
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [tempToken, setTempToken] = useState(null);
+
   const navigate = useNavigate();
   const { showStatus } = useNotification();
 
@@ -40,6 +46,17 @@ export default function AdminLogin() {
       const data = await response.json();
 
       if (data.success) {
+        if (data.require2FA) {
+          setTempToken(data.tempToken);
+          setRequires2FA(true);
+          showStatus({
+            type: 'info',
+            title: '2FA CHALLENGE',
+            message: 'Provide your Authenticator OTP to proceed.'
+          });
+          return;
+        }
+
         localStorage.setItem('arcpay_token', data.token);
         localStorage.setItem('arcpay_merchant', data.businessName);
         showStatus({ 
@@ -74,6 +91,45 @@ export default function AdminLogin() {
     }
   };
 
+  const handleVerify2FA = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/auth/verify-2fa`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tempToken, code: otpCode })
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem('arcpay_token', data.token);
+        localStorage.setItem('arcpay_merchant', data.businessName);
+        showStatus({ 
+          type: 'success', 
+          title: 'AUTHENTICATION', 
+          message: `Digital identity verified. Welcome back, ${data.businessName}.` 
+        });
+        navigate('/admin/dashboard');
+      } else {
+        showStatus({ 
+          type: 'error', 
+          title: 'ACCESS DENIED', 
+          message: data.error || "Invalid OTP code." 
+        });
+      }
+    } catch (err) {
+      showStatus({ 
+        type: 'error', 
+        title: 'GATEWAY FAILURE', 
+        message: "Unable to verify authentication code." 
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0a0a0c] flex items-center justify-center p-6 relative overflow-hidden">
       {/* Background Ambience */}
@@ -90,15 +146,28 @@ export default function AdminLogin() {
             <div className="w-[1px] h-6 bg-white/20 mx-1"></div>
             <img src={arcbyteLogo} alt="ArcByte" className="h-6 opacity-90 object-contain" />
           </div>
-          <h2 className="text-5xl font-black mb-4 text-white uppercase tracking-tighter italic">ArcPay <span className="text-[#d4ff3f]">Login</span></h2>
-          <p className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.5em] ml-[0.5em]">Access Your Dashboard</p>
+          <h2 className="text-5xl font-black mb-4 text-white uppercase tracking-tighter italic">
+            ArcPay <span className="text-[#d4ff3f]">{requires2FA ? '2FA' : 'Login'}</span>
+          </h2>
+          <p className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.5em] ml-[0.5em]">
+            {requires2FA ? 'Security Challenge' : 'Access Your Dashboard'}
+          </p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-12">
-          <div className="space-y-10">
-            <div className="relative group border-b border-white/[0.05] focus-within:border-[#d4ff3f]/40 transition-colors pb-4">
-              <p className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.3em] mb-4">Business Email</p>
-              <div className="flex items-center">
+        <AnimatePresence mode="wait">
+          {!requires2FA ? (
+            <motion.form 
+              key="login"
+              initial={{ opacity: 0, x: -20 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              exit={{ opacity: 0, x: 20 }}
+              onSubmit={handleLogin} 
+              className="space-y-12"
+            >
+              <div className="space-y-10">
+                <div className="relative group border-b border-white/[0.05] focus-within:border-[#d4ff3f]/40 transition-colors pb-4">
+                  <p className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.3em] mb-4">Business Email</p>
+                  <div className="flex items-center">
                 <Mail className="w-5 h-5 text-zinc-700 mr-4 shrink-0" />
                 <input
                   type="email"
@@ -127,21 +196,68 @@ export default function AdminLogin() {
             </div>
           </div>
 
-          <div className="pt-8">
-            <SlideToSubmit
-              onComplete={() => {
-                const form = document.querySelector('form');
-                if (form.checkValidity()) {
-                  handleLogin({ preventDefault: () => { } });
-                } else {
-                  form.reportValidity();
-                }
-              }}
-              text="SLIDE TO LOGIN"
-              isLoading={isLoading}
-            />
-          </div>
-        </form>
+              <div className="pt-8">
+                <SlideToSubmit
+                  onComplete={() => {
+                    const form = document.querySelector('form');
+                    if (form.checkValidity()) {
+                      handleLogin({ preventDefault: () => { } });
+                    } else {
+                      form.reportValidity();
+                    }
+                  }}
+                  text="SLIDE TO LOGIN"
+                  isLoading={isLoading}
+                />
+              </div>
+            </motion.form>
+          ) : (
+            <motion.form 
+              key="2fa"
+              initial={{ opacity: 0, x: 20 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              exit={{ opacity: 0, x: -20 }}
+              onSubmit={handleVerify2FA} 
+              className="space-y-12"
+            >
+              <div className="space-y-10">
+                <div className="relative group border-b border-white/[0.05] focus-within:border-[#d4ff3f]/40 transition-colors pb-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <p className="text-zinc-600 text-[9px] font-black uppercase tracking-[0.3em]">Authenticator Code</p>
+                    <button type="button" onClick={() => { setRequires2FA(false); setOtpCode(''); }} className="text-[#d4ff3f]/60 hover:text-[#d4ff3f] text-[9px] font-bold uppercase tracking-widest transition-colors">Cancel</button>
+                  </div>
+                  <div className="flex items-center">
+                    <Lock className="w-5 h-5 text-zinc-700 mr-4 shrink-0" />
+                    <input
+                      type="text"
+                      required
+                      maxLength="6"
+                      value={otpCode}
+                      onChange={(e) => setOtpCode(e.target.value.replace(/[^0-9]/g, ''))}
+                      placeholder="000000"
+                      className="w-full bg-transparent outline-none text-[#d4ff3f] font-black text-4xl tracking-[0.5em] placeholder:text-zinc-900 transition-all font-sans text-center"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-8">
+                <SlideToSubmit
+                  onComplete={() => {
+                    const form = document.querySelector('form');
+                    if (form.checkValidity() && otpCode.length === 6) {
+                      handleVerify2FA({ preventDefault: () => { } });
+                    } else {
+                      form.reportValidity();
+                    }
+                  }}
+                  text="VERIFY CODE"
+                  isLoading={isLoading}
+                />
+              </div>
+            </motion.form>
+          )}
+        </AnimatePresence>
 
         <p className="text-zinc-600 text-[9px] font-bold uppercase tracking-[0.2em] text-center mt-12 leading-loose px-12">
           This system is protected by the ArcPay Security System. Unauthorized access attempts are logged and restricted.

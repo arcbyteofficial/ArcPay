@@ -4,6 +4,13 @@ const Razorpay = require('razorpay');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const speakeasy = require('speakeasy');
+const qrcode = require('qrcode');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+const hpp = require('hpp');
 require('dotenv').config();
 
 const Link = require('./models/Link');
@@ -31,12 +38,28 @@ mongoose.connect(dbUri, {
       await Settings.create({});
       console.log('Global Settings - INITIALIZED');
     }
+    await initializeRazorpay();
   })
   .catch(err => {
     console.error('Database Connection Error - FAILED');
     console.error(`Error Details: ${err.message}`);
     console.error('CRITICAL: Check if your local IP is whitelisted in Railway Dashboard > MongoDB > Settings > Public Networking.');
   });
+
+// --- SECURITY MIDDLEWARES ---
+app.use(helmet());
+app.use(mongoSanitize({ replaceWith: '_' }));
+app.use(xss());
+app.use(hpp());
+
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 1000, 
+  message: { error: 'Traffic volume exceeded threshold. Temporary network freeze.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+app.use(globalLimiter);
 
 // Middleware
 app.use(express.json());
@@ -46,16 +69,33 @@ app.use(cors({
   credentials: true
 }));
 
+const authLimiter = rateLimit({
+  windowMs: 30 * 60 * 1000, // 30-minute strict lockout
+  max: 5, 
+  message: { error: 'Authentication threshold vastly exceeded. IP strictly locked for 30 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false
+});
+
 let razorpay = null;
-if (process.env.RAZORPAY_KEY && process.env.RAZORPAY_SECRET) {
-  razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY,
-    key_secret: process.env.RAZORPAY_SECRET,
-  });
-  console.log('Razorpay Protocol - INITIALIZED');
-} else {
-  console.warn('Razorpay Protocol - DISABLED (Missing Credentials)');
-}
+
+const initializeRazorpay = async () => {
+  try {
+    const settings = await Settings.findOne();
+    const key = settings?.razorpayApiKey || process.env.RAZORPAY_KEY;
+    const secret = settings?.razorpayApiSecret || process.env.RAZORPAY_SECRET;
+
+    if (key && secret) {
+      razorpay = new Razorpay({ key_id: key, key_secret: secret });
+      console.log('Razorpay Protocol - SECURELY INITIALIZED');
+    } else {
+      razorpay = null;
+      console.warn('Razorpay Protocol - DISABLED (Awaiting Credentials)');
+    }
+  } catch (err) {
+    console.error('Razorpay Init Error:', err);
+  }
+};
 
 // --- AUTH MIDDLEWARE ---
 const authenticateAdmin = async (req, res, next) => {
@@ -216,7 +256,7 @@ app.post('/api/auth/setup', async (req, res) => {
   }
 });
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
     const admin = await Admin.findOne({ email });
@@ -225,10 +265,47 @@ app.post('/api/auth/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) return res.status(401).json({ error: 'Invalid credentials' });
 
+    if (admin.isTwoFactorEnabled) {
+      // Issue a temporary 5-min token for the OTP challenge
+      const tempToken = jwt.sign({ id: admin._id, isTemp: true }, JWT_SECRET, { expiresIn: '5m' });
+      return res.json({ success: true, require2FA: true, tempToken });
+    }
+
     const token = jwt.sign({ id: admin._id }, JWT_SECRET, { expiresIn: '24h' });
     res.json({ success: true, token, businessName: admin.businessName });
   } catch (err) {
     res.status(500).json({ error: 'Login failed' });
+  }
+});
+
+app.post('/api/auth/verify-2fa', authLimiter, async (req, res) => {
+  try {
+    const { tempToken, code } = req.body;
+    if (!tempToken || !code) return res.status(400).json({ error: 'Missing security parameters' });
+
+    try {
+      const decoded = jwt.verify(tempToken, JWT_SECRET);
+      if (!decoded.isTemp) return res.status(401).json({ error: 'Invalid token structure' });
+
+      const admin = await Admin.findById(decoded.id);
+      if (!admin || !admin.isTwoFactorEnabled) return res.status(401).json({ error: 'Invalid origin state' });
+
+      const verified = speakeasy.totp.verify({
+        secret: admin.twoFactorSecret,
+        encoding: 'base32',
+        token: code,
+        window: 1 // Allow 30 seconds drift before/after
+      });
+
+      if (!verified) return res.status(401).json({ error: 'Invalid or expired 2FA code' });
+
+      const token = jwt.sign({ id: admin._id }, JWT_SECRET, { expiresIn: '24h' });
+      res.json({ success: true, token, businessName: admin.businessName });
+    } catch (err) {
+      res.status(401).json({ error: 'Temporary session expired' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Verification payload dropped' });
   }
 });
 
@@ -363,6 +440,126 @@ app.post('/api/admin/settings', authenticateAdmin, async (req, res) => {
     res.json(settings);
   } catch (err) {
     res.status(500).json({ error: 'System update failed' });
+  }
+});
+
+// --- GATEWAY CONFIGURATION ROUTES ---
+
+app.get('/api/admin/gateway', authenticateAdmin, async (req, res) => {
+  try {
+    const settings = await Settings.findOne() || {};
+    res.json({
+      razorpayApiKey: settings.razorpayApiKey || process.env.RAZORPAY_KEY || "",
+      // Mask the secret for safe UI rendering
+      razorpayApiSecret: (settings.razorpayApiSecret || process.env.RAZORPAY_SECRET) ? "sk_live_*******************" : ""
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch gateway configuration' });
+  }
+});
+
+app.post('/api/admin/gateway', authenticateAdmin, async (req, res) => {
+  try {
+    const { razorpayApiKey, razorpayApiSecret } = req.body;
+    
+    const updateData = {};
+    if (razorpayApiKey !== undefined) updateData.razorpayApiKey = razorpayApiKey;
+    // Don't override with mask if submitted blindly
+    if (razorpayApiSecret !== undefined && !razorpayApiSecret.includes('***')) {
+      updateData.razorpayApiSecret = razorpayApiSecret;
+    }
+
+    await Settings.findOneAndUpdate({}, updateData, { new: true, upsert: true });
+    
+    // Hot-reload the gateway parameters dynamically on the node
+    await initializeRazorpay();
+
+    res.json({ success: true, message: 'Gateway configurations bound successfully.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update gateway configurations. Hot-reload aborted.' });
+  }
+});
+
+// --- ADMIN 2FA ROUTES ---
+
+app.get('/api/admin/2fa/status', authenticateAdmin, async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.adminId);
+    if (!admin) return res.status(404).json({ error: 'Identity dropped' });
+    res.json({ isTwoFactorEnabled: !!admin.isTwoFactorEnabled });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to retrieve 2FA status' });
+  }
+});
+
+app.get('/api/admin/2fa/generate', authenticateAdmin, async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.adminId);
+    if (!admin) return res.status(404).json({ error: 'Admin identity lost' });
+
+    const secret = speakeasy.generateSecret({ 
+      name: `ArcPay (${admin.businessName})` 
+    });
+
+    qrcode.toDataURL(secret.otpauth_url, (err, data_url) => {
+      if (err) return res.status(500).json({ error: 'Failed to generate cryptographic visual payload' });
+      res.json({
+        secret: secret.base32,
+        qrCode: data_url
+      });
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to generate 2FA node secret' });
+  }
+});
+
+app.post('/api/admin/2fa/enable', authenticateAdmin, async (req, res) => {
+  try {
+    const { code, secret } = req.body;
+    const admin = await Admin.findById(req.adminId);
+
+    const verified = speakeasy.totp.verify({
+      secret: secret,
+      encoding: 'base32',
+      token: code,
+      window: 1
+    });
+
+    if (verified) {
+      admin.twoFactorSecret = secret;
+      admin.isTwoFactorEnabled = true;
+      await admin.save();
+      res.json({ success: true, message: 'Two-Factor Authentication securely locked' });
+    } else {
+      res.status(400).json({ error: 'Algorithmic code mismatch, try again' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to lock 2FA state' });
+  }
+});
+
+app.post('/api/admin/2fa/disable', authenticateAdmin, async (req, res) => {
+  try {
+    const { code } = req.body;
+    const admin = await Admin.findById(req.adminId);
+
+    const verified = speakeasy.totp.verify({
+      secret: admin.twoFactorSecret,
+      encoding: 'base32',
+      token: code,
+      window: 1
+    });
+
+    if (verified) {
+      admin.isTwoFactorEnabled = false;
+      admin.twoFactorSecret = undefined;
+      await admin.save();
+      res.json({ success: true, message: 'Two-Factor Authentication dismantled' });
+    } else {
+      res.status(400).json({ error: 'Algorithmic code mismatch' });
+    }
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to unlock 2FA state' });
   }
 });
 

@@ -1838,9 +1838,16 @@ const PayerView = ({
               </div>
               <div className="flex items-baseline gap-2 mt-2 mb-10">
                 <span className="text-[#d4ff3f]/60 text-4xl">₹</span>
-                <span className="text-white font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.1)]">
-                  {amount ? new Intl.NumberFormat('en-IN').format(Number(amount)) + '\u00A0/-' : "0.00\u00A0/-"}
-                </span>
+                {(() => {
+                  const displayAmt = amount ? new Intl.NumberFormat('en-IN').format(Number(amount)) + '\u00A0/-' : "0.00\u00A0/-";
+                  const len = displayAmt.length;
+                  const sizeClass = len > 12 ? "text-3xl sm:text-4xl" : len > 9 ? "text-4xl sm:text-5xl" : "text-5xl sm:text-6xl";
+                  return (
+                    <span className={`text-white font-bold ${sizeClass} tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.1)]`}>
+                      {displayAmt}
+                    </span>
+                  );
+                })()}
               </div>
 
               <div className="flex items-start gap-3 pt-8 border-t border-white/[0.04] mt-auto">
@@ -1896,9 +1903,16 @@ const PayerView = ({
               </div>
               <div className="flex items-baseline gap-2 mt-2 mb-8">
                 <span className="text-[#d4ff3f]/60 text-4xl">₹</span>
-                <span className="text-[#d4ff3f] font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
-                  {amount ? new Intl.NumberFormat('en-IN').format(Number(amount)) + '\u00A0/-' : "0.00\u00A0/-"}
-                </span>
+                {(() => {
+                  const displayAmt = amount ? new Intl.NumberFormat('en-IN').format(Number(amount)) + '\u00A0/-' : "0.00\u00A0/-";
+                  const len = displayAmt.length;
+                  const sizeClass = len > 12 ? "text-3xl sm:text-4xl" : len > 9 ? "text-4xl sm:text-5xl" : "text-5xl sm:text-6xl";
+                  return (
+                    <span className={`text-[#d4ff3f] font-bold ${sizeClass} tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]`}>
+                      {displayAmt}
+                    </span>
+                  );
+                })()}
               </div>
 
               <div className="flex items-start gap-2.5 pt-6 border-t border-white/[0.05] mt-auto">
@@ -1953,9 +1967,16 @@ const PayerView = ({
                     </span>
                     <div className="flex items-baseline gap-2 mt-2 mb-10">
                       <span className="text-[#d4ff3f]/60 text-4xl">₹</span>
-                      <span className="text-[#d4ff3f] font-bold text-6xl tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]">
-                        {amount ? new Intl.NumberFormat('en-IN').format(Number(amount)) + '\u00A0/-' : "0.00\u00A0/-"}
-                      </span>
+                      {(() => {
+                        const displayAmt = amount ? new Intl.NumberFormat('en-IN').format(Number(amount)) + '\u00A0/-' : "0.00\u00A0/-";
+                        const len = displayAmt.length;
+                        const sizeClass = len > 12 ? "text-3xl sm:text-4xl" : len > 9 ? "text-4xl sm:text-5xl" : "text-5xl sm:text-6xl";
+                        return (
+                          <span className={`text-[#d4ff3f] font-bold ${sizeClass} tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]`}>
+                            {displayAmt}
+                          </span>
+                        );
+                      })()}
                     </div>
 
                     <div className="flex items-start gap-2.5 pt-6 border-t border-white/[0.05] mt-auto">

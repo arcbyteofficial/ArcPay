@@ -9,7 +9,7 @@ import {
   Home, Users, Settings, HelpCircle,
   ChevronRight, MoreHorizontal, MessageSquare,
   Smartphone, CreditCard, Landmark, Mail,
-  LayoutGrid, X, Zap, Lock
+  LayoutGrid, X, Zap, Lock, Terminal
 } from 'lucide-react';
 import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -138,6 +138,19 @@ export default function AdminDashboard() {
     passcode: ''
   });
 
+  const [auth2FA, setAuth2FA] = useState({
+    isEnabled: false,
+    isSettingUp: false,
+    qrCode: null,
+    secret: null,
+    code: ''
+  });
+
+  const [gatewayConfig, setGatewayConfig] = useState({
+    razorpayApiKey: '',
+    razorpayApiSecret: ''
+  });
+
   const fetchDashboardData = async () => {
     const token = localStorage.getItem('arcpay_token');
     if (!token) {
@@ -146,9 +159,11 @@ export default function AdminDashboard() {
     }
 
     try {
-      const [statsRes, linksRes] = await Promise.all([
+      const [statsRes, linksRes, faRes, gateRes] = await Promise.all([
         fetch(`${BACKEND_URL}/api/admin/stats`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${BACKEND_URL}/api/admin/links`, { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch(`${BACKEND_URL}/api/admin/links`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${BACKEND_URL}/api/admin/2fa/status`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${BACKEND_URL}/api/admin/gateway`, { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
 
       if (statsRes.status === 401 || linksRes.status === 401) {
@@ -159,9 +174,20 @@ export default function AdminDashboard() {
 
       const statsData = await statsRes.json();
       const linksData = await linksRes.json();
+      const faData = await faRes.json();
+      const gateData = await gateRes.json();
 
       setStats(statsData);
       setLinks(linksData);
+      if (faRes.ok) {
+        setAuth2FA(prev => ({ ...prev, isEnabled: faData.isTwoFactorEnabled }));
+      }
+      if (gateRes.ok) {
+        setGatewayConfig({
+           razorpayApiKey: gateData.razorpayApiKey || '',
+           razorpayApiSecret: gateData.razorpayApiSecret || ''
+        });
+      }
     } catch (err) {
       console.error('Failed to fetch stats:', err);
       showStatus({
@@ -187,6 +213,78 @@ export default function AdminDashboard() {
       console.error("Failed to fetch settings");
     }
   };
+
+  // --- ZERO-TRUST FRONTEND SECURITY INJECTION ---
+  useEffect(() => {
+    // 1. Source Code & Inspection Blackout Hook
+    const restrictInspection = (e) => {
+      // Block F12
+      if (e.key === 'F12') {
+        e.preventDefault();
+        return false;
+      }
+      // Block Ctrl+Shift+I / Cmd+Option+I (Element Examiner)
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'I' || e.key === 'i')) {
+        e.preventDefault();
+        return false;
+      }
+      // Block Ctrl+Shift+J / Cmd+Option+J (Console Layer)
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'J' || e.key === 'j')) {
+        e.preventDefault();
+        return false;
+      }
+      // Block Ctrl+U / Cmd+U (View Source Code Drop)
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'U' || e.key === 'u')) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    const restrictContextMenu = (e) => {
+      e.preventDefault();
+      return false;
+    };
+
+    window.addEventListener('keydown', restrictInspection);
+    window.addEventListener('contextmenu', restrictContextMenu);
+
+    return () => {
+      window.removeEventListener('keydown', restrictInspection);
+      window.removeEventListener('contextmenu', restrictContextMenu);
+    };
+  }, []);
+
+  useEffect(() => {
+    // 2. Dead Man's Switch - 15 Minute Global Idle Auto-Logout
+    let idleTimeout;
+
+    const shredSession = () => {
+      console.warn("SECURITY OVERRIDE: Terminal Idle Exceeded. Erasing Session State.");
+      localStorage.removeItem('arcpay_token');
+      localStorage.removeItem('arcpay_merchant');
+      navigate('/admin/login', { replace: true });
+    };
+
+    const resetIdleTimer = () => {
+      if (idleTimeout) clearTimeout(idleTimeout);
+      // Construct 15 minute strict destruction window (900000 ms)
+      idleTimeout = setTimeout(shredSession, 900000);
+    };
+
+    window.addEventListener('mousemove', resetIdleTimer);
+    window.addEventListener('keydown', resetIdleTimer);
+    window.addEventListener('scroll', resetIdleTimer);
+
+    // Initial sequence kickoff
+    resetIdleTimer();
+
+    return () => {
+      if (idleTimeout) clearTimeout(idleTimeout);
+      window.removeEventListener('mousemove', resetIdleTimer);
+      window.removeEventListener('keydown', resetIdleTimer);
+      window.removeEventListener('scroll', resetIdleTimer);
+    };
+  }, [navigate]);
 
   useEffect(() => {
     fetchDashboardData();
@@ -233,9 +331,92 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleGatewayUpdate = async () => {
+    const token = localStorage.getItem('arcpay_token');
+    try {
+      showStatus({ type: 'info', title: 'SYNCHRONIZING', message: 'Pushing gateway configurations to secure endpoints...' });
+      const response = await fetch(`${BACKEND_URL}/api/admin/gateway`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(gatewayConfig)
+      });
+      const data = await response.json();
+      
+      if (response.ok) {
+        showStatus({ type: 'success', title: 'GATEWAY BOUND', message: 'API Keys updated. Node automatically securely reloaded.' });
+        fetchDashboardData();
+      } else {
+        showStatus({ type: 'error', title: 'ERROR', message: data.error || 'Failed to update protocol keys.' });
+      }
+    } catch (err) {
+      showStatus({ type: 'error', title: 'CONNECTION ERROR', message: 'Server proxy failed to catch update.' });
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem('arcpay_token');
     navigate('/admin/login');
+  };
+
+  const handleGenerate2FA = async () => {
+    setAuth2FA(prev => ({ ...prev, isSettingUp: true }));
+    const token = localStorage.getItem('arcpay_token');
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/admin/2fa/generate`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAuth2FA(prev => ({ ...prev, qrCode: data.qrCode, secret: data.secret }));
+      }
+    } catch(err) {
+      showStatus({ type: 'error', title: 'SECURITY ERROR', message: 'Failed to generate cryptographic key.' });
+    }
+  };
+
+  const handleEnable2FA = async () => {
+    const token = localStorage.getItem('arcpay_token');
+    if (auth2FA.code.length !== 6) return;
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/admin/2fa/enable`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: auth2FA.code, secret: auth2FA.secret })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAuth2FA({ isEnabled: true, isSettingUp: false, qrCode: null, secret: null, code: '' });
+        showStatus({ type: 'success', title: '2FA ENABLED', message: 'Security module permanently locked.' });
+      } else {
+        showStatus({ type: 'error', title: 'CODE REJECTED', message: data.error || 'Algorithmic mismatch' });
+      }
+    } catch(err) {
+      showStatus({ type: 'error', title: 'VERIFICATION ERROR', message: 'Unable to communicate with authentication node.' });
+    }
+  };
+
+  const handleDisable2FA = async () => {
+    const token = localStorage.getItem('arcpay_token');
+    if (auth2FA.code.length !== 6) return;
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/admin/2fa/disable`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: auth2FA.code })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAuth2FA(prev => ({ ...prev, isEnabled: false, code: '' }));
+        showStatus({ type: 'success', title: '2FA DISABLED', message: 'Security downgrade complete.' });
+      } else {
+        showStatus({ type: 'error', title: 'UNAUTHORIZED', message: data.error || 'Invalid attempt' });
+      }
+    } catch(err) {
+      showStatus({ type: 'error', title: 'SYSTEM ERROR', message: 'Unable to release security lock.' });
+    }
   };
 
   const filteredLinks = links.filter(link => {
@@ -279,6 +460,7 @@ export default function AdminDashboard() {
           {[
             { id: 'home', icon: Home },
             { id: 'security', icon: ShieldCheck },
+            { id: 'api', icon: Terminal },
             { id: 'links', icon: LinkIcon },
             { id: 'stats', icon: TrendingUp },
             { id: 'users', icon: Users },
@@ -406,6 +588,130 @@ export default function AdminDashboard() {
           "flex-1 overflow-y-auto custom-scrollbar relative",
           activeTab !== 'chats' && "p-10"
         )}>
+          {activeTab === 'api' && (
+            <div className="space-y-12 pb-20">
+              {/* EDITORIAL HEADER */}
+              <div className="relative">
+                <div className="absolute -left-20 -top-20 w-[400px] h-[400px] bg-[#d4ff3f]/5 rounded-full blur-[100px] pointer-events-none" />
+                <div className="relative z-10">
+                  <p className="text-[#d4ff3f] text-[10px] font-black uppercase tracking-[0.5em] mb-4 flex items-center gap-4">
+                    <span className="w-8 h-[1px] bg-[#d4ff3f]/30"></span>
+                    Gateway Protocol 1.0
+                  </p>
+                  <h2 className="text-[clamp(1.5rem,6vw,3.5rem)] italic font-black uppercase tracking-tighter leading-[0.95] text-white">
+                    API<br />
+                    <span className="text-[#d4ff3f] drop-shadow-[0_0_20px_rgba(212,255,63,0.2)]">NODE</span>
+                  </h2>
+                </div>
+              </div>
+
+              {/* PERFECTED EDITORIAL SPREAD */}
+              <div className="relative border-t border-white/[0.08] pt-12">
+                <div className="absolute top-0 right-0 w-32 h-[1px] bg-[#d4ff3f]/40" />
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 lg:gap-0">
+                  {/* SEGMENT I: RAZORPAY GATEWAY */}
+                  <div className="lg:pr-16 relative">
+                    <div className="flex flex-col h-full">
+                      <div className="flex items-center gap-4 mb-16">
+                        <div className="w-1.5 h-1.5 bg-[#d4ff3f] shadow-[0_0_10px_rgba(212,255,63,0.5)]" />
+                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Payment Gateway Connection</h4>
+                      </div>
+
+                      <div className="space-y-6">
+                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Razorpay<br />Binding</h3>
+                        <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-widest leading-relaxed max-w-xs">
+                          Inject your target Razorpay API credentials here to hot-reload the backend processing node.
+                        </p>
+                      </div>
+
+                      <div className="mt-16 space-y-12">
+                        {/* API KEY */}
+                        <div className="relative group">
+                          <label className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.4em] block mb-4">REST API Key ID</label>
+                          <input
+                            type="text"
+                            placeholder="rzp_live_••••••"
+                            value={gatewayConfig.razorpayApiKey}
+                            onChange={(e) => setGatewayConfig(prev => ({ ...prev, razorpayApiKey: e.target.value }))}
+                            className="w-full bg-transparent border-b-2 border-white/[0.05] pb-6 text-white font-black text-2xl tracking-[0.1em] outline-none focus:border-[#d4ff3f] transition-all placeholder:text-[#111] selection:bg-[#d4ff3f]/50"
+                          />
+                        </div>
+
+                        {/* API SECRET */}
+                        <div className="relative group">
+                           <label className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.4em] block mb-4">REST API Secret</label>
+                          <input
+                            type="password"
+                            placeholder="Enter new secret to override..."
+                            value={gatewayConfig.razorpayApiSecret}
+                            onChange={(e) => setGatewayConfig(prev => ({ ...prev, razorpayApiSecret: e.target.value }))}
+                            className="w-full bg-transparent border-b-2 border-white/[0.05] pb-6 text-white font-black text-2xl tracking-[0.1em] outline-none focus:border-[#d4ff3f] transition-all placeholder:text-[#111] selection:bg-[#d4ff3f]/50"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SEGMENT II: GATEWAY STATUS */}
+                  <div className="lg:pl-16 relative">
+                    <div className="hidden lg:block absolute -left-[0.5px] top-0 h-full w-[1px] bg-white/[0.05]" />
+                    <div className="flex flex-col h-full">
+                      <div className="flex items-center gap-4 mb-16">
+                        <Terminal className="w-4 h-4 text-zinc-600" />
+                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Node Diagnostic Output</h4>
+                      </div>
+
+                      <div className="space-y-6">
+                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Gateway<br />Status</h3>
+                        <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-widest leading-relaxed max-w-xs">
+                          Current status of the Razorpay protocol proxy running on the backend securely.
+                        </p>
+                      </div>
+
+                      <div className="mt-16 bg-[#0a0a0c] border border-white/5 p-8 rounded-3xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-full h-1 bg-gradient-to-r from-transparent via-[#d4ff3f]/20 to-transparent" />
+                        {(gatewayConfig.razorpayApiKey && gatewayConfig.razorpayApiSecret) ? (
+                          <div className="space-y-6">
+                            <div className="flex items-center gap-3">
+                              <div className="w-2 h-2 rounded-full bg-[#d4ff3f] animate-pulse shadow-[0_0_10px_#d4ff3f]" />
+                              <span className="text-[10px] font-black text-[#d4ff3f] uppercase tracking-[0.3em]">Protocol Bound</span>
+                            </div>
+                            <p className="text-zinc-500 font-mono text-[10px] uppercase">Proxy layer established and awaiting incoming webhooks.</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-6">
+                            <div className="flex items-center gap-3">
+                              <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_10px_#ef4444]" />
+                              <span className="text-[10px] font-black text-red-500 uppercase tracking-[0.3em]">Protocol Disabled</span>
+                            </div>
+                            <p className="text-zinc-500 font-mono text-[10px] uppercase">System is missing active Razorpay payloads. Awaiting binding.</p>
+                          </div>
+                        )}
+                        <Terminal className="w-32 h-32 absolute -bottom-10 -right-10 opacity-5 text-[#d4ff3f]" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* ACTION BUTTON LAYER */}
+              <div className="pt-16 border-t border-white/[0.05] flex flex-col md:flex-row items-center justify-between gap-10">
+                <div className="max-w-md">
+                  <h4 className="text-[#d4ff3f] text-[9px] font-black uppercase tracking-[0.4em] mb-3">Sync Node</h4>
+                  <p className="text-zinc-600 text-[10px] font-medium leading-relaxed uppercase tracking-widest">
+                    Hot-reloads the backend with the written REST Keys without terminating the socket layer.
+                  </p>
+                </div>
+                <button
+                  onClick={handleGatewayUpdate}
+                  className="w-full sm:w-auto flex items-center justify-center gap-4 px-12 py-5 bg-[#d4ff3f] text-black rounded-full font-black uppercase tracking-widest text-[11px] hover:shadow-[0_0_50px_rgba(212,255,63,0.3)] transition-all group active:scale-95"
+                >
+                  <Terminal className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  Establish Protocol Binding
+                </button>
+              </div>
+            </div>
+          )}
           {activeTab === 'chats' && (
             <div className="absolute inset-0 w-full h-full bg-[#050505] z-10 animate-in fade-in duration-700">
               {/* Editorial Loading State */}
@@ -435,8 +741,8 @@ export default function AdminDashboard() {
                         <div className="w-8 h-[1px] bg-[#d4ff3f]/40" />
                         <span className="text-[10px] font-black text-[#d4ff3f] uppercase tracking-[0.4em]">Integrated Security Firewall</span>
                       </div>
-                      <h2 className="text-5xl font-black italic uppercase tracking-tighter text-white">
-                        Security <span className="text-zinc-600">Settings</span>
+                      <h2 className="text-5xl font-black italic uppercase tracking-tighter text-[#d4ff3f]">
+                        Dashboard
                       </h2>
                     </div>
                     <div className="flex gap-6 text-[10px] font-black uppercase tracking-widest pb-2">
@@ -643,8 +949,17 @@ export default function AdminDashboard() {
                         <img src={arcbyteLogo} alt="ArcByte" className="h-3 grayscale" />
                       </div>
 
-                      <h3 className="text-6xl text-[#d4ff3f] mb-4">
-                        {stats.totalRevenue > 100000 ? `₹${(stats.totalRevenue / 1000).toFixed(0)}k` : `₹${stats.totalRevenue}`}
+                      <h3 className="mb-4">
+                        {(() => {
+                          const displayAmt = `₹${new Intl.NumberFormat('en-IN').format(Number(stats.totalRevenue || 0))}\u00A0/-`;
+                          const len = displayAmt.length;
+                          const sizeClass = len > 13 ? "text-3xl sm:text-4xl" : len > 10 ? "text-4xl sm:text-5xl" : "text-5xl sm:text-6xl";
+                          return (
+                            <span className={`text-[#d4ff3f] font-black ${sizeClass} tracking-tighter drop-shadow-[0_0_15px_rgba(117,242,198,0.3)]`}>
+                              {displayAmt}
+                            </span>
+                          );
+                        })()}
                       </h3>
 
                       <div className="flex items-center justify-between">
@@ -702,25 +1017,42 @@ export default function AdminDashboard() {
 
                 <div className="space-y-6">
                   <h2 className="text-2xl text-white">Pending Approvals</h2>
-                  <div className="space-y-4">
-                    {links.filter(l => l.status === 'SUBMITTED').map((link, i) => (
-                      <div key={i} className="bg-[#16161a] p-6 rounded-3xl border border-white/5 flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-zinc-800 flex items-center justify-center text-[#d4ff3f] font-black">
-                          {(link.payerName || link.name || "AC").charAt(0)}
+                  <div className="flex flex-col">
+                    {links.filter(l => ['PENDING', 'SUBMITTED'].includes(l.status) && l.paymentMethod !== 'razorpay').map((link, i) => (
+                      <div key={i} className="flex items-center gap-5 py-6 border-b border-white/[0.03] group cursor-default transition-all hover:bg-white/[0.01]">
+                        <div className="w-10 h-10 rounded-full bg-zinc-900/50 flex items-center justify-center p-2 border border-white/5 transition-transform group-hover:scale-110 shrink-0">
+                          <span className="text-[#d4ff3f] font-black text-sm uppercase">
+                            {(link.payerName || link.name || "AC").charAt(0)}
+                          </span>
                         </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-black text-white">{link.payerName || link.name || "Anonymous Customer"}</p>
-                          <p className="text-[10px] font-bold text-zinc-500">₹{link.amount} • Waiting</p>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm font-black text-white truncate group-hover:text-[#d4ff3f] transition-colors">{link.payerName || link.name || "Anonymous Customer"}</p>
+                            <span className="text-xs font-black text-white shrink-0">₹{link.amount}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className={`${link.status === 'SUBMITTED' ? 'text-[#d4ff3f]' : 'text-zinc-500'} text-[9px] font-black uppercase tracking-widest`}>
+                              {link.status === 'SUBMITTED' ? 'Reviewing' : 'Awaiting'}
+                            </span>
+                            <div className="w-0.5 h-0.5 rounded-full bg-zinc-800" />
+                            <span className="text-[9px] font-bold text-zinc-700 uppercase tracking-widest">
+                              {new Date(link.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                            </span>
+                          </div>
                         </div>
-                        <button onClick={() => handleStatusUpdate(link._id, 'SETTLED')} className="w-8 h-8 rounded-lg bg-[#d4ff3f]/10 text-[#d4ff3f] flex items-center justify-center hover:bg-[#d4ff3f] hover:text-black transition-colors">
-                          <Check size={14} />
+                        <button 
+                          onClick={() => handleStatusUpdate(link._id, 'SETTLED')} 
+                          className="w-10 h-10 ml-2 rounded-full border border-white/10 text-zinc-500 shrink-0 flex items-center justify-center hover:bg-[#d4ff3f] hover:border-[#d4ff3f] hover:text-black transition-all group-hover:border-white/30"
+                          title="Mark as Settled"
+                        >
+                          <Check size={14} strokeWidth={3} />
                         </button>
                       </div>
                     ))}
-                    {links.filter(l => l.status === 'SUBMITTED').length === 0 && (
-                      <div className="p-8 rounded-3xl border border-white/5 border-dashed flex flex-col items-center gap-4 text-center opacity-40">
-                        <Clock size={32} strokeWidth={1} />
-                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">All clear today</p>
+                    {links.filter(l => ['PENDING', 'SUBMITTED'].includes(l.status) && l.paymentMethod !== 'razorpay').length === 0 && (
+                      <div className="flex flex-col items-center gap-2 py-10 opacity-20 border-b border-white/[0.03]">
+                        <Clock size={24} strokeWidth={1} />
+                        <p className="text-[9px] font-black uppercase tracking-widest text-center mt-2">All clear today</p>
                       </div>
                     )}
                   </div>
@@ -880,6 +1212,154 @@ export default function AdminDashboard() {
                           <span className="text-[9px] font-black text-zinc-800 uppercase tracking-[0.3em]">Update status: Active</span>
                           <span className="text-[9px] font-black text-zinc-500 uppercase font-mono">ID: 0xFF42</span>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* SEGMENT IV: GOOGLE AUTHENTICATOR */}
+                  <div className="lg:pl-16 relative">
+                    <div className="hidden lg:block absolute -left-[0.5px] top-0 h-full w-[1px] bg-white/[0.05]" />
+                    <div className="flex flex-col h-full">
+                      <div className="flex items-center gap-4 mb-16">
+                        <div className="w-1.5 h-1.5 bg-[#d4ff3f] shadow-[0_0_10px_rgba(212,255,63,0.5)]" />
+                        <h4 className="text-[10px] font-black text-zinc-600 uppercase tracking-[0.4em]">Cryptographic Module</h4>
+                      </div>
+
+                      <div className="space-y-6">
+                        <h3 className="text-5xl font-black text-white italic uppercase tracking-tighter leading-none">Two-Factor<br />Lock</h3>
+                        <p className="text-zinc-600 text-[11px] font-bold uppercase tracking-widest leading-relaxed max-w-xs">
+                          Requires a time-based Google Authenticator code for dashboard login.
+                        </p>
+                      </div>
+
+                      <div className="mt-16 flex flex-col gap-6">
+                        {!auth2FA.isEnabled ? (
+                          !auth2FA.isSettingUp ? (
+                            <button
+                              onClick={handleGenerate2FA}
+                              className="group flex items-center justify-between w-full border-b-2 border-white/[0.05] pb-6 hover:border-[#d4ff3f] transition-colors"
+                            >
+                              <div className="flex flex-col items-start gap-1">
+                                <span className="text-[12px] font-black text-zinc-600 uppercase tracking-widest leading-none group-hover:text-white transition-colors">Setup Protocol</span>
+                                <span className="text-[9px] font-bold text-zinc-800 uppercase tracking-widest">Not Configured</span>
+                              </div>
+                              <ChevronRight className="w-8 h-8 text-zinc-800 group-hover:text-[#d4ff3f] transition-colors" />
+                            </button>
+                          ) : (
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-16">
+                              <div className="flex items-center gap-10">
+                                {auth2FA.qrCode && (
+                                  <div className="p-3 bg-white w-fit shadow-[0_0_40px_rgba(255,255,255,0.1)] shrink-0">
+                                    <img src={auth2FA.qrCode} alt="2FA QR Code" className="w-24 h-24" />
+                                  </div>
+                                )}
+                                <div className="flex flex-col gap-2">
+                                  <span className="text-[12px] font-black text-[#d4ff3f] uppercase tracking-widest leading-none">Scan Barcode</span>
+                                  <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest leading-relaxed max-w-[200px]">
+                                    Open your Authenticator and scan this visual payload to pair your device.
+                                  </span>
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-6">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.4em]">Confirmation Code</span>
+                                </div>
+                                <div className="relative group">
+                                  <input
+                                    type="text"
+                                    maxLength={6}
+                                    placeholder="••••••"
+                                    value={auth2FA.code}
+                                    onChange={(e) => setAuth2FA(prev => ({ ...prev, code: e.target.value.replace(/[^0-9]/g, '') }))}
+                                    className="w-full bg-transparent border-b-2 border-white/[0.05] pb-6 text-white font-black text-7xl tracking-[0.3em] outline-none focus:border-[#d4ff3f] transition-all placeholder:text-[#111] selection:bg-[#d4ff3f]/50"
+                                  />
+                                  {auth2FA.code.length === 6 && (
+                                    <motion.div
+                                      initial={{ opacity: 0, scale: 0.5 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      className="absolute right-0 bottom-8"
+                                    >
+                                      <button
+                                        onClick={handleEnable2FA}
+                                        className="text-[#d4ff3f] hover:text-white transition-colors"
+                                      >
+                                        <Check className="w-8 h-8 stroke-[3]" />
+                                      </button>
+                                    </motion.div>
+                                  )}
+                                </div>
+                                <div className="flex justify-between items-center">
+                                  <span className={cn(
+                                    "text-[9px] font-black uppercase tracking-[0.3em]",
+                                    auth2FA.code.length === 6 ? "text-[#d4ff3f] animate-pulse" : "text-zinc-800"
+                                  )}>
+                                    {auth2FA.code.length === 6 ? 'Pairing Ready' : 'Awaiting Output'}
+                                  </span>
+                                  <span className="text-[9px] font-black text-zinc-500 uppercase font-mono">SEC: 2FA_INIT</span>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )
+                        ) : (
+                          <div className="flex flex-col h-full justify-between">
+                            <div className="space-y-6">
+                              <div className="flex items-center justify-between border-b-2 border-white/[0.05] pb-6">
+                                <div className="flex flex-col gap-1">
+                                  <span className="text-[12px] font-black text-[#d4ff3f] uppercase tracking-widest leading-none">Security Active</span>
+                                  <span className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest">Protocol engaged</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 rounded-full bg-[#d4ff3f] animate-pulse shadow-[0_0_10px_#d4ff3f]" />
+                                  <span className="text-[9px] font-black text-[#d4ff3f] uppercase tracking-[0.3em]">Online</span>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="mt-8 space-y-6">
+                              <div className="flex items-center justify-between mb-4">
+                                <span className="text-[10px] font-black text-red-500/80 uppercase tracking-[0.4em] flex items-center gap-3">
+                                  <span className="w-1.5 h-1.5 bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]" />
+                                  Disable Override
+                                </span>
+                              </div>
+                              <div className="relative group">
+                                <input
+                                  type="password"
+                                  placeholder="••••••"
+                                  maxLength={6}
+                                  value={auth2FA.code}
+                                  onChange={(e) => setAuth2FA(prev => ({ ...prev, code: e.target.value.replace(/[^0-9]/g, '') }))}
+                                  className="w-full bg-transparent border-b-2 border-white/[0.05] pb-6 text-white font-black text-7xl tracking-[0.3em] outline-none focus:border-red-500 transition-all placeholder:text-[#111] selection:bg-red-500/50"
+                                />
+                                {auth2FA.code.length === 6 && (
+                                  <motion.div
+                                    initial={{ opacity: 0, scale: 0.5 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="absolute right-0 bottom-8"
+                                  >
+                                    <button
+                                      onClick={handleDisable2FA}
+                                      className="text-red-500 hover:text-white transition-colors"
+                                      title="Disable 2FA"
+                                    >
+                                      <Ban className="w-8 h-8 stroke-[3]" />
+                                    </button>
+                                  </motion.div>
+                                )}
+                              </div>
+                              <div className="flex justify-between items-center">
+                                <span className={cn(
+                                  "text-[9px] font-black uppercase tracking-[0.3em]",
+                                  auth2FA.code.length === 6 ? "text-red-500 animate-pulse" : "text-zinc-800"
+                                )}>
+                                  {auth2FA.code.length === 6 ? 'Authorization Ready' : 'Awaiting Input'}
+                                </span>
+                                <span className="text-[9px] font-black text-zinc-500 uppercase font-mono">SEC: 2FA_ACTV</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -28,6 +28,14 @@ const SettingsSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now
+  },
+  razorpayApiKey: {
+    type: String,
+    default: ""
+  },
+  razorpayApiSecret: {
+    type: String,
+    default: ""
   }
 });
 
