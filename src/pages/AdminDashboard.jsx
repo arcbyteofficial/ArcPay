@@ -438,14 +438,14 @@ export default function AdminDashboard() {
   });
 
   return (
-    <div className="admin-dashboard-root flex h-screen bg-[#050505] text-[#e0e0e0] font-sans selection:bg-[#d4ff3f]/30 overflow-hidden">
+    <div className="admin-dashboard-root flex flex-col md:flex-row h-screen bg-[#050505] text-[#e0e0e0] font-sans selection:bg-[#d4ff3f]/30 overflow-hidden pb-16 md:pb-0">
       {/* NIXIO SIDEBAR */}
-      <aside className="w-[100px] flex flex-col items-center py-10 border-r border-[#ffffff0a] bg-[#0a0a0c] z-50">
-        <div className="mb-16">
+      <aside className="w-full md:w-[100px] h-16 md:h-screen flex flex-row md:flex-col items-center py-3 px-6 md:py-10 md:px-0 border-t md:border-t-0 md:border-r border-[#ffffff0a] bg-[#0a0a0c] z-50 fixed bottom-0 left-0 right-0 md:relative md:bottom-auto md:left-auto md:right-auto">
+        <div className="hidden md:block mb-16">
           <ShieldCheck className="w-8 h-8 text-[#d4ff3f]" strokeWidth={2.5} />
         </div>
 
-        <nav className="flex flex-col gap-10 flex-1">
+        <nav className="flex flex-row md:flex-col gap-6 md:gap-10 justify-around md:justify-start items-center flex-1 w-full">
           {[
             { id: 'home', icon: Home },
             { id: 'security', icon: ShieldCheck },
@@ -460,11 +460,11 @@ export default function AdminDashboard() {
             <button
               key={item.id}
               onClick={() => setActiveTab(item.id)}
-              className={`relative p-3 rounded-2xl transition-all group ${activeTab === item.id ? 'text-[#d4ff3f]' : 'text-zinc-600 hover:text-zinc-400'}`}
+              className={`relative p-2.5 sm:p-3 rounded-2xl transition-all group ${activeTab === item.id ? 'text-[#d4ff3f]' : 'text-zinc-600 hover:text-zinc-400'}`}
             >
-              <item.icon className="w-6 h-6" />
+              <item.icon className="w-5 h-5 sm:w-6 sm:h-6" />
               {item.count && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#d4ff3f] text-black text-[10px] font-black rounded-full flex items-center justify-center border-4 border-[#0a0a0c]">
+                <span className="absolute -top-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 bg-[#d4ff3f] text-black text-[9px] sm:text-[10px] font-black rounded-full flex items-center justify-center border-2 sm:border-4 border-[#0a0a0c]">
                   {item.count}
                 </span>
               )}
@@ -475,9 +475,9 @@ export default function AdminDashboard() {
           ))}
         </nav>
 
-        <div className="mt-auto flex flex-col gap-8">
+        <div className="md:mt-auto flex flex-row md:flex-col gap-8 pl-4 md:pl-0">
           <button onClick={handleLogout} className="text-zinc-600 hover:text-red-500 transition-colors">
-            <LogOut className="w-6 h-6" />
+            <LogOut className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
       </aside>
@@ -485,32 +485,32 @@ export default function AdminDashboard() {
       {/* MAIN PANEL */}
       <main className="flex-1 flex flex-col overflow-hidden relative">
         {/* NIXIO TOPBAR */}
-        <header className="h-[100px] flex items-center justify-between px-10 border-b border-[#ffffff0a]">
-          <div className="flex items-center gap-10">
+        <header className="min-h-[80px] md:h-[100px] flex flex-col xl:flex-row items-start xl:items-center justify-between py-6 px-6 md:px-10 border-b border-[#ffffff0a] gap-6 xl:gap-0 w-full">
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6 lg:gap-10 w-full xl:w-auto">
             <div className="flex items-center gap-3">
-              <span className="text-3xl font-black tracking-tighter text-white">ArcPay</span>
+              <span className="text-2xl sm:text-3xl font-black tracking-tighter text-white">ArcPay</span>
               <div className="w-[1px] h-6 bg-white/10" />
-              <img src={arcbyteLogo} alt="ArcByte" className="h-6 opacity-80" />
+              <img src={arcbyteLogo} alt="ArcByte" className="h-5 sm:h-6 opacity-80" />
             </div>
 
-            <div className="relative group">
+            <div className="relative group w-full md:w-auto">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500 group-focus-within:text-[#d4ff3f] transition-colors" />
               <input
                 type="text"
                 placeholder="Find payments..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="bg-[#16161a] h-12 rounded-2xl pl-12 pr-6 text-sm font-bold w-[260px] outline-none border border-transparent focus:border-[#d4ff3f]/30 transition-all placeholder:text-zinc-700"
+                className="bg-[#16161a] h-12 rounded-2xl pl-12 pr-6 text-sm font-bold w-full md:w-[200px] lg:w-[260px] outline-none border border-transparent focus:border-[#d4ff3f]/30 transition-all placeholder:text-zinc-700"
               />
             </div>
 
-            <div className="flex items-center gap-2 bg-[#16161a] p-1.5 rounded-2xl border border-white/5">
+            <div className="flex items-center gap-1.5 bg-[#16161a] p-1 rounded-2xl border border-white/5 overflow-x-auto w-full md:w-auto no-scrollbar scroll-smooth">
               {['ALL', 'PENDING', 'SETTLED', 'INVALID'].map((s) => (
                 <button
                   key={s}
                   onClick={() => setStatusFilter(s === 'INVALID' ? 'INVALIDATED' : s)}
                   className={cn(
-                    "px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
+                    "px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all shrink-0",
                     (statusFilter === s || (s === 'INVALID' && statusFilter === 'INVALIDATED'))
                       ? "bg-[#d4ff3f] text-black shadow-[0_0_15px_#d4ff3f50]"
                       : "text-zinc-600 hover:text-zinc-400"
@@ -522,8 +522,8 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-10">
-            <div className="flex -space-x-4 group/avatars">
+          <div className="flex flex-wrap items-center justify-between md:justify-end gap-6 md:gap-10 w-full xl:w-auto">
+            <div className="hidden sm:flex -space-x-4 group/avatars">
               {[1, 2, 3].map(i => (
                 <div key={i} className={`w-10 h-10 rounded-full border-2 border-[#050505] bg-zinc-900 flex items-center justify-center relative transition-all duration-500 hover:z-10 hover:-translate-y-1 cursor-default ${i === 3 ? 'shadow-[0_0_20px_rgba(212,255,63,0.1)]' : ''}`}>
                   <span className="text-[10px] font-black text-zinc-600 group-hover/avatars:text-white transition-colors">+9</span>
@@ -531,7 +531,7 @@ export default function AdminDashboard() {
               ))}
             </div>
 
-            <div className="flex items-center gap-8">
+            <div className="flex items-center gap-6 sm:gap-8">
               <div className="flex items-center gap-3">
                 <div className="relative flex items-center justify-center">
                   <div className="absolute w-4 h-4 bg-[#d4ff3f]/20 rounded-full blur-md animate-pulse" />
@@ -551,7 +551,7 @@ export default function AdminDashboard() {
               </div>
             </div>
 
-            <div className="flex items-center gap-5 ml-4 pl-10 border-l border-white/5">
+            <div className="flex items-center gap-3 sm:gap-5 md:ml-4 md:pl-10 md:border-l border-white/5">
               <div className="text-right flex flex-col items-end">
                 <div className="flex items-center gap-2 mb-1.5">
                   <span className="text-[11px] font-black text-white uppercase tracking-wider">{merchantName}</span>
@@ -574,8 +574,8 @@ export default function AdminDashboard() {
 
         {/* FEED CONTENT */}
         <section className={cn(
-          "flex-1 overflow-y-auto custom-scrollbar relative",
-          activeTab !== 'chats' && "p-10"
+          "flex-1 overflow-y-auto custom-scrollbar relative pb-24 md:pb-10",
+          activeTab !== 'chats' && "p-6 md:p-10"
         )}>
           {activeTab === 'api' && (
             <div className="space-y-12 pb-20">
@@ -719,9 +719,9 @@ export default function AdminDashboard() {
             </div>
           )}
           {activeTab === 'home' && (
-            <div className="flex gap-10">
+            <div className="flex flex-col xl:flex-row gap-10">
               {/* LEFT COLUMN: STATS & LIST */}
-              <div className="flex-1 space-y-12">
+              <div className="flex-1 space-y-12 w-full">
                 {/* STATISTICS SECTION */}
                 <div className="space-y-8">
                   <div className="flex items-end justify-between">
@@ -741,9 +741,9 @@ export default function AdminDashboard() {
                     </div>
                   </div>
 
-                  <div className="bg-[#0a0a0c] rounded-[32px] border border-[#ffffff08] p-10 relative overflow-hidden h-[400px]">
+                  <div className="bg-[#0a0a0c] rounded-[32px] border border-[#ffffff08] p-5 sm:p-10 relative overflow-hidden h-[340px] sm:h-[400px]">
                     {/* Date Scroller */}
-                    <div className="flex gap-4 overflow-x-auto no-scrollbar mb-10 pb-4">
+                    <div className="flex gap-3 sm:gap-4 overflow-x-auto no-scrollbar mb-6 sm:mb-10 pb-4">
                       {dynamicDays.map((d, i) => {
                         const dayStats = stats.dailyStats?.find(s => s.date === d.dateStr);
                         const isSelected = selectedDate === d.dateStr;
@@ -751,7 +751,7 @@ export default function AdminDashboard() {
                           <div
                             key={i}
                             onClick={() => setSelectedDate(isSelected ? null : d.dateStr)}
-                            className={`flex flex-col items-center justify-center min-w-[72px] h-[90px] rounded-2xl border transition-all duration-500 cursor-pointer ${isSelected ? 'bg-[#d4ff3f] border-[#d4ff3f] text-black shadow-[0_0_25px_rgba(212,255,63,0.2)]' : 'bg-[#16161a] border-white/5 text-zinc-500 hover:border-white/10'}`}
+                            className={`flex flex-col items-center justify-center min-w-[60px] sm:min-w-[72px] h-[80px] sm:h-[90px] rounded-2xl border transition-all duration-500 cursor-pointer ${isSelected ? 'bg-[#d4ff3f] border-[#d4ff3f] text-black shadow-[0_0_25px_rgba(212,255,63,0.2)]' : 'bg-[#16161a] border-white/5 text-zinc-500 hover:border-white/10'}`}
                           >
                             <span className="text-[11px] font-black uppercase mb-1">{d.num}</span>
                             <span className="text-[9px] font-bold opacity-60 uppercase tracking-widest">{d.day}</span>
@@ -825,28 +825,28 @@ export default function AdminDashboard() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.05 }}
-                        className="group relative flex items-center justify-between py-10 px-6 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all duration-500 rounded-[24px] cursor-default"
+                        className="group relative flex flex-col lg:flex-row lg:items-center justify-between py-6 lg:py-10 px-4 sm:px-6 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all duration-500 rounded-[24px] cursor-default gap-6 lg:gap-0"
                       >
                         {/* Left: Identity & Primary Info */}
-                        <div className="flex items-center gap-10 w-[45%] min-w-[400px]">
+                        <div className="flex items-center gap-4 sm:gap-10 w-full lg:w-[45%] lg:min-w-[320px] xl:min-w-[400px]">
                           <div className="relative shrink-0">
-                            <div className="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center border border-white/5 text-xl font-black text-[#d4ff3f] shadow-2xl transition-transform group-hover:scale-110 duration-500">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-zinc-900 rounded-full flex items-center justify-center border border-white/5 text-lg sm:text-xl font-black text-[#d4ff3f] shadow-2xl transition-transform group-hover:scale-110 duration-500">
                               {(link.payerName || link.name || "AC").charAt(0)}
                             </div>
-                            <div className={`absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-4 border-black ${link.status === 'SETTLED' ? 'bg-[#d4ff3f]' :
+                            <div className={`absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 rounded-full border-2 sm:border-4 border-black ${link.status === 'SETTLED' ? 'bg-[#d4ff3f]' :
                               link.status === 'SUBMITTED' ? 'bg-[#d4ff3f] animate-pulse' :
                                 'bg-zinc-800'
                               }`} />
                           </div>
 
-                          <div className="flex flex-col gap-2 min-w-0">
-                            <h3 className="text-2xl text-white group-hover:text-[#d4ff3f] transition-colors duration-500 truncate flex items-center gap-2">
+                          <div className="flex flex-col gap-1 sm:gap-2 min-w-0">
+                            <h3 className="text-lg sm:text-2xl text-white group-hover:text-[#d4ff3f] transition-colors duration-500 truncate flex items-center gap-2">
                               {link.payerName || link.name || "Anonymous Customer"}
                               {link.status === 'SETTLED' && <Check className="w-4 h-4 text-[#d4ff3f] shrink-0" />}
                             </h3>
-                            <div className="flex items-center gap-4 text-zinc-500 font-bold uppercase tracking-[0.2em] text-[10px]">
+                            <div className="flex items-center gap-3 sm:gap-4 text-zinc-500 font-bold uppercase tracking-[0.2em] text-[9px] sm:text-[10px]">
                               <span className={link.status === 'SETTLED' ? 'text-[#d4ff3f]/80' : 'text-zinc-600'}>
-                                {link.status === 'SETTLED' ? 'Payment Verified' : link.status === 'SUBMITTED' ? 'Processing' : 'Awaiting Payment'}
+                                {link.status === 'SETTLED' ? 'Verified' : link.status === 'SUBMITTED' ? 'Processing' : 'Awaiting'}
                               </span>
                               <div className="w-1 h-1 rounded-full bg-zinc-800" />
                               <span>{new Date(link.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
@@ -857,61 +857,61 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* Middle: Metadata Columns */}
-                        <div className="flex items-center flex-1 justify-end gap-16">
-                          <div className="flex flex-col items-end gap-1.5 w-[200px] shrink-0">
-                            <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Payment Note / Ref</span>
-                            <span className="text-xs font-black text-zinc-400 truncate w-full text-right">{link.note || "No Reference"}</span>
+                        <div className="flex flex-row flex-wrap lg:flex-nowrap items-center justify-between lg:justify-end gap-6 lg:gap-16 w-full lg:flex-1">
+                          <div className="flex flex-col items-start lg:items-end gap-1.5 w-[45%] lg:w-[200px] shrink-0">
+                            <span className="text-[9px] sm:text-[10px] font-black text-zinc-600 uppercase tracking-widest">Note / Ref</span>
+                            <span className="text-xs font-black text-zinc-400 truncate w-full text-left lg:text-right">{link.note || "No Reference"}</span>
                           </div>
 
-                          <div className="flex flex-col items-end gap-1.5 w-[80px] shrink-0">
-                            <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Method</span>
+                          <div className="flex flex-col items-end gap-1.5 w-[20%] lg:w-[80px] shrink-0">
+                            <span className="text-[9px] sm:text-[10px] font-black text-zinc-600 uppercase tracking-widest">Method</span>
                             <div className="flex items-center gap-2">
-                              {link.paymentMethod === 'upi' && <img src={upiLogo} alt="UPI" className="h-5 opacity-80" />}
-                              {link.paymentMethod === 'bank' && <img src={bankLogo} alt="Bank" className="h-5 opacity-80" />}
-                              {link.paymentMethod === 'razorpay' && <img src={razorpayLogo} alt="RP" className="h-5 opacity-80" />}
+                              {link.paymentMethod === 'upi' && <img src={upiLogo} alt="UPI" className="h-4 sm:h-5 opacity-80" />}
+                              {link.paymentMethod === 'bank' && <img src={bankLogo} alt="Bank" className="h-4 sm:h-5 opacity-80" />}
+                              {link.paymentMethod === 'razorpay' && <img src={razorpayLogo} alt="RP" className="h-4 sm:h-5 opacity-80" />}
                               {link.paymentMethod !== 'bank' && (
                                 <span className="text-xs font-black text-white uppercase">{link.paymentMethod}</span>
                               )}
                             </div>
                           </div>
 
-                          <div className="flex flex-col items-end gap-1.5 w-[150px] shrink-0">
-                            <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Total Amount</span>
-                            <span className="text-3xl font-black text-white tracking-tighter">
+                          <div className="flex flex-col items-end gap-1.5 w-[30%] lg:w-[150px] shrink-0">
+                            <span className="text-[9px] sm:text-[10px] font-black text-zinc-600 uppercase tracking-widest">Amount</span>
+                            <span className="text-xl sm:text-3xl font-black text-white tracking-tighter">
                               ₹{new Intl.NumberFormat('en-IN').format(link.amount)}
                             </span>
                           </div>
                         </div>
 
                         {/* Right: Actions */}
-                        <div className="flex items-center justify-end gap-3 w-[160px] shrink-0 ml-10">
+                        <div className="flex items-center justify-end gap-3 w-full lg:w-[160px] shrink-0 lg:ml-10 mt-4 lg:mt-0">
                           {['PENDING', 'SUBMITTED'].includes(link.status) && (
                             <>
                               {link.paymentMethod !== 'razorpay' && (
                                 <button
                                   onClick={() => handleStatusUpdate(link._id, 'SETTLED')}
-                                  className="w-12 h-12 rounded-full bg-[#d4ff3f]/10 text-[#d4ff3f] flex items-center justify-center hover:bg-[#d4ff3f] hover:text-black transition-all duration-300 opacity-40 hover:opacity-100 hover:rotate-12 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
+                                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#d4ff3f]/10 text-[#d4ff3f] flex items-center justify-center hover:bg-[#d4ff3f] hover:text-black transition-all duration-300 opacity-40 hover:opacity-100 hover:rotate-12 shadow-[0_0_20px_rgba(16,185,129,0.2)]"
                                   title="Validate Payment"
                                 >
-                                  <Check size={20} strokeWidth={3} />
+                                  <Check size={18} strokeWidth={3} />
                                 </button>
                               )}
                               <button
                                 onClick={() => handleStatusUpdate(link._id, 'INVALIDATED')}
-                                className="w-12 h-12 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-black transition-all duration-300 opacity-40 hover:opacity-100 hover:-rotate-12 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
-                                title="Invalidate Link"
+                                className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center hover:bg-red-500 hover:text-black transition-all duration-300 opacity-40 hover:opacity-100 hover:-rotate-12 shadow-[0_0_20px_rgba(239,68,68,0.2)]"
+                                  title="Invalidate Link"
                               >
-                                <X size={20} strokeWidth={3} />
+                                <X size={18} strokeWidth={3} />
                               </button>
                             </>
                           )}
                           <a
                             href={link.fullUrl || `http://localhost:5173/app?pay_id=${link.linkId}`}
                             target="_blank"
-                            className="w-12 h-12 rounded-full bg-white/5 text-zinc-500 flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 opacity-40 hover:opacity-100 shadow-xl"
+                            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/5 text-zinc-500 flex items-center justify-center hover:bg-white hover:text-black transition-all duration-300 opacity-40 hover:opacity-100 shadow-xl"
                             title="View Payment Page"
                           >
-                            <ExternalLink size={20} />
+                            <ExternalLink size={18} />
                           </a>
                         </div>
                       </motion.div>
@@ -921,7 +921,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* RIGHT COLUMN: WIDGETS */}
-              <div className="w-[380px] space-y-12">
+              <div className="w-full xl:w-[380px] space-y-12 shrink-0">
                 {/* TOTAL VOLUME CARD - Nixio Dark Beautification */}
                 <div className="max-w-md">
                   <motion.div
@@ -1186,15 +1186,15 @@ export default function AdminDashboard() {
                               const val = e.target.value.replace(/\D/g, '').slice(0, 6);
                               setMaintenanceSettings(prev => ({ ...prev, passcode: val }));
                             }}
-                            className="w-full bg-transparent border-b-2 border-white/[0.05] pb-6 text-white font-black text-7xl tracking-[0.3em] outline-none focus:border-[#d4ff3f] transition-all placeholder:text-[#111] selection:bg-[#d4ff3f]/50"
+                            className="w-full bg-transparent border-b-2 border-white/[0.05] pb-4 sm:pb-6 text-white font-black text-3xl sm:text-5xl md:text-7xl tracking-[0.2em] sm:tracking-[0.3em] outline-none focus:border-[#d4ff3f] transition-all placeholder:text-[#111] selection:bg-[#d4ff3f]/50"
                           />
                           {maintenanceSettings.passcode?.length === 6 && (
                             <motion.div
                               initial={{ opacity: 0, scale: 0.5 }}
                               animate={{ opacity: 1, scale: 1 }}
-                              className="absolute right-0 bottom-8 text-[#d4ff3f]"
+                              className="absolute right-0 bottom-6 sm:bottom-8 text-[#d4ff3f]"
                             >
-                              <ShieldCheck className="w-8 h-8" />
+                              <ShieldCheck className="w-6 h-6 sm:w-8 sm:h-8" />
                             </motion.div>
                           )}
                         </div>
@@ -1262,7 +1262,7 @@ export default function AdminDashboard() {
                                     placeholder="••••••"
                                     value={auth2FA.code}
                                     onChange={(e) => setAuth2FA(prev => ({ ...prev, code: e.target.value.replace(/[^0-9]/g, '') }))}
-                                    className="w-full bg-transparent border-b-2 border-white/[0.05] pb-6 text-white font-black text-7xl tracking-[0.3em] outline-none focus:border-[#d4ff3f] transition-all placeholder:text-[#111] selection:bg-[#d4ff3f]/50"
+                                    className="w-full bg-transparent border-b-2 border-white/[0.05] pb-4 sm:pb-6 text-white font-black text-3xl sm:text-5xl md:text-7xl tracking-[0.2em] sm:tracking-[0.3em] outline-none focus:border-[#d4ff3f] transition-all placeholder:text-[#111] selection:bg-[#d4ff3f]/50"
                                   />
                                   {auth2FA.code.length === 6 && (
                                     <motion.div
@@ -1320,7 +1320,7 @@ export default function AdminDashboard() {
                                   maxLength={6}
                                   value={auth2FA.code}
                                   onChange={(e) => setAuth2FA(prev => ({ ...prev, code: e.target.value.replace(/[^0-9]/g, '') }))}
-                                  className="w-full bg-transparent border-b-2 border-white/[0.05] pb-6 text-white font-black text-7xl tracking-[0.3em] outline-none focus:border-red-500 transition-all placeholder:text-[#111] selection:bg-red-500/50"
+                                  className="w-full bg-transparent border-b-2 border-white/[0.05] pb-4 sm:pb-6 text-white font-black text-3xl sm:text-5xl md:text-7xl tracking-[0.2em] sm:tracking-[0.3em] outline-none focus:border-red-500 transition-all placeholder:text-[#111] selection:bg-red-500/50"
                                 />
                                 {auth2FA.code.length === 6 && (
                                   <motion.div
@@ -1430,7 +1430,7 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="space-y-0">
-                  <div className="grid grid-cols-12 pb-6 border-b border-white/[0.03] opacity-20">
+                  <div className="hidden md:grid grid-cols-12 pb-6 border-b border-white/[0.03] opacity-20">
                     <div className="col-span-6 text-[9px] font-black uppercase tracking-[0.3em]">Activity</div>
                     <div className="col-span-2 text-[9px] font-black uppercase tracking-[0.3em] text-center">Status</div>
                     <div className="col-span-2 text-[9px] font-black uppercase tracking-[0.3em] text-center">Time</div>
@@ -1450,12 +1450,12 @@ export default function AdminDashboard() {
                         initial={{ opacity: 0, x: -10 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.1, duration: 0.8, ease: "easeOut" }}
-                        className="grid grid-cols-12 py-10 items-center group cursor-default"
+                        className="grid grid-cols-12 py-6 md:py-10 items-center group cursor-default gap-2 md:gap-0"
                       >
-                        <div className="col-span-12 md:col-span-6 mb-4 md:mb-0">
+                        <div className="col-span-12 md:col-span-6 mb-2 md:mb-0">
                           <div className="flex items-center gap-6">
                             <span className="text-[10px] font-mono text-zinc-800 tabular-nums">0{i + 1}</span>
-                            <h3 className="text-2xl md:text-3xl font-black text-white italic uppercase tracking-tighter group-hover:text-[#d4ff3f] transition-all duration-500">
+                            <h3 className="text-xl md:text-3xl font-black text-white italic uppercase tracking-tighter group-hover:text-[#d4ff3f] transition-all duration-500">
                               {log.event.replace(/_/g, ' ')}
                             </h3>
                           </div>
@@ -1478,7 +1478,7 @@ export default function AdminDashboard() {
                           </div>
                         </div>
 
-                        <div className="col-span-4 md:col-span-2 text-[10px] font-bold text-zinc-600 text-center uppercase tracking-widest">
+                        <div className="col-span-4 md:col-span-2 text-[10px] font-bold text-zinc-600 text-left md:text-center uppercase tracking-widest">
                           {log.time}
                         </div>
 
@@ -1536,14 +1536,14 @@ export default function AdminDashboard() {
                       initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.03 }}
-                      className="group relative flex items-center justify-between py-10 px-8 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all duration-500 rounded-[32px] cursor-default"
+                      className="group relative flex flex-col md:flex-row md:items-center justify-between py-6 md:py-10 px-4 sm:px-8 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all duration-500 rounded-[32px] cursor-default gap-6 md:gap-0"
                     >
-                      <div className="flex items-center gap-10 w-[400px]">
-                        <div className="w-14 h-14 bg-zinc-900 rounded-2xl flex items-center justify-center border border-white/5 text-zinc-600 group-hover:text-[#d4ff3f] transition-all duration-500 group-hover:rotate-12">
-                          <Smartphone size={24} />
+                      <div className="flex items-center gap-4 sm:gap-10 w-full md:w-[350px] lg:w-[400px]">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-zinc-900 rounded-2xl flex items-center justify-center border border-white/5 text-zinc-600 group-hover:text-[#d4ff3f] transition-all duration-500 group-hover:rotate-12 shrink-0">
+                          <Smartphone size={20} className="sm:size-[24px]" />
                         </div>
                         <div className="flex flex-col gap-1.5">
-                          <span className="text-white font-black text-xl tracking-tight uppercase italic">{link.linkId.toUpperCase()}</span>
+                          <span className="text-white font-black text-lg sm:text-xl tracking-tight uppercase italic">{link.linkId.toUpperCase()}</span>
                           <div className="flex items-center gap-3">
                             <div className={cn("px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest", link.amount ? "bg-white/5 text-zinc-400" : "bg-[#d4ff3f] text-black italic")}>
                               {link.amount ? 'Fixed Value' : 'Open Amount'}
@@ -1553,8 +1553,8 @@ export default function AdminDashboard() {
                         </div>
                       </div>
 
-                      <div className="flex-1 flex items-center gap-20 justify-end h-full pr-10">
-                        <div className="flex flex-col items-end gap-1.5 min-w-[150px]">
+                      <div className="flex-1 flex flex-row flex-wrap md:flex-nowrap items-center justify-between md:justify-end gap-6 md:gap-20 h-full pr-0 md:pr-10 w-full">
+                        <div className="flex flex-col items-start md:items-end gap-1.5 min-w-[120px] sm:min-w-[150px]">
                           <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Linked Merchant</span>
                           <div className="flex items-center gap-2">
                             <span className="text-[11px] font-bold text-zinc-400">{link.name || "Default Vendor"}</span>
@@ -1562,7 +1562,7 @@ export default function AdminDashboard() {
                           </div>
                         </div>
 
-                        <div className="flex flex-col items-end gap-1.5 min-w-[100px]">
+                        <div className="flex flex-col items-start md:items-end gap-1.5 min-w-[80px] sm:min-w-[100px]">
                           <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Status</span>
                           <div className="flex items-center gap-2">
                             <div className="w-1.5 h-1.5 bg-[#d4ff3f] rounded-full shadow-[0_0_8px_#d4ff3f]" />
@@ -1774,11 +1774,11 @@ export default function AdminDashboard() {
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: i * 0.03 }}
-                      className="group relative flex items-center justify-between py-10 px-8 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all duration-500 rounded-[32px] cursor-default"
+                      className="group relative flex flex-col lg:flex-row lg:items-center justify-between py-6 lg:py-10 px-4 sm:px-8 border-b border-white/[0.03] hover:bg-white/[0.02] transition-all duration-500 rounded-[32px] cursor-default gap-6 lg:gap-0"
                     >
                       {/* Detailed Column Layout */}
-                      <div className="flex items-center gap-10 w-[350px]">
-                        <div className="w-14 h-14 bg-zinc-900 rounded-2xl flex items-center justify-center border border-white/5 text-lg font-black text-[#d4ff3f] shadow-2xl relative">
+                      <div className="flex items-center gap-4 sm:gap-10 w-full lg:w-[350px]">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 bg-zinc-900 rounded-2xl flex items-center justify-center border border-white/5 text-base sm:text-lg font-black text-[#d4ff3f] shadow-2xl relative shrink-0">
                           {(link.payerName || link.name || "AC").charAt(0)}
                           <div className={`absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full border-2 border-black ${link.status === 'SETTLED' ? 'bg-[#d4ff3f]' :
                             link.status === 'SUBMITTED' ? 'bg-[#d4ff3f] animate-pulse' :
@@ -1786,12 +1786,12 @@ export default function AdminDashboard() {
                             }`} />
                         </div>
                         <div className="flex flex-col gap-1">
-                          <span className="text-white font-black text-xl truncate tracking-tight group-hover:text-[#d4ff3f] transition-colors">{link.payerName || link.name || "Anonymous"}</span>
+                          <span className="text-white font-black text-lg sm:text-xl truncate tracking-tight group-hover:text-[#d4ff3f] transition-colors">{link.payerName || link.name || "Anonymous"}</span>
                           <span className="text-[9px] font-black text-zinc-600 uppercase tracking-[0.2em]">{new Date(link.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                         </div>
                       </div>
 
-                      <div className="flex-1 grid grid-cols-3 gap-10 items-center px-10">
+                      <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-6 sm:gap-10 items-center px-0 lg:px-10 w-full">
                         <div className="flex flex-col gap-1.5">
                           <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Payment Details</span>
                           <span className="text-[11px] font-bold text-zinc-400 group-hover:text-white transition-colors">{link.linkId.toUpperCase()}</span>
@@ -1805,9 +1805,9 @@ export default function AdminDashboard() {
                             </span>
                           </div>
                         </div>
-                        <div className="flex flex-col items-end gap-1.5 pr-10">
+                        <div className="flex flex-col items-start sm:items-end gap-1.5 pr-0 lg:pr-10 col-span-2 sm:col-span-1">
                           <span className="text-[9px] font-black text-zinc-700 uppercase tracking-widest">Amount</span>
-                          <span className="text-2xl font-black text-white tracking-tighter">₹{new Intl.NumberFormat('en-IN').format(link.amount)}</span>
+                          <span className="text-xl sm:text-2xl font-black text-white tracking-tighter">₹{new Intl.NumberFormat('en-IN').format(link.amount)}</span>
                         </div>
                       </div>
 
