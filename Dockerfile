@@ -9,9 +9,18 @@ RUN npm install
 # Copy all source files
 COPY . .
 
-# Build the frontend with the backend URL argument
+# Build the frontend with the arguments
 ARG VITE_BACKEND_URL
 ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
+
+ARG VITE_RAZORPAY_KEY
+ENV VITE_RAZORPAY_KEY=$VITE_RAZORPAY_KEY
+
+ARG VITE_PAYEE_VPA
+ENV VITE_PAYEE_VPA=$VITE_PAYEE_VPA
+
+ARG VITE_PAYEE_NAME
+ENV VITE_PAYEE_NAME=$VITE_PAYEE_NAME
 
 RUN npm run build
 
