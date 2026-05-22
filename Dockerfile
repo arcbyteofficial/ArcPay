@@ -10,17 +10,17 @@ RUN npm install
 COPY . .
 
 # Build the frontend with the arguments
+# Build the frontend with the arguments
 ARG VITE_BACKEND_URL
-ENV VITE_BACKEND_URL=$VITE_BACKEND_URL
-
 ARG VITE_RAZORPAY_KEY
-ENV VITE_RAZORPAY_KEY=$VITE_RAZORPAY_KEY
-
 ARG VITE_PAYEE_VPA
-ENV VITE_PAYEE_VPA=$VITE_PAYEE_VPA
-
 ARG VITE_PAYEE_NAME
-ENV VITE_PAYEE_NAME=$VITE_PAYEE_NAME
+
+# Force Vite to see these variables by writing them directly into a .env file before building
+RUN echo "VITE_BACKEND_URL=$VITE_BACKEND_URL" >> .env && \
+    echo "VITE_RAZORPAY_KEY=$VITE_RAZORPAY_KEY" >> .env && \
+    echo "VITE_PAYEE_VPA=$VITE_PAYEE_VPA" >> .env && \
+    echo "VITE_PAYEE_NAME=$VITE_PAYEE_NAME" >> .env
 
 RUN npm run build
 
