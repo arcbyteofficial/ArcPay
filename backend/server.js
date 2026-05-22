@@ -63,8 +63,13 @@ app.use(globalLimiter);
 
 // Middleware
 app.use(express.json());
+const allowedOrigins = ['https://pay.arcbyte.co', 'http://localhost:5173'];
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
+
 app.use(cors({
-  origin: ['https://pay.arcbyte.co', 'http://localhost:5173'],
+  origin: allowedOrigins,
   methods: ['GET', 'POST', 'PATCH', 'DELETE'],
   credentials: true
 }));
