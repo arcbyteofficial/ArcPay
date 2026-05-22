@@ -18,6 +18,9 @@ const Admin = require('./models/Admin');
 const Settings = require('./models/Settings');
 
 const app = express();
+// Trust the Dokploy/Traefik reverse proxy to allow rate-limiting to work correctly
+app.set('trust proxy', 1);
+
 const port = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'arcpay_super_secret_key_2024';
 
